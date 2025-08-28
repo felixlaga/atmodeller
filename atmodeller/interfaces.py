@@ -29,6 +29,8 @@ from jaxtyping import Array, ArrayLike, Bool
 class ActivityProtocol(Protocol):
     def log_activity(self, temperature: ArrayLike, pressure: ArrayLike) -> ArrayLike: ...
 
+    def log_fugacity(self, temperature: ArrayLike, pressure: ArrayLike) -> ArrayLike: ...
+
 
 @runtime_checkable
 class FugacityConstraintProtocol(Protocol):
