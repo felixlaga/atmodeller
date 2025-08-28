@@ -23,10 +23,10 @@ from jaxtyping import ArrayLike
 
 from atmodeller import debug_logger
 from atmodeller.classes import InteriorAtmosphere
-from atmodeller.containers import Planet, SpeciesCollection
+from atmodeller.containers import ConstantFugacityConstraint, Planet, Species, SpeciesCollection
 from atmodeller.interfaces import FugacityConstraintProtocol
 from atmodeller.output import Output
-from atmodeller.thermodata import IronWustiteBuffer
+from atmodeller.thermodata import CondensateActivity, IronWustiteBuffer
 from atmodeller.utilities import earth_oceans_to_hydrogen_mass
 
 logger: logging.Logger = debug_logger()
@@ -59,9 +59,7 @@ def test_graphite_stable(helper) -> None:
     mass_constraints = {"C": c_kg, "H": h_kg, "O": o_kg}
 
     CHO_system.solve(
-        planet=planet,
-        fugacity_constraints=fugacity_constraints,
-        mass_constraints=mass_constraints,
+        planet=planet, fugacity_constraints=fugacity_constraints, mass_constraints=mass_constraints
     )
     output: Output = CHO_system.output
     solution: dict[str, ArrayLike] = output.quick_look()
@@ -94,9 +92,7 @@ def test_graphite_unstable(helper) -> None:
     mass_constraints = {"C": c_kg, "H": h_kg}
 
     CHO_system.solve(
-        planet=planet,
-        fugacity_constraints=fugacity_constraints,
-        mass_constraints=mass_constraints,
+        planet=planet, fugacity_constraints=fugacity_constraints, mass_constraints=mass_constraints
     )
     output: Output = CHO_system.output
     solution: dict[str, ArrayLike] = output.quick_look()
@@ -127,10 +123,7 @@ def test_water_stable(helper) -> None:
     o_kg: float = 1.14375e21
     mass_constraints = {"H": h_kg, "O": o_kg}
 
-    interior_atmosphere.solve(
-        planet=planet,
-        mass_constraints=mass_constraints,
-    )
+    interior_atmosphere.solve(planet=planet, mass_constraints=mass_constraints)
     output: Output = interior_atmosphere.output
     solution: dict[str, ArrayLike] = output.quick_look()
 
@@ -159,10 +152,7 @@ def test_graphite_water_stable(helper) -> None:
     o_kg: float = 2.48298883581636e21
     mass_constraints = {"C": c_kg, "H": h_kg, "O": o_kg}
 
-    interior_atmosphere.solve(
-        planet=planet,
-        mass_constraints=mass_constraints,
-    )
+    interior_atmosphere.solve(planet=planet, mass_constraints=mass_constraints)
     output: Output = interior_atmosphere.output
     solution: dict[str, ArrayLike] = output.quick_look()
 
@@ -180,3 +170,46 @@ def test_graphite_water_stable(helper) -> None:
     }
 
     assert helper.isclose(solution, factsage_result, log=True, rtol=TOLERANCE, atol=TOLERANCE)
+
+
+def test_imposed_stable_condensate(helper) -> None:
+    """Tests a user-imposed stable condensate
+
+    In general, it is not guaranteed that a system under consideration has a stable condensate, and
+    so for most cases the abundance of a condensate should be solved for along with its stability.
+    """
+
+    # To enforce condensate stability we must set the ``solve_for_stability`` flag to ``False``
+    C_cr: Species = Species.create_condensed("C", solve_for_stability=False)
+    H2_g: Species = Species.create_gas("H2")
+    N2_g: Species = Species.create_gas("N2")
+    CHN_g: Species = Species.create_gas("CHN")
+    Ar_g: Species = Species.create_gas("Ar")
+
+    species: SpeciesCollection = SpeciesCollection((C_cr, H2_g, N2_g, CHN_g, Ar_g))
+
+    planet: Planet = Planet(surface_temperature=1500, mantle_melt_fraction=0)
+    interior_atmosphere: InteriorAtmosphere = InteriorAtmosphere(species)
+
+    # Only specify fugacity constraints
+    fugacity_constraints: dict[str, FugacityConstraintProtocol] = {
+        "C_cr": CondensateActivity(),  # Enforce condensate stability as a constraint
+        "H2_g": ConstantFugacityConstraint(0.1),
+        "N2_g": ConstantFugacityConstraint(0.2),
+        "Ar_g": ConstantFugacityConstraint(0.9),
+    }
+
+    interior_atmosphere.solve(planet=planet, fugacity_constraints=fugacity_constraints)
+    output: Output = interior_atmosphere.output
+    solution: dict[str, ArrayLike] = output.quick_look()
+
+    # TODO: Swap for a comparison with FactSage?
+    target_result: dict[str, float] = {
+        "C_cr_activity": 1.0,
+        "H2_g": 0.1,
+        "N2_g": 0.2,
+        "Ar_g": 0.9,
+        "CHN_g": 0.000174719425093,
+    }
+
+    assert helper.isclose(solution, target_result, log=False, rtol=RTOL, atol=ATOL)
