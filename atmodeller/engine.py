@@ -571,6 +571,9 @@ def objective_function(
     # jax.debug.print("log_activity_number_density = {out}", out=log_activity_number_density)
 
     # Fugacity constraints residual (dimensionless, log-ratio of number densities)
+    # For condensates with an imposed activity, this operation will produce a meaningless numerical
+    # value because it doesn't make sense to convert a condensate activity of unity to a
+    # log_number_density. However, this meaningless value is masked out at the end of the function.
     fugacity_residual: Float[Array, " reactions"] = (
         log_activity_number_density
         - parameters.fugacity_constraints.log_number_density(temperature, total_pressure)
@@ -690,6 +693,9 @@ def objective_function(
         [fugacity_residual, reaction_residual, mass_residual, stability_residual]
     )
     # jax.debug.print("residual (with nans) = {out}", out=residual)
+
+    # This final masking operation drops nans (unused constraint options) as well as dropping
+    # meaningless entries associated with imposed condensate activity.
 
     active_mask: Bool[Array, " dim"] = get_active_mask(parameters)
     # jax.debug.print("active_mask = {out}", out=active_mask)
