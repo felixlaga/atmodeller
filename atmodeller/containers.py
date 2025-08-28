@@ -70,12 +70,14 @@ class Species(eqx.Module):
         activity: Activity
         solubility: Solubility
         solve_for_stability: Solve for stability
+        number_solution: Number of solution quantities
     """
 
     data: IndividualSpeciesData
     activity: ActivityProtocol
     solubility: SolubilityProtocol
     solve_for_stability: bool
+    number_solution: int
 
     @property
     def name(self) -> str:
@@ -104,7 +106,15 @@ class Species(eqx.Module):
         """
         species_data: IndividualSpeciesData = IndividualSpeciesData(formula, state)
 
-        return cls(species_data, activity, NoSolubility(), solve_for_stability)
+        # For a condensate, either both a number density and stability are solved for, or
+        # alternatively stability can be enforced in which case the number density is irrelevant
+        # and there is nothing to solve for.
+        # TODO: Theoretically the scenario could be accommodated whereby a user enforces stability
+        # and wants to solve for the number density. But this could give rise to strange
+        # inconsistencies so this scenario is not accommodated.
+        number_solution: int = 2 if solve_for_stability else 0
+
+        return cls(species_data, activity, NoSolubility(), solve_for_stability, number_solution)
 
     @classmethod
     def create_gas(
@@ -131,7 +141,10 @@ class Species(eqx.Module):
         """
         species_data: IndividualSpeciesData = IndividualSpeciesData(formula, state)
 
-        return cls(species_data, activity, solubility, solve_for_stability)
+        # For a gas, a number density is always solved for, and stability can be if desired
+        number_solution: int = 2 if solve_for_stability else 1
+
+        return cls(species_data, activity, solubility, solve_for_stability, number_solution)
 
     def __str__(self) -> str:
         return f"{self.name}: {self.activity.__class__.__name__}, {self.solubility.__class__.__name__}"
@@ -177,8 +190,10 @@ class SpeciesCollection(eqx.Module):
         self.data = tuple(data)
 
         # Ensure number_solution is static
+        self.number_solution = sum([species.number_solution for species in self.data])
+
         active_stability: list[bool] = [species.solve_for_stability for species in self.data]
-        self.number_solution = self.number_species + sum(active_stability)
+
         self.active_stability = np.array(active_stability)
 
         self.gas_species_mask = np.array(
@@ -462,7 +477,7 @@ class ConstantFugacityConstraint(eqx.Module):
         """
         return ~jnp.isnan(self.fugacity)
 
-    def log_fugacity(self, temperature: ArrayLike, pressure: ArrayLike) -> Array:
+    def log_fugacity(self, temperature: ArrayLike, pressure: ArrayLike) -> Float[Array, "..."]:
         del temperature
         del pressure
 
