@@ -45,11 +45,22 @@ class CondensateActivity(eqx.Module):
     """Activity of a stable condensate
 
     Args:
-        activity: Activity. Defaults to 1.
+        activity: Activity. Defaults to ``1``.
     """
 
     activity: float = eqx.field(converter=float, default=1)
     """Activity"""
+
+    def active(self) -> Bool[Array, ""]:
+        """Active activity constraint
+
+        Condensate activity is imposed in the reaction network and therefore is never part of an
+        active constraint in the residual.
+
+        Returns:
+            Always ``False`` because it does not require solution.
+        """
+        return jnp.array(False)
 
     def log_activity(self, temperature: ArrayLike, pressure: ArrayLike) -> Float[Array, ""]:
         """Log activity
@@ -65,6 +76,9 @@ class CondensateActivity(eqx.Module):
         del pressure
 
         return jnp.log(self.activity)
+
+    def log_fugacity(self, temperature: ArrayLike, pressure: ArrayLike) -> Float[Array, ""]:
+        return self.log_activity(temperature, pressure)
 
 
 class ThermodynamicCoefficients(eqx.Module):
