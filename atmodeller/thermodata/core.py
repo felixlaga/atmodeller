@@ -48,10 +48,10 @@ class CondensateActivity(eqx.Module):
         activity: Activity. Defaults to ``1``.
     """
 
-    activity: float = eqx.field(converter=float, default=1)
+    activity: Array = eqx.field(converter=as_j64, default=1)
     """Activity"""
 
-    def active(self) -> Bool[Array, ""]:
+    def active(self) -> Bool[Array, "..."]:
         """Active activity constraint
 
         Condensate activity is imposed in the reaction network and therefore is never part of an
@@ -60,9 +60,9 @@ class CondensateActivity(eqx.Module):
         Returns:
             Always ``False`` because it does not require solution.
         """
-        return jnp.array(False)
+        return jnp.full_like(self.activity, False, dtype=jnp.bool_)
 
-    def log_activity(self, temperature: ArrayLike, pressure: ArrayLike) -> Float[Array, ""]:
+    def log_activity(self, temperature: ArrayLike, pressure: ArrayLike) -> Float[Array, "..."]:
         """Log activity
 
         Args:
@@ -77,7 +77,7 @@ class CondensateActivity(eqx.Module):
 
         return jnp.log(self.activity)
 
-    def log_fugacity(self, temperature: ArrayLike, pressure: ArrayLike) -> Float[Array, ""]:
+    def log_fugacity(self, temperature: ArrayLike, pressure: ArrayLike) -> Float[Array, "..."]:
         return self.log_activity(temperature, pressure)
 
 

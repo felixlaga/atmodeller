@@ -528,6 +528,9 @@ class FugacityConstraints(eqx.Module):
             if species_name in fugacity_constraints_:
                 constraints.append(fugacity_constraints_[species_name])
             else:
+                # NOTE: This is also applied to condensates, which is OK because it returns nans.
+                # Hence for condensates nans means no imposed activity, and for gas species nans
+                # means no imposed fugacity.
                 constraints.append(ConstantFugacityConstraint())
 
         return cls(tuple(constraints), unique_species)
@@ -559,7 +562,8 @@ class FugacityConstraints(eqx.Module):
             log_fugacity_list.append(log_fugacity)
 
         out: dict[str, NpArray] = {
-            f"{key}_fugacity": np.exp(log_fugacity_list[idx])
+            # Subtle, but np.exp will collapse scalar array to 0-D, violating the type hint.
+            f"{key}_fugacity": np.exp(np.atleast_1d(log_fugacity_list[idx]))
             for idx, key in enumerate(self.species)
             if not np.all(np.isnan(log_fugacity_list[idx]))
         }
@@ -619,6 +623,67 @@ class FugacityConstraints(eqx.Module):
         return log_number_density
 
 
+class TotalPressureConstraint(eqx.Module):
+    """Total pressure constraint
+
+    Args:
+        log_pressure: Log total pressure
+    """
+
+    log_pressure: Float[Array, "..."] = eqx.field(converter=as_j64, default=np.nan)
+
+    @classmethod
+    def create(
+        cls, total_pressure_constraint: Optional[ArrayLike] = None
+    ) -> "TotalPressureConstraint":
+        """Creates an instance
+
+        Args:
+            total_pressure_constraint. Defaults to ``None``.
+
+        Returns:
+            An instance
+        """
+        total_pressure_constraint_: ArrayLike = (
+            total_pressure_constraint if total_pressure_constraint is not None else np.nan
+        )
+
+        return cls(np.log(total_pressure_constraint_))
+
+    def active(self) -> Bool[Array, "..."]:
+        """Active total pressure constraint
+
+        Returns:
+            Mask indicating whether the total pressure constraint is active or not
+        """
+        return ~jnp.isnan(jnp.atleast_1d(self.log_pressure))
+
+    def asdict(self) -> dict[str, NpArray]:
+        """Gets a dictionary of the total pressure constraint as a NumPy array
+
+        Returns:
+            A dictionary of the total pressure constraint
+        """
+        out: dict[str, NpArray] = {"total_pressure": np.asarray(np.exp(self.log_pressure))}
+
+        return out
+
+    def log_number_density(self, temperature: ArrayLike) -> Float[Array, "..."]:
+        """Log number density
+
+        Args:
+            temperature: Temperature in K
+
+        Returns:
+            Log number density
+        """
+        log_number_density: Array = get_log_number_density_from_log_pressure(
+            self.log_pressure, temperature
+        )
+
+        return log_number_density
+
+
 class MassConstraints(eqx.Module):
     """Mass constraints of elements
 
@@ -627,7 +692,7 @@ class MassConstraints(eqx.Module):
         elements: Elements corresponding to the columns of ``log_abundance``
     """
 
-    log_abundance: Float64[Array, "dim elements"]
+    log_abundance: Float64[Array, "dim elements"] = eqx.field(converter=as_j64)
     elements: tuple[str, ...]
 
     @classmethod
@@ -641,7 +706,7 @@ class MassConstraints(eqx.Module):
         Args:
             species: Species
             mass_constraints: Mapping of element name and mass constraint in kg. Defaults to
-                `None`.
+                ``None``.
 
         Returns:
             An instance
@@ -670,7 +735,7 @@ class MassConstraints(eqx.Module):
 
         # jax.debug.print("log_abundance = {out}", out=log_abundance)
 
-        return cls(jnp.asarray(log_abundance), unique_elements)
+        return cls(log_abundance, unique_elements)
 
     def asdict(self) -> dict[str, NpArray]:
         """Gets a dictionary of the values as NumPy arrays
@@ -849,6 +914,7 @@ class Parameters(eqx.Module):
         planet: Planet
         fugacity_constraints: Fugacity constraints
         mass_constraints: Mass constraints
+        total_pressure_constraint: Total pressure constraint
         solver_parameters: Solver parameters
         batch_size: Batch size. Defaults to ``1``.
     """
@@ -861,6 +927,8 @@ class Parameters(eqx.Module):
     """Fugacity constraints"""
     mass_constraints: MassConstraints
     """Mass constraints"""
+    total_pressure_constraint: TotalPressureConstraint
+    """Total pressure constraint"""
     solver_parameters: SolverParameters
     """Solver parameters"""
     batch_size: int = 1
@@ -873,6 +941,7 @@ class Parameters(eqx.Module):
         planet: Optional[Planet] = None,
         fugacity_constraints: Optional[Mapping[str, FugacityConstraintProtocol]] = None,
         mass_constraints: Optional[Mapping[str, ArrayLike]] = None,
+        total_pressure_constraint: Optional[ArrayLike] = None,
         solver_parameters: Optional[SolverParameters] = None,
     ):
         """Creates an instance
@@ -884,6 +953,8 @@ class Parameters(eqx.Module):
                 a new instance of ``FugacityConstraints``.
             mass_constraints: Mapping of element name and mass constraint in kg. Defaults to
                 a new instance of ``MassConstraints``.
+            total_pressure_constraint: Total pressure constraint. Defaults to a new instance of
+                ``TotalPressureConstraint``.
             solver_parameters: Solver parameters. Defaults to a new instance of
                 ``SolverParameters``.
 
@@ -895,10 +966,15 @@ class Parameters(eqx.Module):
             species, fugacity_constraints
         )
         mass_constraints_: MassConstraints = MassConstraints.create(species, mass_constraints)
+        total_pressure_constraint_: TotalPressureConstraint = TotalPressureConstraint.create(
+            total_pressure_constraint
+        )
 
         # These pytrees only contain arrays intended for vectorisation (no hidden JAX/NumPy arrays
         # that should remain scalar)
-        batch_size: int = get_batch_size((planet, fugacity_constraints, mass_constraints))
+        batch_size: int = get_batch_size(
+            (planet, fugacity_constraints, mass_constraints, total_pressure_constraint_)
+        )
         solver_parameters_: SolverParameters = (
             SolverParameters() if solver_parameters is None else solver_parameters
         )
@@ -915,6 +991,7 @@ class Parameters(eqx.Module):
             planet_,
             fugacity_constraints_,
             mass_constraints_,
+            total_pressure_constraint_,
             solver_parameters_,
             batch_size,
         )

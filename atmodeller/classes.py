@@ -101,6 +101,7 @@ class InteriorAtmosphere:
         initial_log_stability: Optional[ArrayLike] = None,
         fugacity_constraints: Optional[Mapping[str, FugacityConstraintProtocol]] = None,
         mass_constraints: Optional[Mapping[str, ArrayLike]] = None,
+        total_pressure_constraint: Optional[ArrayLike] = None,
         solver_parameters: Optional[SolverParameters] = None,
     ) -> None:
         """Solves the system and initialises an Output instance for processing the result
@@ -111,10 +112,16 @@ class InteriorAtmosphere:
             initial_log_stability: Initial log stability. Defaults to ``None``.
             fugacity_constraints: Fugacity constraints. Defaults to ``None``.
             mass_constraints: Mass constraints. Defaults to ``None``.
+            total_pressure_constraint: Total pressure constraint. Defaults to ``None``.
             solver_parameters: Solver parameters. Defaults to ``None``.
         """
         parameters: Parameters = Parameters.create(
-            self.species, planet, fugacity_constraints, mass_constraints, solver_parameters
+            self.species,
+            planet,
+            fugacity_constraints,
+            mass_constraints,
+            total_pressure_constraint,
+            solver_parameters,
         )
         base_solution_array: Array = broadcast_initial_solution(
             initial_log_number_density,
@@ -126,7 +133,7 @@ class InteriorAtmosphere:
 
         self._solver = get_solver_individual(parameters)
         # Alternative: solve the entire batch with a single root-finding call. This approach is
-        # less flexible because it doesn't allow inspecting  the solution for each individual
+        # less flexible because it doesn't allow inspecting the solution for each individual
         # system.
         # self._solver = get_solver_batch(parameters)
 

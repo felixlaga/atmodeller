@@ -821,6 +821,9 @@ class OutputSolution(Output):
             self.parameters.fugacity_constraints.asdict(temperature, pressure),
             self.number_solutions,
         )
+        out["constraints"] |= broadcast_arrays_in_dict(
+            self.parameters.total_pressure_constraint.asdict(), self.number_solutions
+        )
 
         out["residual"] = self.residual_asdict()  # type: ignore since keys are int
 

@@ -62,19 +62,20 @@ def get_active_mask(parameters: Parameters) -> Bool[Array, " dim"]:
     Returns:
         Active mask
     """
-    # Get all masks separately
     fugacity_mask: Bool[Array, " dim"] = parameters.fugacity_constraints.active()
     reactions_mask: ArrayLike = parameters.species.active_reactions
+    total_pressure_mask: ArrayLike = parameters.total_pressure_constraint.active()
     mass_mask: Bool[Array, " dim"] = parameters.mass_constraints.active()
     stability_mask: ArrayLike = parameters.species.active_stability
 
     # jax.debug.print("fugacity_mask = {out}", out=fugacity_mask)
     # jax.debug.print("reactions_mask = {out}", out=reactions_mask)
+    # jax.debug.print("total_pressure_mask = {out}", out=total_pressure_mask)
     # jax.debug.print("mass_mask = {out}", out=mass_mask)
     # jax.debug.print("stability_mask = {out}", out=stability_mask)
 
     active_mask: Bool[Array, " dim"] = jnp.concatenate(
-        (fugacity_mask, reactions_mask, mass_mask, stability_mask)
+        (fugacity_mask, reactions_mask, total_pressure_mask, mass_mask, stability_mask)
     )
     # jax.debug.print("active_mask = {out}", out=active_mask)
 
@@ -627,6 +628,17 @@ def objective_function(
     #     out2=jnp.nanstd(reaction_residual),
     # )
 
+    # Log total pressure (number density) residual
+    log_total_number_density: Float[Array, ""] = get_log_number_density_from_log_pressure(
+        jnp.log(total_pressure), temperature
+    )
+    total_pressure_residual: Float[Array, ""] = (
+        log_total_number_density
+        - parameters.total_pressure_constraint.log_number_density(temperature)
+    )
+    # Must be 1-D for concatenation with other residual terms
+    total_pressure_residual = jnp.atleast_1d(total_pressure_residual)
+
     # Elemental mass balance residual
     # Number density of elements in the gas or condensed phase
     element_density: Float[Array, " elements"] = get_element_density(
@@ -690,7 +702,13 @@ def objective_function(
 
     # NOTE: Order must be identical to get_active_mask()
     residual: Float[Array, " residual"] = jnp.concatenate(
-        [fugacity_residual, reaction_residual, mass_residual, stability_residual]
+        [
+            fugacity_residual,
+            reaction_residual,
+            total_pressure_residual,
+            mass_residual,
+            stability_residual,
+        ]
     )
     # jax.debug.print("residual (with nans) = {out}", out=residual)
 
