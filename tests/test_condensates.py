@@ -24,9 +24,10 @@ from jaxtyping import ArrayLike
 from atmodeller import debug_logger
 from atmodeller.classes import InteriorAtmosphere
 from atmodeller.containers import ConstantFugacityConstraint, Planet, Species, SpeciesCollection
-from atmodeller.interfaces import FugacityConstraintProtocol
+from atmodeller.interfaces import ActivityProtocol, FugacityConstraintProtocol
 from atmodeller.output import Output
 from atmodeller.thermodata import IronWustiteBuffer
+from atmodeller.thermodata.core import CondensateActivity
 from atmodeller.utilities import earth_oceans_to_hydrogen_mass
 
 logger: logging.Logger = debug_logger()
@@ -218,6 +219,54 @@ def test_impose_stable(helper) -> None:
     assert helper.isclose(solution, target_result, rtol=RTOL, atol=ATOL)
 
 
+def test_impose_stable_activity(helper) -> None:
+    """Tests a user-imposed stable condensate with a non-unity activity
+
+    In general, it is not guaranteed that a system under consideration has a stable condensate, and
+    so for most cases the abundance of a condensate should be solved for along with its stability.
+    """
+
+    # To enforce condensate stability we must set solve_for_stability to False
+    # Impose a non-unity activity for C(cr)
+    activity: ActivityProtocol = CondensateActivity(0.9)
+    C_cr: Species = Species.create_condensed("C", activity=activity, solve_for_stability=False)
+    H2_g: Species = Species.create_gas("H2")
+    N2_g: Species = Species.create_gas("N2")
+    CHN_g: Species = Species.create_gas("CHN")
+    Ar_g: Species = Species.create_gas("Ar")
+
+    species: SpeciesCollection = SpeciesCollection((C_cr, H2_g, N2_g, CHN_g, Ar_g))
+
+    # We still specify a planet, even though the only parameter of relevance is the temperature
+    # Melt fraction is set to zero for completeness, but again is irrelevant without solubility.
+    planet: Planet = Planet(surface_temperature=1500, mantle_melt_fraction=0)
+    interior_atmosphere: InteriorAtmosphere = InteriorAtmosphere(species)
+
+    # Only specify fugacity constraints
+    fugacity_constraints: dict[str, FugacityConstraintProtocol] = {
+        # Since solve_for_stability is False the activity is imposed, which counts as a constraint
+        # and does not need to be re-specified here.
+        "H2_g": ConstantFugacityConstraint(0.1),
+        "N2_g": ConstantFugacityConstraint(0.2),
+        "Ar_g": ConstantFugacityConstraint(0.9),
+    }
+
+    interior_atmosphere.solve(planet=planet, fugacity_constraints=fugacity_constraints)
+    output: Output = interior_atmosphere.output
+    solution: dict[str, ArrayLike] = output.quick_look()
+
+    # TODO: Swap for a like-for-like comparison with FactSage?
+    target_result: dict[str, float] = {
+        "C_cr_activity": 0.9,
+        "H2_g": 0.1,
+        "N2_g": 0.2,
+        "Ar_g": 0.9,
+        "CHN_g": 0.000157247482584,
+    }
+
+    assert helper.isclose(solution, target_result, rtol=RTOL, atol=ATOL)
+
+
 def test_impose_stable_pressure(helper) -> None:
     """Tests a user-imposed stable condensate with a total pressure constraint
 
@@ -225,7 +274,7 @@ def test_impose_stable_pressure(helper) -> None:
     so for most cases the abundance of a condensate should be solved for along with its stability.
     """
 
-    # To enforce condensate stability we must set the ``solve_for_stability`` flag to ``False``
+    # To enforce condensate stability we must set solve_for_stability to False
     C_cr: Species = Species.create_condensed("C", solve_for_stability=False)
     H2_g: Species = Species.create_gas("H2")
     N2_g: Species = Species.create_gas("N2")
