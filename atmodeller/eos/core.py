@@ -30,7 +30,7 @@ from jax import jacfwd
 from jaxtyping import Array, ArrayLike
 
 from atmodeller import override
-from atmodeller.constants import GAS_CONSTANT_BAR
+from atmodeller.constants import GAS_CONSTANT_BAR, STANDARD_FUGACITY
 from atmodeller.eos import ABSOLUTE_TOLERANCE, RELATIVE_TOLERANCE, THROW
 from atmodeller.thermodata import CriticalData
 from atmodeller.type_aliases import OptxSolver
@@ -189,10 +189,7 @@ class RealGas(eqx.Module):
         Returns:
             Log activity, which is dimensionless
         """
-        # The standard state is defined at 1 bar (see PRESSURE_REFERENCE), so we do not need to
-        # perform a division (by unity) to get activity, which is non-dimensional.
-
-        return self.log_fugacity(temperature, pressure)
+        return self.log_fugacity(temperature, pressure) / STANDARD_FUGACITY
 
     @eqx.filter_jit
     def compressibility_factor(self, temperature: ArrayLike, pressure: ArrayLike) -> ArrayLike:

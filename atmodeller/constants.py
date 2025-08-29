@@ -29,8 +29,10 @@ from scipy import constants
 # Thermodynamic standard state
 TEMPERATURE_REFERENCE: float = 298.15
 """Enthalpy reference temperature in K (:math:`T_r` in the JANAF tables) :cite:p:`MZG02,Cha98`"""
-PRESSURE_REFERENCE: float = 1.0
+STANDARD_PRESSURE: float = 1.0
 """Standard state pressure in bar"""
+STANDARD_FUGACITY: float = STANDARD_PRESSURE
+"""Standard fugacity for gases in bar"""
 GAS_STATE: str = "g"
 """Suffix to identify gases as per JANAF convention for the state of aggregation"""
 

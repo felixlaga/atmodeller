@@ -31,7 +31,7 @@ from jaxtyping import Array, ArrayLike
 from molmass import Formula
 
 from atmodeller import override
-from atmodeller.constants import GAS_CONSTANT_BAR, PRESSURE_REFERENCE
+from atmodeller.constants import GAS_CONSTANT_BAR, STANDARD_PRESSURE
 from atmodeller.eos import DATA_DIRECTORY
 from atmodeller.eos._aggregators import CombinedRealGas
 from atmodeller.eos.core import RealGas
@@ -198,7 +198,7 @@ class Chabrier(RealGas):
 
         # Pressure range to integrate over
         pressures: Array = jnp.logspace(
-            jnp.log10(PRESSURE_REFERENCE), log10_pressure, num=self.integration_steps
+            jnp.log10(STANDARD_PRESSURE), log10_pressure, num=self.integration_steps
         )
         # jax.debug.print("pressures.shape = {out}", out=pressures.shape)
         dP: Array = jnp.diff(pressures, axis=0)

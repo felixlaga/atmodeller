@@ -27,7 +27,7 @@ import jax.numpy as jnp
 from jaxtyping import Array, ArrayLike
 
 from atmodeller import override
-from atmodeller.constants import GAS_CONSTANT_BAR, PRESSURE_REFERENCE
+from atmodeller.constants import GAS_CONSTANT_BAR, STANDARD_PRESSURE
 from atmodeller.eos._aggregators import CombinedRealGas
 from atmodeller.eos.core import RealGas
 from atmodeller.utilities import ExperimentalCalibration, to_native_floats
@@ -181,9 +181,9 @@ class VirialQuadratic(RealGas):
         """
         volume_integral: Array = (
             (
-                self.a(temperature) * jnp.log(pressure / PRESSURE_REFERENCE)
-                + self.b(temperature) * (pressure - PRESSURE_REFERENCE)
-                + (1.0 / 2) * self.c(temperature) * (jnp.square(pressure) - PRESSURE_REFERENCE**2)
+                self.a(temperature) * jnp.log(pressure / STANDARD_PRESSURE)
+                + self.b(temperature) * (pressure - STANDARD_PRESSURE)
+                + (1.0 / 2) * self.c(temperature) * (jnp.square(pressure) - STANDARD_PRESSURE**2)
             )
             * GAS_CONSTANT_BAR
             * temperature

@@ -28,7 +28,7 @@ import jax.numpy as jnp
 from jaxtyping import Array, ArrayLike
 
 from atmodeller import override
-from atmodeller.constants import GAS_CONSTANT_BAR, PRESSURE_REFERENCE
+from atmodeller.constants import GAS_CONSTANT_BAR, STANDARD_PRESSURE
 from atmodeller.eos._aggregators import CombinedRealGas
 from atmodeller.eos.core import RealGas
 from atmodeller.thermodata import CriticalData, critical_data_dictionary
@@ -238,13 +238,13 @@ class SaxenaABC(RealGas):
         """
         Tr: ArrayLike = self.scaled_temperature(temperature)
         Pr: ArrayLike = self.scaled_pressure(pressure)
-        PRESSURE_REFERENCE_SCALED: float = PRESSURE_REFERENCE / self.critical_pressure
+        STANDARD_PRESSURE_SCALED: float = STANDARD_PRESSURE / self.critical_pressure
         volume_integral: Array = (
             (
-                self.a(Tr) * jnp.log(Pr / PRESSURE_REFERENCE_SCALED)
-                + self.b(Tr) * (Pr - PRESSURE_REFERENCE_SCALED)
-                + (1.0 / 2) * self.c(Tr) * (jnp.square(Pr) - PRESSURE_REFERENCE_SCALED**2)
-                + (1.0 / 3) * self.d(Tr) * (jnp.power(Pr, 3) - PRESSURE_REFERENCE_SCALED**3)
+                self.a(Tr) * jnp.log(Pr / STANDARD_PRESSURE_SCALED)
+                + self.b(Tr) * (Pr - STANDARD_PRESSURE_SCALED)
+                + (1.0 / 2) * self.c(Tr) * (jnp.square(Pr) - STANDARD_PRESSURE_SCALED**2)
+                + (1.0 / 3) * self.d(Tr) * (jnp.power(Pr, 3) - STANDARD_PRESSURE_SCALED**3)
             )
             * GAS_CONSTANT_BAR
             * temperature

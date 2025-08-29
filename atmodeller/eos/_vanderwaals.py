@@ -22,10 +22,9 @@ import optimistix as optx
 from jaxtyping import Array, ArrayLike
 
 from atmodeller import override
-from atmodeller.constants import GAS_CONSTANT_BAR
+from atmodeller.constants import GAS_CONSTANT_BAR, STANDARD_PRESSURE
 from atmodeller.eos import (
     ABSOLUTE_TOLERANCE,
-    PRESSURE_REFERENCE,
     RELATIVE_TOLERANCE,
     THROW,
     VOLUME_EPSILON,
@@ -117,7 +116,7 @@ class VanderWaals(RealGas):
             Volume integral in :math:`\mathrm{m}^3\ \mathrm{bar}\ \mathrm{mol}^{-1}`
         """
         vol: ArrayLike = self.volume(temperature, pressure)
-        vol0: ArrayLike = self.volume(temperature, PRESSURE_REFERENCE)
+        vol0: ArrayLike = self.volume(temperature, STANDARD_PRESSURE)
         volume_integral: Array = (
             self.b * (vol0 - vol) / ((vol - self.b) * (vol0 - self.b))  # type: ignore
             - jnp.log((vol - self.b) / (vol0 - self.b))
