@@ -27,9 +27,8 @@ from typing import Optional
 import equinox as eqx
 import jax.numpy as jnp
 import numpy as np
-from jaxmod.constants import ATMOSPHERE, BOLTZMANN_CONSTANT_BAR, OCEAN_MASS_H2
+from jaxmod.constants import BOLTZMANN_CONSTANT_BAR, OCEAN_MASS_H2
 from jaxtyping import Array, ArrayLike
-from scipy.constants import kilo, mega
 
 from atmodeller.type_aliases import Scalar
 
@@ -82,31 +81,6 @@ class ExperimentalCalibration(eqx.Module):
             self.log10_fO2_min = float(log10_fO2_min)
         if log10_fO2_max is not None:
             self.log10_fO2_max = float(log10_fO2_max)
-
-
-class UnitConversion(eqx.Module):
-    """Unit conversions"""
-
-    atmosphere_to_bar: float = ATMOSPHERE
-    bar_to_Pa: float = 1.0e5
-    bar_to_MPa: float = 1.0e-1
-    bar_to_GPa: float = 1.0e-4
-    Pa_to_bar: float = 1.0e-5
-    MPa_to_bar: float = 1.0e1
-    GPa_to_bar: float = 1.0e4
-    fraction_to_ppm: float = mega
-    g_to_kg: float = 1 / kilo
-    ppm_to_fraction: float = 1 / mega
-    ppm_to_percent: float = 100 / mega
-    percent_to_ppm: float = 1.0e4
-    cm3_to_m3: float = 1.0e-6
-    m3_to_cm3: float = 1.0e6
-    m3_bar_to_J: float = 1.0e5
-    J_to_m3_bar: float = 1.0e-5
-    litre_to_m3: float = 1.0e-3
-
-
-unit_conversion: UnitConversion = UnitConversion()
 
 
 def get_log_number_density_from_log_pressure(

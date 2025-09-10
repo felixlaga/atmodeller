@@ -23,6 +23,7 @@ import equinox as eqx
 import jax.numpy as jnp
 import optimistix as optx
 from jaxmod.constants import GAS_CONSTANT_BAR
+from jaxmod.units import unit_conversion
 from jaxmod.utils import as_j64, safe_exp
 from jaxtyping import Array, ArrayLike
 
@@ -31,7 +32,7 @@ from atmodeller.eos import ABSOLUTE_TOLERANCE, RELATIVE_TOLERANCE, THROW, VOLUME
 from atmodeller.eos._aggregators import CombinedRealGas
 from atmodeller.eos.core import RealGas
 from atmodeller.type_aliases import OptxSolver
-from atmodeller.utilities import ExperimentalCalibration, unit_conversion
+from atmodeller.utilities import ExperimentalCalibration
 
 
 class ZhangDuan(RealGas):

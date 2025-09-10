@@ -21,12 +21,13 @@ from typing import Optional
 
 import equinox as eqx
 import jax.numpy as jnp
+from jaxmod.units import unit_conversion
 from jaxmod.utils import as_j64, to_native_floats
 from jaxtyping import Array, ArrayLike, Bool
 
 from atmodeller import override
 from atmodeller.type_aliases import Scalar
-from atmodeller.utilities import ExperimentalCalibration, unit_conversion
+from atmodeller.utilities import ExperimentalCalibration
 
 
 class RedoxBuffer(eqx.Module):

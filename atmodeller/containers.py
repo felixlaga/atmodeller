@@ -28,6 +28,7 @@ import numpy as np
 import optimistix as optx
 from jax import lax
 from jaxmod.constants import AVOGADRO, GRAVITATIONAL_CONSTANT
+from jaxmod.units import unit_conversion
 from jaxmod.utils import as_j64, get_batch_size, partial_rref, to_hashable
 from jaxtyping import Array, ArrayLike, Bool, Float, Float64
 from lineax import AbstractLinearSolver
@@ -50,7 +51,7 @@ from atmodeller.thermodata import (
     thermodynamic_data_source,
 )
 from atmodeller.type_aliases import NpArray, NpBool, NpFloat, NpInt, OptxSolver
-from atmodeller.utilities import get_log_number_density_from_log_pressure, unit_conversion
+from atmodeller.utilities import get_log_number_density_from_log_pressure
 
 logger: logging.Logger = logging.getLogger(__name__)
 

@@ -26,6 +26,7 @@ import numpy as np
 import numpy.typing as npt
 import pandas as pd
 from jaxmod.constants import AVOGADRO, GAS_CONSTANT
+from jaxmod.units import unit_conversion
 from jaxtyping import Array, ArrayLike, Bool, Float, Integer
 from molmass import Formula
 from openpyxl.styles import PatternFill
@@ -37,7 +38,6 @@ from atmodeller.engine_vmap import VmappedFunctions
 from atmodeller.interfaces import RedoxBufferProtocol
 from atmodeller.thermodata import IronWustiteBuffer
 from atmodeller.type_aliases import NpArray, NpBool, NpFloat, NpInt
-from atmodeller.utilities import unit_conversion
 
 logger: logging.Logger = logging.getLogger(__name__)
 

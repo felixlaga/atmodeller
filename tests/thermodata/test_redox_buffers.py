@@ -18,6 +18,7 @@
 
 import logging
 
+from jaxmod.units import unit_conversion
 from jaxtyping import ArrayLike
 from pytest import approx
 
@@ -28,7 +29,6 @@ from atmodeller.thermodata._redox_buffers import (
     IronWustiteBufferHirschmann21,
     RedoxBuffer,
 )
-from atmodeller.utilities import unit_conversion
 
 logger: logging.Logger = debug_logger()
 logger.setLevel(logging.WARNING)

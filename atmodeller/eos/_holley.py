@@ -22,6 +22,7 @@ import equinox as eqx
 import jax.numpy as jnp
 import optimistix as optx
 from jaxmod.constants import ATMOSPHERE, GAS_CONSTANT_BAR
+from jaxmod.units import unit_conversion
 from jaxtyping import Array, ArrayLike
 
 from atmodeller import override
@@ -29,7 +30,7 @@ from atmodeller.eos import ABSOLUTE_TOLERANCE, RELATIVE_TOLERANCE, THROW, VOLUME
 from atmodeller.eos._aggregators import CombinedRealGas
 from atmodeller.eos.core import RealGas
 from atmodeller.type_aliases import OptxSolver, Scalar
-from atmodeller.utilities import ExperimentalCalibration, unit_conversion
+from atmodeller.utilities import ExperimentalCalibration
 
 logger: logging.Logger = logging.getLogger(__name__)
 

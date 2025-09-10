@@ -16,7 +16,7 @@
 #
 """Tests for the EOS models from :cite:t:`ZD09`"""
 
-from atmodeller.utilities import unit_conversion
+from jaxmod.units import unit_conversion
 
 RTOL: float = 1.0e-8
 """Relative tolerance"""
