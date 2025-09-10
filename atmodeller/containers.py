@@ -97,7 +97,7 @@ class Species(eqx.Module):
 
         Args:
             formula: Formula
-            state: State of aggregation as defined by JANAF. Defaults to ``"cr"``.
+            state: State of aggregation as defined by JANAF. Defaults to ``cr``.
             activity: Activity. Defaults to ``1.0`` (unity activity).
             solve_for_stability. Solve for stability. Defaults to ``True``.
 
