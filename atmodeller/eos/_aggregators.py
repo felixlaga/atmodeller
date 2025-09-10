@@ -25,11 +25,11 @@ from collections.abc import Callable, Sequence
 import equinox as eqx
 import jax.numpy as jnp
 from jax import lax
+from jaxmod.constants import GAS_CONSTANT_BAR
 from jaxmod.utils import as_j64, to_hashable, to_native_floats
 from jaxtyping import Array, ArrayLike
 
 from atmodeller import override
-from atmodeller.constants import GAS_CONSTANT_BAR
 from atmodeller.eos.core import IdealGas, RealGas
 from atmodeller.utilities import ExperimentalCalibration
 

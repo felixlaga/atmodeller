@@ -20,10 +20,10 @@ import logging
 
 import equinox as eqx
 import jax.numpy as jnp
+from jaxmod.constants import GAS_CONSTANT_BAR
 from jaxtyping import ArrayLike
 
 from atmodeller import override
-from atmodeller.constants import GAS_CONSTANT_BAR
 from atmodeller.eos._aggregators import CombinedRealGas
 from atmodeller.eos.core import RealGas, RedlichKwongABC
 from atmodeller.thermodata import CriticalData, critical_data_dictionary

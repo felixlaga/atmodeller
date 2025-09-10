@@ -21,11 +21,11 @@ For every law there should be a test in the test suite.
 
 import equinox as eqx
 import jax.numpy as jnp
+from jaxmod.constants import GAS_CONSTANT_BAR
 from jaxmod.utils import power_law, safe_exp
 from jaxtyping import Array, ArrayLike
 
 from atmodeller import override
-from atmodeller.constants import GAS_CONSTANT_BAR
 from atmodeller.interfaces import RedoxBufferProtocol
 from atmodeller.solubility.core import (
     Solubility,

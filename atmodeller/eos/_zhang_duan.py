@@ -22,11 +22,11 @@ from typing import ClassVar
 import equinox as eqx
 import jax.numpy as jnp
 import optimistix as optx
+from jaxmod.constants import GAS_CONSTANT_BAR
 from jaxmod.utils import as_j64, safe_exp
 from jaxtyping import Array, ArrayLike
 
 from atmodeller import override
-from atmodeller.constants import GAS_CONSTANT_BAR
 from atmodeller.eos import ABSOLUTE_TOLERANCE, RELATIVE_TOLERANCE, THROW, VOLUME_EPSILON
 from atmodeller.eos._aggregators import CombinedRealGas
 from atmodeller.eos.core import RealGas

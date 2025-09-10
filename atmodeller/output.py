@@ -25,13 +25,13 @@ import jax.numpy as jnp
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
+from jaxmod.constants import AVOGADRO, GAS_CONSTANT
 from jaxtyping import Array, ArrayLike, Bool, Float, Integer
 from molmass import Formula
 from openpyxl.styles import PatternFill
 from scipy.constants import mega
 
 from atmodeller import override
-from atmodeller.constants import AVOGADRO, GAS_CONSTANT
 from atmodeller.containers import Parameters, Planet, SpeciesCollection
 from atmodeller.engine_vmap import VmappedFunctions
 from atmodeller.interfaces import RedoxBufferProtocol

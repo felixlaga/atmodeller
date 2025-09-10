@@ -27,10 +27,10 @@ from typing import Optional
 import equinox as eqx
 import jax.numpy as jnp
 import numpy as np
+from jaxmod.constants import ATMOSPHERE, BOLTZMANN_CONSTANT_BAR, OCEAN_MASS_H2
 from jaxtyping import Array, ArrayLike
 from scipy.constants import kilo, mega
 
-from atmodeller.constants import ATMOSPHERE, BOLTZMANN_CONSTANT_BAR, OCEAN_MASS_H2
 from atmodeller.type_aliases import Scalar
 
 logger: logging.Logger = logging.getLogger(__name__)

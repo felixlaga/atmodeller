@@ -27,15 +27,14 @@ import lineax as lx
 import numpy as np
 import optimistix as optx
 from jax import lax
+from jaxmod.constants import AVOGADRO, GRAVITATIONAL_CONSTANT
 from jaxmod.utils import as_j64, get_batch_size, partial_rref, to_hashable
 from jaxtyping import Array, ArrayLike, Bool, Float, Float64
 from lineax import AbstractLinearSolver
 from molmass import Formula
 
 from atmodeller.constants import (
-    AVOGADRO,
     GAS_STATE,
-    GRAVITATIONAL_CONSTANT,
     LOG_NUMBER_DENSITY_LOWER,
     LOG_NUMBER_DENSITY_UPPER,
     LOG_STABILITY_LOWER,

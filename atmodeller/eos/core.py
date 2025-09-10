@@ -27,11 +27,12 @@ import equinox as eqx
 import jax.numpy as jnp
 import optimistix as optx
 from jax import jacfwd
+from jaxmod.constants import GAS_CONSTANT_BAR
 from jaxmod.utils import as_j64, safe_exp, to_native_floats
 from jaxtyping import Array, ArrayLike
 
 from atmodeller import override
-from atmodeller.constants import GAS_CONSTANT_BAR, STANDARD_FUGACITY
+from atmodeller.constants import STANDARD_FUGACITY
 from atmodeller.eos import ABSOLUTE_TOLERANCE, RELATIVE_TOLERANCE, THROW
 from atmodeller.thermodata import CriticalData
 from atmodeller.type_aliases import OptxSolver
