@@ -22,84 +22,20 @@ JAX transformations support Equinox-based pytrees for flexible parameter handlin
 """
 
 from collections.abc import Callable
-from typing import Any, Literal, cast
+from typing import cast
 
 import equinox as eqx
 import jax
 import jax.numpy as jnp
 import optimistix as optx
 from jax import lax, random
-from jax.tree_util import tree_map
+from jaxmod.utils import vmap_axes_spec
 from jaxtyping import Array, Bool, Float, Integer, PRNGKeyArray
 
 from atmodeller.containers import Parameters
 from atmodeller.engine import objective_function
 
 LOG_NUMBER_DENSITY_VMAP_AXES: int = 0
-
-
-def is_jax_array(element: Any) -> bool:
-    """Returns ``True`` if ``element`` is a JAX array."""
-    return isinstance(element, jax.Array)
-
-
-def is_arraylike_batched(x: Any) -> Literal[0, None]:
-    """Determines whether an object should be treated as batched along axis 0 for :func:`jax.vmap`.
-
-    This function only considers JAX arrays for batching. While :func:`equinox.is_array` regards
-    both JAX and NumPy arrays as arrays for tracing, NumPy arrays are treated here as static
-    constants and are never batched. This allows fixed matrices (e.g., reaction matrices,
-    stoichiometric formulae) to remain inside pytrees without being inadvertently vectorised.
-
-    Batching rules for JAX arrays:
-        - 1-D JAX arrays: Always considered batched along axis 0.
-        - 2-D JAX arrays: Considered batched if they have more than one row; the leading axis
-          (rows) is the batch dimension.
-        - 0-D (scalar) JAX arrays: Not batched.
-
-    All other objects (non-arrays or NumPy arrays) are treated as not batched.
-
-    Args:
-        x: Candidate object to check for batching.
-
-    Returns:
-        ``0`` if ``x`` should be batched along axis 0, otherwise ``None``.
-    """
-    if is_jax_array(x):
-        # Vectorise over any 1-D array
-        if x.ndim == 1:
-            return 0
-        # Any 2-D array (i.e., log_abundance in MassConstraints) should be vectorised over the
-        # the first dimension if it is not unity
-        elif x.ndim == 2 and x.shape[0] > 1:
-            return 0
-
-
-def vmap_axes_spec(x: Any) -> Any:
-    """Recursively generate ``in_axes`` for :func:`jax.vmap` by checking if each leaf is batched.
-
-    Unlike :func:`equinox.is_array`, which treats both JAX and NumPy arrays as arrays for tracing,
-    batching here is only applied to JAX array leaves. This distinction is important because:
-
-    - JAX arrays: These are the only leaves considered for batching. If a JAX array is 1-D or a
-      2-D array with more than one row, its leading axis (0) is marked for vectorisation.
-    - NumPy arrays: These are traced like arrays by Equinox but are treated as static constants
-      here. They are not batched, which allows domain-specific matrices (e.g., formula matrices,
-      reaction matrices, stoichiometry tables) to remain inside pytrees without being mistakenly
-      vectorised.
-
-    This behaviour ensures that only model inputs and outputs represented as JAX arrays
-    participate in :func:`jax.vmap`, while fixed structural data stored as NumPy arrays are
-    preserved as-is.
-
-    Args:
-        x: A pytree of nested containers possibly containing JAX arrays, NumPy arrays, or scalars.
-
-    Returns:
-        A pytree with the same structure as ``x``. Each leaf is ``0`` if batched, or ``None``
-        if not.
-    """
-    return tree_map(is_arraylike_batched, x)
 
 
 # @eqx.filter_jit

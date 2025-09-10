@@ -23,6 +23,7 @@ from collections.abc import Callable
 import equinox as eqx
 import jax.numpy as jnp
 from jax import lax
+from jaxmod.utils import as_j64, to_native_floats
 from jaxtyping import Array, ArrayLike
 from scipy.constants import kilo
 
@@ -39,7 +40,7 @@ from atmodeller.eos.core import (
 )
 from atmodeller.thermodata import CriticalData, critical_data_dictionary
 from atmodeller.type_aliases import Scalar
-from atmodeller.utilities import ExperimentalCalibration, as_j64, to_native_floats
+from atmodeller.utilities import ExperimentalCalibration
 
 logger: logging.Logger = logging.getLogger(__name__)
 

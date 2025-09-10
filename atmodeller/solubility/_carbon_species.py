@@ -20,11 +20,12 @@ For every law there should be a test in the test suite.
 """
 
 import jax.numpy as jnp
+from jaxmod.utils import safe_exp
 from jaxtyping import Array, ArrayLike
 
 from atmodeller import override
 from atmodeller.solubility.core import Solubility
-from atmodeller.utilities import safe_exp, unit_conversion
+from atmodeller.utilities import unit_conversion
 
 
 class _CH4_basalt_ardia13(Solubility):

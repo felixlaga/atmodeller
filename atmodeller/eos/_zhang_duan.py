@@ -22,6 +22,7 @@ from typing import ClassVar
 import equinox as eqx
 import jax.numpy as jnp
 import optimistix as optx
+from jaxmod.utils import as_j64, safe_exp
 from jaxtyping import Array, ArrayLike
 
 from atmodeller import override
@@ -30,7 +31,7 @@ from atmodeller.eos import ABSOLUTE_TOLERANCE, RELATIVE_TOLERANCE, THROW, VOLUME
 from atmodeller.eos._aggregators import CombinedRealGas
 from atmodeller.eos.core import RealGas
 from atmodeller.type_aliases import OptxSolver
-from atmodeller.utilities import ExperimentalCalibration, as_j64, safe_exp, unit_conversion
+from atmodeller.utilities import ExperimentalCalibration, unit_conversion
 
 
 class ZhangDuan(RealGas):

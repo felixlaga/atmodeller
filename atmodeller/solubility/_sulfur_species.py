@@ -22,11 +22,12 @@ For every law there should be a test in the test suite.
 import logging
 
 import jax.numpy as jnp
+from jaxmod.utils import as_j64
 from jaxtyping import Array, ArrayLike
 
 from atmodeller import override
 from atmodeller.solubility.core import Solubility
-from atmodeller.utilities import as_j64, unit_conversion
+from atmodeller.utilities import unit_conversion
 
 logger: logging.Logger = logging.getLogger(__name__)
 

@@ -40,17 +40,13 @@ import equinox as eqx
 import jax.numpy as jnp
 from jax import lax
 from jax.scipy.special import logsumexp
+from jaxmod.utils import safe_exp, to_hashable
 from jaxtyping import Array, ArrayLike, Bool, Float, Integer, Shaped
 
 from atmodeller.constants import AVOGADRO, BOLTZMANN_CONSTANT_BAR, GAS_CONSTANT
 from atmodeller.containers import Parameters, Planet, SpeciesCollection
 from atmodeller.type_aliases import NpBool
-from atmodeller.utilities import (
-    get_log_number_density_from_log_pressure,
-    safe_exp,
-    to_hashable,
-    unit_conversion,
-)
+from atmodeller.utilities import get_log_number_density_from_log_pressure, unit_conversion
 
 
 def get_active_mask(parameters: Parameters) -> Bool[Array, " dim"]:

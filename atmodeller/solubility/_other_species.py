@@ -21,6 +21,7 @@ For every law there should be a test in the test suite.
 
 import equinox as eqx
 import jax.numpy as jnp
+from jaxmod.utils import power_law, safe_exp
 from jaxtyping import Array, ArrayLike
 
 from atmodeller import override
@@ -30,11 +31,10 @@ from atmodeller.solubility.core import (
     Solubility,
     SolubilityPowerLaw,
     fO2_temperature_correction,
-    power_law,
 )
 from atmodeller.thermodata import IronWustiteBuffer
 from atmodeller.type_aliases import Scalar
-from atmodeller.utilities import safe_exp, unit_conversion
+from atmodeller.utilities import unit_conversion
 
 Cl2_ano_dio_for_thomas21: Solubility = SolubilityPowerLaw(
     140.52 * unit_conversion.percent_to_ppm, 0.5

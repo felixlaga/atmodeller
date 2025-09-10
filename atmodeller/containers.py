@@ -27,6 +27,7 @@ import lineax as lx
 import numpy as np
 import optimistix as optx
 from jax import lax
+from jaxmod.utils import as_j64, get_batch_size, partial_rref, to_hashable
 from jaxtyping import Array, ArrayLike, Bool, Float, Float64
 from lineax import AbstractLinearSolver
 from molmass import Formula
@@ -50,14 +51,7 @@ from atmodeller.thermodata import (
     thermodynamic_data_source,
 )
 from atmodeller.type_aliases import NpArray, NpBool, NpFloat, NpInt, OptxSolver
-from atmodeller.utilities import (
-    as_j64,
-    get_batch_size,
-    get_log_number_density_from_log_pressure,
-    partial_rref,
-    to_hashable,
-    unit_conversion,
-)
+from atmodeller.utilities import get_log_number_density_from_log_pressure, unit_conversion
 
 logger: logging.Logger = logging.getLogger(__name__)
 

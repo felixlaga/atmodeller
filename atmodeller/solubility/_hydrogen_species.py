@@ -22,13 +22,14 @@ For every law there should be a test in the test suite.
 import equinox as eqx
 import jax.numpy as jnp
 import numpy as np
+from jaxmod.utils import as_j64
 from jaxtyping import Array, ArrayLike
 
 from atmodeller import override
 from atmodeller.eos._chabrier import H2_chabrier21_bounded
 from atmodeller.solubility.core import Solubility, SolubilityPowerLaw, SolubilityPowerLawLog10
 from atmodeller.type_aliases import Scalar
-from atmodeller.utilities import as_j64, unit_conversion
+from atmodeller.utilities import unit_conversion
 
 H2_andesite_hirschmann12: Solubility = SolubilityPowerLawLog10(1.01058631, 0.60128868)
 """H2 in synthetic andesite :cite:p:`HWA12`

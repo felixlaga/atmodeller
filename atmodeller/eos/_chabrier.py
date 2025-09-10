@@ -27,6 +27,7 @@ import equinox as eqx
 import jax.numpy as jnp
 import pandas as pd
 from jax.scipy.interpolate import RegularGridInterpolator
+from jaxmod.utils import as_j64
 from jaxtyping import Array, ArrayLike
 from molmass import Formula
 
@@ -35,7 +36,7 @@ from atmodeller.constants import GAS_CONSTANT_BAR, STANDARD_PRESSURE
 from atmodeller.eos import DATA_DIRECTORY
 from atmodeller.eos._aggregators import CombinedRealGas
 from atmodeller.eos.core import RealGas
-from atmodeller.utilities import ExperimentalCalibration, as_j64, unit_conversion
+from atmodeller.utilities import ExperimentalCalibration, unit_conversion
 
 logger: logging.Logger = logging.getLogger(__name__)
 
