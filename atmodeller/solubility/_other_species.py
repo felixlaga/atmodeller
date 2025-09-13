@@ -169,8 +169,8 @@ class _N2_basalt_dasgupta22(Solubility):
 
     :cite:p:`DFP22` performed experiments on 80:20 synthetic basalt-Si3N4 mixture at 1.5-3.0 GPa and 1300-1600 C
     fO2 from ~IW-3 to IW-4. They combined this data with prior studies to derive
-    their N solubility law (:cite:t:`DFP22{Equation 10}` and Figure 6). The combined set of 
-    experiments for which the solubility law is based on span pressures from 1 atm - 8.2 GPa, 
+    their N solubility law (:cite:t:`DFP22{Equation 10}` and Figure 6). The combined set of
+    experiments for which the solubility law is based on span pressures from 1 atm - 8.2 GPa,
     temperatures from 1050-2327 C, and fO2 from -8.3 to +8.7 relative to IW.
 
     Note that the IW redox buffer is evaluated at the pressure of interest.
