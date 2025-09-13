@@ -75,21 +75,29 @@ Option 1: uv (recommended)
 
 This requires `uv <https://docs.astral.sh/uv>`_ to be installed.
 
-Create a virtual environment (if you haven't already), typically at the uppermost level of the source code repository::
-
-    uv venv
-
-Activate the virtual environment::
-
-    source .venv/bin/activate
-
-Install the *Atmodeller* package, including development tools::
+In the directory of the source code repository (where ``pyproject.toml`` is located), run::
 
     uv sync
 
+``uv`` will create a virtual environment in a ``.venv`` directory inside the source repository and install the package along with its development tools and dependencies.
+
+To activate the virtual environment the command is different depending on your operating system:
+
+Mac/Linux::
+
+    source .venv/bin/activate
+
+Windows::
+
+    .venv\Scripts\Activate.ps1
+
+For all operating systems you can deactivate (exit) the virtual environment by running::
+
+    deactivate
+
 Optional extras:
 
-- To install documentation dependencies::
+- To install documentation dependencies only::
 
       uv sync --extra docs
 
@@ -99,8 +107,8 @@ Optional extras:
 
 .. note::
 
-    If you're using VS Code, you may need to restart the editor for the virtual environment to be detected automatically. In some cases, additional configuration may be required---see the official guidance here:
-    https://code.visualstudio.com/docs/python/environments
+    If you're using VS Code, you may need to restart the editor for the virtual environment to be detected automatically. In some cases, additional configuration may be required---see the `official guidance 
+    <https://code.visualstudio.com/docs/python/environments>`_.
 
     As a fallback, prefixing any command with ``uv`` will ensure it runs in the local (uv-created) environment, even if the virtual environment is not activated manually.
 
