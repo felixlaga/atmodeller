@@ -41,9 +41,9 @@ INITIAL_LOG_NUMBER_DENSITY: float = 50.0
 Empiricially determined. This value is mid-range for Earth-like planets.
 """
 INITIAL_LOG_STABILITY: float = -30.0
-"""Initial log stability.
+"""Initial log stability
 
-Empirically determined.
+Empirically determined
 """
 
 # Maximum x for which exp(x) is finite in 64-bit precision (to prevent overflow)
