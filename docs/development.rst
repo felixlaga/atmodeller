@@ -31,9 +31,15 @@ When the doc dependencies have been installed the documentation can be compiled:
     cd docs
     sphinx-apidoc -f -o source ../atmodeller
 
-To generate HTML documentation::
+To generate HTML documentation use the appropriate command for your operating system:
+
+Mac/Linux::
 
     make html
+
+Windows::
+
+    .\make html
 
 To generate PDF documentation, noting that ``latexpdf`` must be available on your system::
 
