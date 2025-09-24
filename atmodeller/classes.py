@@ -59,6 +59,12 @@ class InteriorAtmosphere:
     def __init__(self, species: SpeciesCollection):
         self.species: SpeciesCollection = species
         logger.info("species = %s", str(self.species))
+        temperature_min, temperature_max = self.species.get_temperature_range()
+        logger.info(
+            "Thermodynamic data requires temperatures between %d K and %d K",
+            np.ceil(temperature_min),
+            np.floor(temperature_max),
+        )
         logger.info("reactions = %s", pprint.pformat(self.species.get_reaction_dictionary()))
 
     @property

@@ -185,11 +185,8 @@ class SpeciesCollection(eqx.Module):
 
         # Ensure number_solution is static
         self.number_solution = sum([species.number_solution for species in self.data])
-
         active_stability: list[bool] = [species.solve_for_stability for species in self.data]
-
         self.active_stability = np.array(active_stability)
-
         self.gas_species_mask = np.array(
             [species.data.state == GAS_STATE for species in self.data], dtype=bool
         )
@@ -336,6 +333,17 @@ class SpeciesCollection(eqx.Module):
         # logger.debug("reaction_matrix = %s", reaction_matrix)
 
         return reaction_matrix
+
+    def get_temperature_range(self) -> tuple[float, float]:
+        """Gets the temperature range of the thermodynamic data for the species
+
+        Returns:
+            Minimum and maximum temperature that is valid for the species
+        """
+        temperature_min: list[float] = [min(species.data.thermo.T_min) for species in self.data]
+        temperature_max: list[float] = [max(species.data.thermo.T_max) for species in self.data]
+
+        return max(temperature_min), min(temperature_max)
 
     def __getitem__(self, index: int) -> Species:
         return self.data[index]
