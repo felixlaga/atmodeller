@@ -151,6 +151,28 @@ def test_H2O_basalt_dixon(check_values) -> None:
     )
 
 
+def test_H2O_basalt_dixon_table5(check_values) -> None:
+    """Tests H2O in MORB liquids, fitted to the model of :cite:p:`DSH95`.
+
+    Reference Parameters (fH2O and H2O Conc) from Table 5, P = 1000 bar, fH2O = 993 bar, total
+    H2O = 3.22 wt%. The fit reproduces it within 1.3%.
+    """
+
+    function_name: str = inspect.currentframe().f_code.co_name  # type: ignore
+    solubility_model: Solubility = solubility_models["H2O_basalt_dixon95_table5"]
+    target_concentration: ArrayLike = 32200
+    test_fugacity_H2O_dixon_table5: ArrayLike = 993
+    check_values.concentration(
+        function_name,
+        solubility_model,
+        target_concentration,
+        test_fugacity_H2O_dixon_table5,
+        TEST_TEMPERATURE,
+        TEST_PRESSURE,
+        TEST_FO2,
+    )
+
+
 def test_H2O_basalt_mitchell(check_values) -> None:
     """Tests H2O in basaltic melt :cite:p:`MGO17`.
 
@@ -168,6 +190,30 @@ def test_H2O_basalt_mitchell(check_values) -> None:
         test_fugacity_H2O_mitchell_basalt,
         TEST_TEMPERATURE,
         TEST_PRESSURE,
+        TEST_FO2,
+    )
+
+
+def test_H2O_basalt_moore(check_values) -> None:
+    """Tests H2O in MORB liquid :cite:p:`MVC98`.
+
+    Reference Parameters (P, T, fH2O and measured H2O Conc) from Table 2, experiment 17H on the
+    MORB TT152-21-35 of :cite:t:`DSH95`. The model reproduces it within 0.12 wt%.
+    """
+
+    function_name: str = inspect.currentframe().f_code.co_name  # type: ignore
+    solubility_model: Solubility = solubility_models["H2O_basalt_moore98"]
+    target_concentration: ArrayLike = 25600
+    test_fugacity_H2O_moore_basalt: ArrayLike = 711
+    test_temperature_moore_basalt: ArrayLike = 1200 + 273.15
+    test_pressure_moore_basalt: ArrayLike = 717
+    check_values.concentration(
+        function_name,
+        solubility_model,
+        target_concentration,
+        test_fugacity_H2O_moore_basalt,
+        test_temperature_moore_basalt,
+        test_pressure_moore_basalt,
         TEST_FO2,
     )
 
