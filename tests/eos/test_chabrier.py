@@ -4,15 +4,40 @@
 
 """Tests for the EOS models from :cite:t:`CD21`"""
 
+import pytest
+
 from atmodeller.eos import RealGas
 from atmodeller.eos._chabrier import (
     H2_3000K_chabrier21,
     H2_4000K_chabrier21,
     H2_chabrier21,
+    H2_He_Y0275_chabrier21,
+    H2_He_Y0292_chabrier21,
+    H2_He_Y0297_chabrier21,
+    He_chabrier21,
     _H2_3000K_chabrier21,
 )
 from atmodeller.eos.core import RealGasBase
 from atmodeller.sci_utils import unit_conversion
+
+
+@pytest.mark.parametrize(
+    "model",
+    [
+        pytest.param(H2_chabrier21, id="H"),
+        pytest.param(He_chabrier21, id="He"),
+        pytest.param(H2_He_Y0275_chabrier21, id="Y0275"),
+        pytest.param(H2_He_Y0292_chabrier21, id="Y0292"),
+        pytest.param(H2_He_Y0297_chabrier21, id="Y0297"),
+    ],
+)
+def test_ideal_gas_limit(check_values, model: RealGas) -> None:
+    """Tests that the compressibility factor tends to unity at low pressure
+
+    For the H2-He mixtures this checks that Y is treated as a He mass fraction when converting the
+    tabulated mass density to molar density. Treating Y as a mole fraction gives Z of about 1.1.
+    """
+    check_values.compressibility_factor(1000, 1, model, 1.0, rtol=2e-3, atol=0)
 
 
 def test_H2_volume_100kbar(check_values) -> None:

@@ -40,7 +40,7 @@ class Chabrier(RealGas):
 
     Args:
         log10_density_func: Spline lookup for density from :cite:t:`CD21` T-P-rho tables
-        He_fraction: He fraction
+        He_fraction: He mass fraction (Y)
         H2_molar_mass_g_mol: Molar mass of :math:`\mathrm{H}_2`
         He_molar_mass_g_mol: Molar mass of He
         integration_steps: Number of integration steps
@@ -51,7 +51,7 @@ class Chabrier(RealGas):
     log10_density_func: Callable
     """Spline lookup for density from :cite:t:`CD21` T-P-rho tables"""
     He_fraction: float = eqx.field(converter=float)
-    """He fraction"""
+    """He mass fraction (Y)"""
     H2_molar_mass_g_mol: float = eqx.field(converter=float)
     r"""Molar mass of :math:`\mathrm{H}_2`"""
     He_molar_mass_g_mol: float = eqx.field(converter=float)
@@ -144,18 +144,20 @@ class Chabrier(RealGas):
             Molar density (:math:`\mathrm{mol}\ \mathrm{m}^{-3}`)
         """
         molar_density: FloatArray = jnp.power(10, log10_density_gcc) / unit_conversion.cm3_to_m3
-        composition_factor: float = (
-            self.He_molar_mass_g_mol * self.He_fraction
-            + self.H2_molar_mass_g_mol * (1 - self.He_fraction)
+        # He_fraction is a mass fraction, so the mean molar mass is the mass-weighted harmonic mean
+        mean_molar_mass_g_mol: float = 1.0 / (
+            self.He_fraction / self.He_molar_mass_g_mol
+            + (1 - self.He_fraction) / self.H2_molar_mass_g_mol
         )
-        molar_density = molar_density / composition_factor
+        molar_density = molar_density / mean_molar_mass_g_mol
 
         return molar_density
 
     @staticmethod
     def get_He_fraction_map() -> dict[str, float]:
-        """Mole fraction of He in the gas mixture, the other component being H2.
+        """Mass fraction of He (Y) in the gas mixture, the other component being hydrogen.
 
+        Y is the helium mass fraction as defined by :cite:t:`CD21`, not a mole fraction.
         Dictionary keys should correspond to the name of the Chabrier file.
         """
         He_fraction_map: dict[str, float] = {
