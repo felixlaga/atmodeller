@@ -171,7 +171,9 @@ class BeattieBridgeman(RealGas):
         """
         del mole_fractions
 
-        safe_volume: FloatArray = safe_ideal_initial_volume(temperature, pressure)
+        # Shift by B0 to start above the maximum (gas) root, otherwise at high pressure (Z > 1)
+        # Newton can converge to the very small root
+        safe_volume: FloatArray = safe_ideal_initial_volume(temperature, pressure) + self.B0
         kwargs: dict[str, ArrayLike] = {"temperature": temperature, "pressure": pressure}
 
         solver: OptxSolver = optx.Newton(rtol=RELATIVE_TOLERANCE, atol=ABSOLUTE_TOLERANCE)
