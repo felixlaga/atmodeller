@@ -1,5 +1,5 @@
 <p align="center">
-<img src="https://raw.githubusercontent.com/ExPlanetology/atmodeller/main/docs/logo.png" alt="atmodeller logo" width="300"/>
+<img src="https://raw.githubusercontent.com/ExPlanetology/atmodeller/djbower/v2preview/docs/logo.png" alt="atmodeller logo" width="300"/>
 </p>
 
 # Atmodeller
@@ -40,7 +40,7 @@ The data from the above study are also available for download at <https://doi.or
 
 ## Logo
 
-You are welcome to use the Atmodeller logo in presentations, posters, and other materials. The logo is available to download here: [logo.png](https://raw.githubusercontent.com/ExPlanetology/atmodeller/main/docs/logo.png).
+You are welcome to use the Atmodeller logo in presentations, posters, and other materials. The logo is available to download here: [logo.png](https://raw.githubusercontent.com/ExPlanetology/atmodeller/djbower/v2preview/docs/logo.png).
 
 Unlike the source code, the logo is licensed under [Creative Commons Attribution 4.0 International (CC BY 4.0)](https://creativecommons.org/licenses/by/4.0/). Citing Atmodeller (see [Citation](#citation)) satisfies the attribution requirement, so no separate credit is needed for the logo.
 
