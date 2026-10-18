@@ -38,6 +38,12 @@ If you use Atmodeller, or data from Atmodeller, please cite:
 
 The data from the above study are also available for download at <https://doi.org/10.17605/OSF.IO/PC5TD>.
 
+## Logo
+
+You are welcome to use the Atmodeller logo in presentations, posters, and other materials. The logo is available to download here: [logo.png](https://raw.githubusercontent.com/ExPlanetology/atmodeller/main/docs/logo.png).
+
+Unlike the source code, the logo is licensed under [Creative Commons Attribution 4.0 International (CC BY 4.0)](https://creativecommons.org/licenses/by/4.0/). Citing Atmodeller (see [Citation](#citation)) satisfies the attribution requirement, so no separate credit is needed for the logo.
+
 ## Basic usage
 
 Several Jupyter notebooks providing examples are in the `notebooks/` directory. A simple example of how to use Atmodeller is provided below:
