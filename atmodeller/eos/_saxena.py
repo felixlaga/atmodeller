@@ -458,10 +458,20 @@ def get_corresponding_states_SS92(species: str) -> RealGas:
     """Corresponding states :cite:p:`SS92{Table 1a}`
 
     Coefficients for the low and medium pressure regimes are from
-    :cite:t:`SF87a{Equation 23 and 21}`, respectively, although some values disagree either in
-    value or sign with :cite:t:`SS92{Table 1a}`. Eventually it should be determined which is right,
-    but for the time being it is assumed that the earlier work is correct. Coefficients for the
-    high pressure regime are from :cite:t:`SF87{Equation 11}`.
+    :cite:t:`SF87a{Equation 23 and 21}`, respectively, and for the high pressure regime from
+    :cite:t:`SF87{Equation 11}`. Two printed values conflict between sources:
+
+    - Low pressure, final `c` coefficient: 0.1472e-1 in :cite:t:`SF87a{Equation 23}` (abstract
+      and body) versus 0.1427e-1 in :cite:t:`SS92{Table 1a}`. The original source is adopted;
+      the SS92 value is likely a transposition when transcribing from :cite:t:`SF87a`. For
+      T >= 400 K the two values differ by up to about 0.03 in Z below 1 kbar, within the stated
+      fit error of 0.076.
+    - Medium pressure, `c` coefficient of :math:`T_r^{-2}`: -1.4164e-4 in the body of
+      :cite:t:`SF87a{Equation 21}` and in :cite:t:`SS92{Table 1a}`, but +1.4164e-4 in the
+      abstract of :cite:t:`SF87a`, which is a misprint. The negative value agrees to within a
+      few percent with the observed CO2 compressibility factors in :cite:t:`SF87a{Table 1}`
+      (the positive value is 13-35% off) and agrees better with independent EOSs (e.g. CORK,
+      Zhang and Duan) at 1-5 kbar.
 
     Args:
         species: A species
@@ -475,7 +485,7 @@ def get_corresponding_states_SS92(species: str) -> RealGas:
     low_pressure: RealGas = SaxenaFiveCoefficients(
         a_coefficients=(1, 0, 0, 0, 0),
         b_coefficients=(0, 0.9827e-1, 0, -0.2709, 0),
-        # Saxena and Fei (1987) CMP, Eq. 23, C final coefficient = 0.1472e-1 (not 0.1427e-1)
+        # SF87a Eq. 23: final c coefficient 0.1472e-1 (SS92 Table 1a: 0.1427e-1, likely a typo)
         c_coefficients=(0, 0, -0.1030e-2, 0, 0.1472e-1),
         d_coefficients=(0, 0, 0, 0, 0),
         critical_data=critical_data,
@@ -485,8 +495,8 @@ def get_corresponding_states_SS92(species: str) -> RealGas:
     medium_pressure: RealGas = SaxenaEightCoefficients(
         a_coefficients=(1, 0, 0, 0, -5.917e-1, 0, 0, 0),
         b_coefficients=(0, 0, 9.122e-2, 0, 0, 0, 0, 0),
-        # Saxena and Fei (1987) CMP, Eq. 21, C first coefficient = 1.4164e-4 (not negative)
-        c_coefficients=(0, 0, 0, 0, 1.4164e-4, 0, 0, -2.8349e-6),
+        # SF87a Eq. 21 (body) and SS92 Table 1a: -1.4164e-4 (SF87a abstract misprints the sign)
+        c_coefficients=(0, 0, 0, 0, -1.4164e-4, 0, 0, -2.8349e-6),
         d_coefficients=(0, 0, 0, 0, 0, 0, 0, 0),
         critical_data=critical_data,
     )

@@ -45,6 +45,16 @@ def test_compressibility_factor(
     check_values.compressibility_factor(temperature, pressure, model, expected)
 
 
+def test_medium_pressure_corresponding_states(check_values) -> None:
+    """Tests the 1-5 kbar branch :cite:p:`SF87a{Equation 21}`
+
+    Pins the sign of the `c` coefficient of :math:`T_r^{-2}` (-1.4164e-4). The expected value agrees
+    with the CORK model of :cite:t:`HP98` (Z = 2.0447), whereas the positive sign gives Z = 2.088.
+    """
+    model: RealGas = cast(RealGas, check_values.get_eos_model("CO2", "cs_shi92"))
+    check_values.compressibility_factor(1000, 3000, model, 2.0449062266331888)
+
+
 def test_H2_low_pressure_SS92(check_values) -> None:
     """:cite:t:`SS92{Figure 1}`"""
     model: RealGas = cast(RealGas, check_values.get_eos_model("H2", "shi92"))
