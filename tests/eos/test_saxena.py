@@ -9,19 +9,19 @@ from typing import cast
 import pytest
 
 from atmodeller.eos import RealGas
-from atmodeller.eos._saxena import H2_SF87, _H2_high_pressure_SS92, _H2_low_pressure_SS92
+from atmodeller.eos._saxena import _H2_high_pressure_SS92, _H2_low_pressure_SS92
 from atmodeller.sci_utils import unit_conversion
 
-# species, model suffix (None means use the H2_SF87 model object directly), temperature (K),
-# pressure (bar), expected compressibility factor. All rows are :cite:t:`SF87{Table 1}` reference
-# values for the corresponding-states formulation; the model suffix differs per species only
-# because the calibration data differs, not the code path, so this is one test parametrized over
-# reference values rather than distinct branches of the implementation.
+# species, model suffix, temperature (K), pressure (bar), expected compressibility factor. All rows
+# are :cite:t:`SF87{Table 1}` reference values for the corresponding-states formulation; the model
+# suffix differs per species only because the calibration data differs, not the code path, so this
+# is one test parametrized over reference values rather than distinct branches of the
+# implementation. H2 is not included because corresponding states is superseded for H2 (see
+# :obj:`~atmodeller.eos._saxena.H2_SS92`).
 COMPRESSIBILITY_FACTOR_CASES = [
     pytest.param("Ar", "cs_saxena87", 2510, 100e3, 7.41624600755374, id="Ar"),
     pytest.param("CH4", "cs_shi92", 1912, 159e3, 17.77499804453072, id="CH4"),
     pytest.param("CO2", "cs_shi92", 1167, 184e3, 33.886349109271734, id="CO2"),
-    pytest.param("H2", None, 1222, 41.66e3, 4.975497264839999, id="H2_SF87"),
     pytest.param("N2", "cs_saxena87", 1573, 75e3, 10.293087737779091, id="N2"),
     pytest.param("O2", "cs_shi92", 1823, 133e3, 12.409268281002012, id="O2"),
 ]
@@ -33,15 +33,13 @@ COMPRESSIBILITY_FACTOR_CASES = [
 def test_compressibility_factor(
     check_values,
     species: str,
-    suffix: str | None,
+    suffix: str,
     temperature: float,
     pressure: float,
     expected: float,
 ) -> None:
     """Tests compressibility factor against the reference value for each species"""
-    model: RealGas = (
-        H2_SF87 if suffix is None else cast(RealGas, check_values.get_eos_model(species, suffix))
-    )
+    model: RealGas = cast(RealGas, check_values.get_eos_model(species, suffix))
     check_values.compressibility_factor(temperature, pressure, model, expected)
 
 

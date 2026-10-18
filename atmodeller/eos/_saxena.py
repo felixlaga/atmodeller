@@ -358,6 +358,14 @@ H2_SS92: RealGas = CombinedRealGas.create(
 )
 """H2 EOS, which combines the low and high pressure EOS :cite:p:`SS92{Table 1b}`
 
+:cite:t:`SF87,SF87a` included H2 in their corresponding states equations, but :cite:t:`SF88`
+found that H2, with its softer intermolecular potential, is not well represented by corresponding
+states: above 5 kbar the :cite:t:`SF87{Equation 11}` model overestimates the observed
+compressibility factor of H2 by 7-10% along the shock-wave data. :cite:t:`SS92` therefore adopt the
+H2-specific fit of :cite:t:`SF88` above 1 kbar, which supersedes the corresponding states model for
+H2, while the branch below 1 kbar retains the corresponding states form of
+:cite:t:`SF87a{Equation 23}`.
+
 The high pressure fit is constrained by static data at a few kbar and by shock-wave data that lie
 along a path of rising temperature and pressure, from about 10 kbar at 300 K to about 115 kbar at
 3500 K :cite:p:`RRY83,SF87{Table 1}`. Along this path it reproduces the observed compressibility
@@ -473,6 +481,9 @@ def get_corresponding_states_SS92(species: str) -> RealGas:
       (the positive value is 13-35% off) and agrees better with independent EOSs (e.g. CORK,
       Zhang and Duan) at 1-5 kbar.
 
+    Although :cite:t:`SF87,SF87a` included H2 in their fits, this function should not be used for
+    H2; see :obj:`H2_SS92`.
+
     Args:
         species: A species
 
@@ -537,12 +548,6 @@ S2_SS92: RealGas = get_corresponding_states_SS92("S2")
 """S2 corresponding states :cite:p:`SS92`"""
 Ar_SF87: RealGas = get_corresponding_states_SS92("Ar")
 """Ar corresponding states :cite:p:`SF87{Equation 11}`
-
-The low pressure extension given by the corresponding states model of :cite:t:`SS92{Table 1a}` is
-also adopted.
-"""
-H2_SF87: RealGas = get_corresponding_states_SS92("H2")
-"""H2 corresponding states :cite:p:`SF87{Equation 11}`
 
 The low pressure extension given by the corresponding states model of :cite:t:`SS92{Table 1a}` is
 also adopted.
