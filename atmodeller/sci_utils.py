@@ -9,7 +9,8 @@ functions for scientific calculations, particularly in planetary and atmospheric
 designed to be standalone and does not depend on other modules within the atmodeller package.
 """
 
-from typing import Optional, TypeAlias
+from collections.abc import Iterable
+from typing import Any, Optional, TypeAlias
 
 import equinox as eqx
 import numpy as np
@@ -176,6 +177,112 @@ trappist1e: PlanetParameters = PlanetParameters(
     core_mass_fraction=earth.core_mass_fraction,
 )
 """Parameters for TRAPPIST-1e based on :cite:t:`ADG21` and used by :cite:t:`BTH25`"""
+
+
+class SolarAbundances(eqx.Module):
+    r"""Present-day solar photospheric abundances from :cite:t:`AAG21{Table 2}`
+
+    Abundances are logarithmic relative to hydrogen,
+    :math:`\log \epsilon(\mathrm{X}) = \log_{10}(N_\mathrm{X} / N_\mathrm{H}) + 12`, so that
+    :math:`\log \epsilon(\mathrm{H}) = 12`.
+
+    Note:
+        Only the photospheric column of :cite:t:`AAG21{Table 2}` is included. Elements with no
+        photospheric value (only a CI chondrite value) are omitted. He, Ne, Ar, Kr, and Xe are
+        not measured directly in the photosphere and are instead inferred from helioseismology,
+        the solar wind, and nuclear physics.
+    """
+
+    log_epsilon: dict[str, float]
+    """Logarithmic abundance relative to H for each element"""
+
+    def __init__(self):
+        self.log_epsilon = {
+            "H": 12.00,
+            "He": 10.914,
+            "Li": 0.96,
+            "Be": 1.38,
+            "B": 2.70,
+            "C": 8.46,
+            "N": 7.83,
+            "O": 8.69,
+            "F": 4.40,
+            "Ne": 8.06,
+            "Na": 6.22,
+            "Mg": 7.55,
+            "Al": 6.43,
+            "Si": 7.51,
+            "P": 5.41,
+            "S": 7.12,
+            "Cl": 5.31,
+            "Ar": 6.38,
+            "K": 5.07,
+            "Ca": 6.30,
+            "Sc": 3.14,
+            "Ti": 4.97,
+            "V": 3.90,
+            "Cr": 5.62,
+            "Mn": 5.42,
+            "Fe": 7.46,
+            "Co": 4.94,
+            "Ni": 6.20,
+            "Cu": 4.18,
+            "Zn": 4.56,
+            "Ga": 3.02,
+            "Ge": 3.62,
+            "Kr": 3.12,
+            "Rb": 2.32,
+            "Sr": 2.83,
+            "Y": 2.21,
+            "Zr": 2.59,
+            "Nb": 1.47,
+            "Mo": 1.88,
+            "Ru": 1.75,
+            "Rh": 0.78,
+            "Pd": 1.57,
+            "Ag": 0.96,
+            "In": 0.80,
+            "Sn": 2.02,
+            "Xe": 2.22,
+            "Ba": 2.27,
+            "La": 1.11,
+            "Ce": 1.58,
+            "Pr": 0.75,
+            "Nd": 1.42,
+            "Sm": 0.95,
+            "Eu": 0.52,
+            "Gd": 1.08,
+            "Tb": 0.31,
+            "Dy": 1.10,
+            "Ho": 0.48,
+            "Er": 0.93,
+            "Tm": 0.11,
+            "Yb": 0.85,
+            "Lu": 0.10,
+            "Hf": 0.85,
+            "W": 0.79,
+            "Os": 1.35,
+            "Au": 0.91,
+            "Tl": 0.92,
+            "Pb": 1.95,
+            "Th": 0.03,
+        }
+
+    def get_log_epsilon(self, elements: Iterable[str]) -> np.ndarray[Any, np.dtype[np.float64]]:
+        """Gets the solar logarithmic abundance relative to H for the given elements.
+
+        Args:
+            elements: Element symbols
+
+        Returns:
+            Solar logarithmic abundance for each element, with ``NaN`` for elements that do not
+            have a solar photospheric value
+        """
+        return np.array([self.log_epsilon.get(element, np.nan) for element in elements])
+
+
+solar: SolarAbundances = SolarAbundances()
+"""Present-day solar photospheric abundances from :cite:t:`AAG21`"""
 
 GAS_CONSTANT: float = constants.gas_constant
 r"""Gas constant (:math:`\mathrm{J}\mathrm{K}^{-1}\mathrm{mol}^{-1}`)"""

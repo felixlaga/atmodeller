@@ -30,6 +30,7 @@ from atmodeller.initial_solution import generate_auto_initial_guess
 from atmodeller.jax_utils import FloatArray, MultiAttemptSolution, stack_broadcast
 from atmodeller.parameters import ActivityConstraintSet, MassConstraintSet, Parameters
 from atmodeller.phases import BasePhase, GasPhaseOutput, PhaseOutput
+from atmodeller.sci_utils import solar
 
 logger: logging.Logger = logging.getLogger(__name__)
 
@@ -334,20 +335,29 @@ class BaseOutputDict(eqx.Module):
         """Gas phase output. By construction, the gas phase is at index 0 in the phase system."""
         return cast(GasPhaseOutput, self.get_phase_output_from_index(0))
 
-    def gas_log_epsilon(self) -> Float[Array, "#n_batch n_elements"] | None:
-        """Logarithmic abundance of each element in the gas phase relative to gas-phase H.
+    def gas_abundances_relative_to_hydrogen(
+        self,
+    ) -> dict[str, Float[Array, "#n_batch n_elements"]]:
+        r"""Abundances of each element in the gas phase relative to gas-phase H.
 
-        See :func:`log_epsilon`.
+        - ``"log_epsilon"``: :math:`\log \epsilon(\mathrm{X})`, see :func:`log_epsilon`
+        - ``"X_H"``: :math:`[\mathrm{X}/\mathrm{H}] = \log \epsilon(\mathrm{X}) -
+          \log \epsilon(\mathrm{X})_\odot`, relative to the solar abundances in
+          :data:`~atmodeller.sci_utils.solar`. ``NaN`` for elements without a solar value.
 
         Returns:
-            Logarithmic abundance of each element in the gas phase, or ``None`` if H is not
-            present in the gas phase
+            Abundances by key, or an empty dictionary if H is not present in the gas phase
         """
         unique_elements: tuple[str, ...] = self.gas.phase.species.unique_elements
         if "H" not in unique_elements:
-            return None
+            return {}
 
-        return log_epsilon(self.gas.element_number_moles, unique_elements.index("H"))
+        gas_log_epsilon: Array = log_epsilon(
+            self.gas.element_number_moles, unique_elements.index("H")
+        )
+        solar_log_epsilon: Array = jnp.asarray(solar.get_log_epsilon(unique_elements))
+
+        return {"log_epsilon": gas_log_epsilon, "X_H": gas_log_epsilon - solar_log_epsilon}
 
     def get_phase_output_from_index(self, phase_index: int) -> PhaseOutput:
         """Gets the output for a phase from the phase index.
@@ -482,9 +492,7 @@ class OutputNaturalDict(BaseOutputDict):
             out[phase_name]["phase"]["log10dIW_P"] = self.gas.log10dIW_P
             out[phase_name]["phase"]["pressure"] = self.gas.pressure
 
-            gas_log_epsilon: Array | None = self.gas_log_epsilon()
-            if gas_log_epsilon is not None:
-                out[phase_name]["elements"]["log_epsilon"] = gas_log_epsilon
+            out[phase_name]["elements"] |= self.gas_abundances_relative_to_hydrogen()
 
         out["constraints"] = {
             "elements": {
@@ -657,10 +665,9 @@ class OutputNamedArraysDict(BaseOutputDict):
             out[self.gas.phase.name]["phase"]["log10dIW_P"] = self.gas.log10dIW_P
             out[self.gas.phase.name]["phase"]["pressure"] = self.gas.pressure
 
-            gas_log_epsilon: Array | None = self.gas_log_epsilon()
-            if gas_log_epsilon is not None:
+            for key, value in self.gas_abundances_relative_to_hydrogen().items():
                 self._split_by_elements_and_add(
-                    self.gas, gas_log_epsilon, out[self.gas.phase.name]["elements"], "log_epsilon"
+                    self.gas, value, out[self.gas.phase.name]["elements"], key
                 )
 
         out["constraints"] = {}
@@ -940,15 +947,12 @@ class OutputElementsSpeciesDict(BaseOutputDict):
             out[self.gas.phase.name]["phase"]["metallicity_by_moles"] = z_by_moles
             out[self.gas.phase.name]["phase"]["metallicity_by_mass"] = z_by_mass
 
-            # Logarithmic abundance relative to H
-            gas_log_epsilon: Array | None = self.gas_log_epsilon()
-            if gas_log_epsilon is not None:
-                gas_unique_elements: tuple[str, ...] = self.gas.phase.species.unique_elements
-                element_log_epsilon: list[Array] = self._split_array_by_names(
-                    gas_unique_elements, gas_log_epsilon
-                )
+            # Abundances relative to H
+            gas_unique_elements: tuple[str, ...] = self.gas.phase.species.unique_elements
+            for key, value in self.gas_abundances_relative_to_hydrogen().items():
+                split_value: list[Array] = self._split_array_by_names(gas_unique_elements, value)
                 for nn, element in enumerate(gas_unique_elements):
-                    out[element][self.gas.phase.name]["log_epsilon"] = element_log_epsilon[nn]
+                    out[element][self.gas.phase.name][key] = split_value[nn]
 
         # Mass constraints
         mass_constraints: MassConstraintSet = self.parameters.mass_constraints
