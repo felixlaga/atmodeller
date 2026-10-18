@@ -27,7 +27,13 @@ from jaxtyping import Array, ArrayLike, Bool, Float, PyTree
 
 from atmodeller import override
 from atmodeller.initial_solution import generate_auto_initial_guess
-from atmodeller.jax_utils import FloatArray, MultiAttemptSolution, stack_broadcast
+from atmodeller.jax_utils import (
+    FloatArray,
+    MultiAttemptSolution,
+    NpBool,
+    NpFloat,
+    stack_broadcast,
+)
 from atmodeller.parameters import ActivityConstraintSet, MassConstraintSet, Parameters
 from atmodeller.phases import BasePhase, GasPhaseOutput, PhaseOutput
 from atmodeller.sci_utils import solar
@@ -359,6 +365,69 @@ class BaseOutputDict(eqx.Module):
 
         return {"log_epsilon": gas_log_epsilon, "X_H": gas_log_epsilon - solar_log_epsilon}
 
+    def gas_metallicity(self) -> dict[str, Float[Array, "#n_batch 1"]]:
+        r"""Metallicity of the gas phase, where metals are all elements other than H and He.
+
+        - ``"metallicity_by_mass"``: mass fraction of metals in the gas phase (:math:`Z`)
+        - ``"metals_to_hydrogen"``: number of moles of metals (atoms) relative to H,
+          :math:`N_\mathrm{M} / N_\mathrm{H} = \sum_\mathrm{X} N_\mathrm{X} / N_\mathrm{H}`
+        - ``"metals_to_hydrogen_by_mass"``: mass of metals relative to the mass of H
+          (:math:`Z/X`)
+        - ``"M_H"``: :math:`[\mathrm{M}/\mathrm{H}] = \log_{10}\left[\left(\sum_\mathrm{X}
+          N_\mathrm{X}/N_\mathrm{H}\right) / \left(\sum_\mathrm{X}
+          N_\mathrm{X}/N_\mathrm{H}\right)_\odot\right]`, relative to the solar abundances in
+          :data:`~atmodeller.sci_utils.solar`. Both sums are over the same metals, i.e. the
+          metals in the gas phase that have a solar abundance, so elements that are not modelled
+          do not contribute to the solar sum. ``NaN`` if there are no such metals.
+
+        ``"metals_to_hydrogen"``, ``"metals_to_hydrogen_by_mass"``, and ``"M_H"`` are only
+        included if H is present in the gas phase.
+
+        Returns:
+            Metallicity by key
+        """
+        unique_elements: tuple[str, ...] = self.gas.phase.species.unique_elements
+        is_metal: NpBool = np.array(
+            [element not in ("H", "He") for element in unique_elements], dtype=bool
+        )
+        element_number_moles: Float[Array, "#n_batch n_elements"] = self.gas.element_number_moles
+
+        element_mass: Float[Array, "#n_batch n_elements"] = self.gas.element_mass
+        metal_mass: Float[Array, "#n_batch 1"] = jnp.sum(
+            element_mass * is_metal, axis=-1, keepdims=True
+        )
+
+        out: dict[str, Float[Array, "#n_batch 1"]] = {}
+        out["metallicity_by_mass"] = metal_mass / self.gas.phase_mass
+
+        if "H" not in unique_elements:
+            return out
+
+        hydrogen_index: int = unique_elements.index("H")
+        hydrogen_number_moles: Float[Array, "#n_batch 1"] = element_number_moles[
+            ..., hydrogen_index : hydrogen_index + 1
+        ]
+        out["metals_to_hydrogen"] = (
+            jnp.sum(element_number_moles * is_metal, axis=-1, keepdims=True)
+            / hydrogen_number_moles
+        )
+        out["metals_to_hydrogen_by_mass"] = (
+            metal_mass / element_mass[..., hydrogen_index : hydrogen_index + 1]
+        )
+
+        solar_log_epsilon: NpFloat = solar.get_log_epsilon(unique_elements)
+        has_solar: NpBool = is_metal & ~np.isnan(solar_log_epsilon)
+        solar_metals_to_hydrogen: float = float(
+            np.sum(np.power(10.0, solar_log_epsilon[has_solar] - 12.0))
+        )
+        metals_to_hydrogen_with_solar: Float[Array, "#n_batch 1"] = (
+            jnp.sum(element_number_moles * has_solar, axis=-1, keepdims=True)
+            / hydrogen_number_moles
+        )
+        out["M_H"] = jnp.log10(metals_to_hydrogen_with_solar / solar_metals_to_hydrogen)
+
+        return out
+
     def get_phase_output_from_index(self, phase_index: int) -> PhaseOutput:
         """Gets the output for a phase from the phase index.
 
@@ -491,6 +560,7 @@ class OutputNaturalDict(BaseOutputDict):
             out[phase_name]["phase"]["log10dIW_1_bar"] = self.gas.log10dIW_1_bar
             out[phase_name]["phase"]["log10dIW_P"] = self.gas.log10dIW_P
             out[phase_name]["phase"]["pressure"] = self.gas.pressure
+            out[phase_name]["phase"] |= self.gas_metallicity()
 
             out[phase_name]["elements"] |= self.gas_abundances_relative_to_hydrogen()
 
@@ -664,6 +734,7 @@ class OutputNamedArraysDict(BaseOutputDict):
             out[self.gas.phase.name]["phase"]["log10dIW_1_bar"] = self.gas.log10dIW_1_bar
             out[self.gas.phase.name]["phase"]["log10dIW_P"] = self.gas.log10dIW_P
             out[self.gas.phase.name]["phase"]["pressure"] = self.gas.pressure
+            out[self.gas.phase.name]["phase"] |= self.gas_metallicity()
 
             for key, value in self.gas_abundances_relative_to_hydrogen().items():
                 self._split_by_elements_and_add(
@@ -910,42 +981,7 @@ class OutputElementsSpeciesDict(BaseOutputDict):
             out[self.gas.phase.name]["phase"]["log10dIW_P"] = self.gas.log10dIW_P
             out[self.gas.phase.name]["phase"]["pressure"] = self.gas.pressure
 
-            # Metallicity
-            gas_phase_dict: dict[str, Any] = out[self.gas.phase.name]["phase"]
-            total_number_moles: ArrayLike = gas_phase_dict["elements_number_moles"]
-            total_mass: ArrayLike = gas_phase_dict["mass"]
-
-            heavy_elements: tuple[str, ...] = tuple(
-                element
-                for element in self.gas.phase.species.unique_elements
-                if element not in ("H", "He")
-            )
-            if heavy_elements:
-                z_by_moles: ArrayLike = jnp.sum(
-                    jnp.stack(
-                        [
-                            out[element][self.gas.phase.name]["number_moles"]
-                            for element in heavy_elements
-                        ],
-                        axis=0,
-                    ),
-                    axis=0,
-                )
-                z_by_mass: ArrayLike = jnp.sum(
-                    jnp.stack(
-                        [out[element][self.gas.phase.name]["mass"] for element in heavy_elements],
-                        axis=0,
-                    ),
-                    axis=0,
-                )
-            else:
-                z_by_moles = jnp.zeros_like(total_number_moles)
-                z_by_mass = jnp.zeros_like(total_mass)
-
-            z_by_moles = z_by_moles / total_number_moles
-            z_by_mass = z_by_mass / total_mass
-            out[self.gas.phase.name]["phase"]["metallicity_by_moles"] = z_by_moles
-            out[self.gas.phase.name]["phase"]["metallicity_by_mass"] = z_by_mass
+            out[self.gas.phase.name]["phase"] |= self.gas_metallicity()
 
             # Abundances relative to H
             gas_unique_elements: tuple[str, ...] = self.gas.phase.species.unique_elements

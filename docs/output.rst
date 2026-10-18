@@ -116,11 +116,26 @@ The gas phase has the following additional phase-level outputs:
        evaluated at the total pressure (only if O\ :math:`_2` is a gas species)
    * - metallicity_by_mass
      - kg kg\ :math:`^{-1}`
-     - Mass fraction of elements other than H and He (*Z*). ``elements_species`` format only
-   * - metallicity_by_moles
+     - Mass fraction of metals (*Z*), where metals are all elements other than H and He
+   * - metals_to_hydrogen
      - mol mol\ :math:`^{-1}`
-     - Number of moles of elements other than H and He relative to the total number of moles of
-       elements. ``elements_species`` format only
+     - Number of moles of metals (atoms) relative to H,
+       :math:`N_\mathrm{M}/N_\mathrm{H} = \sum_\mathrm{X} N_\mathrm{X}/N_\mathrm{H}`. Only
+       present if H is in the gas phase
+   * - metals_to_hydrogen_by_mass
+     - kg kg\ :math:`^{-1}`
+     - Mass of metals relative to the mass of H (*Z/X*). For comparison, the present-day solar
+       photospheric value is 0.0187 :cite:p:`AAG21`. Only present if H is in the gas phase
+   * - M_H
+     - dex
+     - Metallicity relative to solar,
+       :math:`[\mathrm{M}/\mathrm{H}] = \log_{10}\left[\left(\sum_\mathrm{X}
+       N_\mathrm{X}/N_\mathrm{H}\right) / \left(\sum_\mathrm{X}
+       N_\mathrm{X}/N_\mathrm{H}\right)_\odot\right]`, using the solar abundances of
+       :cite:t:`AAG21`. Both sums are over the same metals: those in the gas phase that have a
+       solar abundance, so metals that are not modelled do not contribute to the solar sum. For
+       example, :math:`[\mathrm{M}/\mathrm{H}] = 2` is 100 times solar. ``NaN`` if there are no
+       such metals. Only present if H is in the gas phase
 
 Elements
 --------
