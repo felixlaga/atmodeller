@@ -49,8 +49,8 @@ def test_H2_volume_100kbar(check_values) -> None:
 
 def test_H2_fugacity_coefficient_100kbar(check_values) -> None:
     """Tests fugacity coefficient at 100 kbar"""
-    # Assumes 100 integration steps
-    expected: float = 33.741562
+    # Assumes Simpson integration with 101 nodes
+    expected: float = 32.808953401650605
     check_values.fugacity_coefficient(3000, 100e3, H2_chabrier21, expected)
 
 
@@ -63,8 +63,8 @@ def test_H2_volume_1000kbar(check_values) -> None:
 
 def test_H2_fugacity_coefficient_1000kbar(check_values) -> None:
     """Tests fugacity coefficient at 1000 kbar"""
-    # Assumes 100 integration steps
-    expected: float = 482475.388584
+    # Assumes Simpson integration with 101 nodes
+    expected: float = 450833.8733449097
     check_values.fugacity_coefficient(5000, 1000e3, H2_chabrier21, expected)
 
 
