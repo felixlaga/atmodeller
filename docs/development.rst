@@ -26,7 +26,7 @@ Documentation
 .. note::
     Documentation should be consistent with the source code, so any changes to the source code should be reflected in changes to the documentation, if required.
 
-When the doc dependencies have been installed the documentation can be compiled::
+The doc dependencies include a bundled copy of pandoc (via ``pypandoc-binary``), which is used if pandoc is not already installed. On Apple Silicon Macs the bundled copy is currently an x86_64 binary that requires Rosetta, so either install pandoc natively (``brew install pandoc``) or install Rosetta (``softwareupdate --install-rosetta``). When the doc dependencies have been installed the documentation can be compiled::
 
     cd docs
     sphinx-apidoc -f -o source ../atmodeller

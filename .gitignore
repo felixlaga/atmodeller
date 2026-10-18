@@ -167,8 +167,6 @@ cython_debug/
 
 uv.lock
 
-docs/bin/pandoc
-
 # Atmodeller output file formats
 *.pdf
 *.pkl
