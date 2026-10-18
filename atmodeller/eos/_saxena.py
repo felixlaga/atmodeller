@@ -326,9 +326,11 @@ _H2_high_pressure_SS92: RealGas = SaxenaEightCoefficients(
 )
 """H2 high pressure (>1000 bar) :cite:p:`SS92{Table 1b}`
 
-This model cannot be a corresponding states model because the data do not appear correct when
-plotted, so presumably it requires the actual temperature and pressure (hence critical data are not
-provided as arguments). Visually, the fit compares well to :obj:`_H2_high_pressure_SS92_refit`.
+These coefficients are those of :cite:t:`SF88`, rewritten from reduced to absolute temperature (K)
+and pressure (bar) using the critical values of :cite:t:`SF88` (:math:`T_c=33.1` K,
+:math:`P_c=13` bar), so no critical data are given (they default to 1). Converting the
+:cite:t:`SF88` coefficients reproduces this table to four significant figures, provided the final
+`c` coefficient of :cite:t:`SF88` is taken as 5.0897e-8; the printed 5.0897e-5 is a misprint.
 """
 
 _H2_high_pressure_SS92_refit: RealGas = SaxenaEightCoefficients(
@@ -360,21 +362,6 @@ Impose an upper bound on the high pressure fit to avoid unphysical extrapolation
 beyond around 100 kbar. This limit was determined by visual inspection of plots of the fugacity
 versus pressure at various temperatures, where beyond 100 kbar a sudden downturn in fugacity was
 observed due to the breakdown of the functional form (polynomial representation).
-"""
-
-_H2_high_pressure_SF88: RealGas = SaxenaEightCoefficients(
-    a_coefficients=(1.6688, 0, -2.0759, 0, -9.6173, 0, 0, -0.1694),
-    b_coefficients=(-2.0410e-3, 0, 7.9230e-2, 0, 5.4295e-2, 0, 0, 4.0887e-4),
-    c_coefficients=(-2.1693e-7, 0, 1.7406e-6, 0, -2.1885e-4, 0, 0, 5.0897e-5),
-    d_coefficients=(-7.1635e-12, 0, 1.6197e-10, 0, -4.8181e-9, 0, 0, 0),
-    critical_data=critical_data_dictionary["H2"],
-)
-"""H2 high pressure :cite:p:`SF88{Table on page 1196}`
-
-This model does not at all agree with :cite:t:`SS92` or data, regardless of whether the temperature
-and pressure inputs are the actual or reduced values.
-
-Further investigations are warranted before this model should be used.
 """
 
 SO2_SS92: RealGas = SaxenaEightCoefficients(
