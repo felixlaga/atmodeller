@@ -358,10 +358,23 @@ H2_SS92: RealGas = CombinedRealGas.create(
 )
 """H2 EOS, which combines the low and high pressure EOS :cite:p:`SS92{Table 1b}`
 
-Impose an upper bound on the high pressure fit to avoid unphysical extrapolation for pressures
-beyond around 100 kbar. This limit was determined by visual inspection of plots of the fugacity
-versus pressure at various temperatures, where beyond 100 kbar a sudden downturn in fugacity was
-observed due to the breakdown of the functional form (polynomial representation).
+The high pressure fit is constrained by static data at a few kbar and by shock-wave data that lie
+along a path of rising temperature and pressure, from about 10 kbar at 300 K to about 115 kbar at
+3500 K :cite:p:`RRY83,SF87{Table 1}`. Along this path it reproduces the observed compressibility
+factor to within 1.5%, but away from it the polynomial is unconstrained. The upper bound of
+100 kbar is retained for high temperature use, beyond which the polynomial is not evaluated and
+the EOS is extrapolated.
+
+At lower temperatures the fit breaks down well below 100 kbar. The compressibility factor stops
+increasing with pressure at about 20, 35, 50 and 70 kbar at 300, 600, 1000 and 2000 K,
+respectively, and becomes negative (so the fugacity decreases with pressure) above about 41, 62 and
+87 kbar at 300, 500 and 800 K, respectively.
+
+Between 2000 and 3000 K and 1 to 50 kbar, compared with :cite:t:`CD21`, which also reproduces the
+shock-wave data, the compressibility factor deviates by up to 6% at 2000 K and up to 25% at 3000 K,
+and the fugacity by up to about 8% at 2000 K and 30% at 3000 K. At high temperature the fugacity
+error arises mostly at 1 to 5 kbar, where the compressibility factor falls below unity. For this
+range the ``H2_chabrier21`` EOS model is preferred.
 """
 
 SO2_SS92: RealGas = SaxenaEightCoefficients(
