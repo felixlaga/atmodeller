@@ -44,7 +44,7 @@ class Solubility(eqx.Module):
     def jax_concentration(
         self, fugacity: ArrayLike, temperature: ArrayLike, pressure: ArrayLike, fO2: ArrayLike
     ) -> FloatArray:
-        """Wrapper to pass concentration arguments by position to use with :func:`jax.lax.switch`.
+        """Wrapper to pass concentration arguments by position.
 
         This is also required for gradient calculations, which require all arguments to be passed
         by position.

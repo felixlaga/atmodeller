@@ -382,8 +382,6 @@ class DissolutionNetwork(BaseReactionBlock):
     """Mapping of dissolution species to corresponding reaction species"""
     dissolution_matrix: NpFloat
     """Dissolution reaction matrix"""
-    vmap_solubility: Callable
-    """Vectorized solubility function for dissolution reactions"""
 
     def __init__(self, species: Iterable[SpeciesProtocol]):
         self.species = SpeciesCollection(species)
@@ -414,24 +412,6 @@ class DissolutionNetwork(BaseReactionBlock):
         self.reaction_indices_map = np.array(reaction_indices_map, dtype=int)
         self.dissolution_matrix = dissolution_matrix
 
-        solubility_funcs: list[Callable] = [
-            to_hashable(species_.solubility.jax_concentration)
-            for species_ in self.species.reservoir_species
-        ]
-
-        def apply_solubility(
-            index: Integer[Array, ""],
-            fugacity_val: FloatArray,
-            temp: FloatArray,
-            press: FloatArray,
-            o2_fug: FloatArray,
-        ) -> FloatArray:
-            return lax.switch(index, solubility_funcs, fugacity_val, temp, press, o2_fug)
-
-        self.vmap_solubility: Callable = eqx.filter_vmap(
-            apply_solubility, in_axes=(0, -1, None, None, None), out_axes=-1
-        )
-
         self.output_to_logger()
 
     @property
@@ -453,6 +433,12 @@ class DissolutionNetwork(BaseReactionBlock):
         :data:`~atmodeller.constants.DISSOLUTION_PPMW_FLOOR` before taking the logarithm to
         prevent ``log(0)`` in underflow-prone regimes.
 
+        Each solubility law is applied directly to the fugacity of its own species, in a loop that
+        is unrolled at trace time. The laws are read from :attr:`species` when called, so their
+        parameters are part of the pytree and can be traced and differentiated. This also avoids
+        :func:`jax.lax.switch` under :func:`jax.vmap`, which would evaluate every law for every
+        species.
+
         Args:
             temperature: Temperature (K)
             gas_species_activity: Gas species activity regulating dissolution reactions
@@ -467,8 +453,14 @@ class DissolutionNetwork(BaseReactionBlock):
         if self.number_reactions == 0:
             return jnp.zeros((*jnp.shape(temperature), 0), dtype=float)
 
-        species_ppmw_concentration: Float[Array, "... n_species"] = self.vmap_solubility(
-            jnp.arange(self.number_reactions), gas_species_activity, temperature, pressure, fO2
+        species_ppmw_concentration: Float[Array, "... n_reactions"] = jnp.stack(
+            [
+                species_.solubility.jax_concentration(
+                    gas_species_activity[..., index], temperature, pressure, fO2
+                )
+                for index, species_ in enumerate(self.species.reservoir_species)
+            ],
+            axis=-1,
         )
         species_ppmw_concentration = jnp.maximum(
             species_ppmw_concentration, DISSOLUTION_PPMW_FLOOR
