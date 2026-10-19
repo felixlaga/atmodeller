@@ -706,6 +706,51 @@ def perturb_around_converged(
     return cast(Array, jnp.clip(perturbed, lower, upper))
 
 
+def stop_gradient_arrays(tree: PyTree) -> PyTree:
+    """Stops gradients through every inexact array leaf of a pytree.
+
+    Args:
+        tree: Pytree, which may contain non-array leaves
+
+    Returns:
+        Pytree with the same structure, with gradients stopped through its inexact array leaves
+    """
+    dynamic, static = eqx.partition(tree, eqx.is_inexact_array)
+
+    return eqx.combine(lax.stop_gradient(dynamic), static)
+
+
+def implicit_polish(
+    solver_function: Callable,
+    solution: Float[Array, "... solution"],
+    success: Bool[Array, "..."],
+    parameters: PyTree,
+) -> Float[Array, "... solution"]:
+    """Re-solves from a converged solution to attach derivatives with respect to ``parameters``.
+
+    The solve starts at the root, so it converges in about one step and leaves the solution
+    unchanged to within the solver tolerance. Because :func:`optimistix.root_find` differentiates
+    with the implicit function theorem, the returned solution has the derivatives of the root with
+    respect to ``parameters``, in both forward and reverse mode, regardless of how the root was
+    found. This allows the root to be located by procedures that cannot be reverse-differentiated,
+    such as a :func:`jax.lax.while_loop`, provided they run on inputs with stopped gradients.
+
+    Args:
+        solver_function: Callable that performs a single (batched) solve. Must accept an initial
+            guess and a pytree of parameters, and return a :class:`MultiAttemptSolution`.
+        solution: Converged solution, which must not carry gradients
+        success: Boolean mask of the batch entries that converged. Other entries are returned
+            unchanged and have zero derivatives.
+        parameters: Parameters to differentiate with respect to
+
+    Returns:
+        Solution with derivatives with respect to ``parameters``
+    """
+    polished: MultiAttemptSolution = solver_function(solution, parameters)
+
+    return cast(Array, jnp.where(success[..., None], polished.value, solution))
+
+
 def make_batch_retry_solver(
     solver_function: Callable,
     objective_fn: Callable,
@@ -746,12 +791,19 @@ def make_batch_retry_solver(
         key: PRNGKeyArray,
         max_retries: int,
         tolerance: float = 1.0e-6,
+        implicit_gradient: bool = True,
     ) -> MultiAttemptSolution:
         """Batched solver with retry and perturbation for failed cases.
 
         Runs a batched solver function on a set of initial guesses. If some entries fail to
         converge, the function perturbs only the failed solutions (via ``perturb_fn``) and
         retries, up to ``max_retries``. Successfully converged solutions are kept fixed throughout.
+
+        The retries only locate the root, so they run with stopped gradients. With
+        ``implicit_gradient``, a final solve from the root (see :func:`implicit_polish`) attaches
+        the derivatives of the root with respect to ``parameters``, which makes the solver
+        differentiable in both forward and reverse mode. The retry history does not contribute to
+        the derivatives.
 
         Note:
             - ``solution.result``: solver's internal convergence classification
@@ -766,10 +818,17 @@ def make_batch_retry_solver(
             max_retries: Maximum number of solver retries per batch entry
             tolerance: Tolerance for the objective-based convergence validation performed after
                 each solve attempt. Defaults to ``1.0e-6``.
+            implicit_gradient: Whether to attach derivatives with respect to ``parameters`` with a
+                final solve. Set to ``False`` when the caller attaches them itself, for example
+                after a sequence of solves. Defaults to ``True``.
 
         Returns:
             :class:`MultiAttemptSolution` object
         """
+        # The retries only locate the root, so stop gradients to avoid differentiating through the
+        # while loop, which does not support reverse mode
+        initial_guess = lax.stop_gradient(initial_guess)
+        search_parameters: PyTree = stop_gradient_arrays(parameters)
 
         def body_fn(state: tuple[Array, Array, Array, Array, Array, Array]) -> tuple:
             """Performs one retry iteration for failed solutions."""
@@ -779,18 +838,20 @@ def make_batch_retry_solver(
 
             key, subkey = jax.random.split(key)
             perturbed: Float[Array, "... solution"] = perturb_fn(
-                solution, attempt, subkey, parameters
+                solution, attempt, subkey, search_parameters
             )
             new_initial_solution: Float[Array, "... solution"] = cast(
                 Array, jnp.where(failed_mask[..., None], perturbed, solution)
             )
 
-            new_sol: MultiAttemptSolution = solver_function(new_initial_solution, parameters)
+            new_sol: MultiAttemptSolution = solver_function(
+                new_initial_solution, search_parameters
+            )
             new_solution: Float[Array, "... solution"] = new_sol.value
             new_result_value: Integer[Array, "..."] = new_sol.result._value  # pyright: ignore
 
             new_converged: Bool[Array, "..."] = (
-                max_norm(objective_fn, new_solution, parameters) < tolerance
+                max_norm(objective_fn, new_solution, search_parameters) < tolerance
             )
             new_solver_success: Bool[Array, "..."] = new_sol.solver_success
             new_success: Bool[Array, "..."] = jnp.logical_and(new_converged, new_solver_success)
@@ -835,12 +896,12 @@ def make_batch_retry_solver(
             return continue_loop
 
         # Try first solution
-        first_sol: MultiAttemptSolution = solver_function(initial_guess, parameters)
+        first_sol: MultiAttemptSolution = solver_function(initial_guess, search_parameters)
         first_solution: Float[Array, "... solution"] = first_sol.value
 
         # Perform a per-system check
         first_converged: Bool[Array, "..."] = (
-            max_norm(objective_fn, first_solution, parameters) < tolerance
+            max_norm(objective_fn, first_solution, search_parameters) < tolerance
         )
         first_solver_success: Bool[Array, "..."] = first_sol.solver_success
         first_result_value: Integer[Array, "..."] = jnp.broadcast_to(
@@ -869,6 +930,11 @@ def make_batch_retry_solver(
         _, _, final_solution, final_result_value, final_num_steps, final_attempt = lax.while_loop(
             cond_fn, body_fn, initial_state
         )
+
+        if implicit_gradient:
+            final_solution = implicit_polish(
+                solver_function, final_solution, final_attempt > 0, parameters
+            )
 
         # Bundle the final outputs into a single optimistix Solution object
         final_result: optx.RESULTS = cast(

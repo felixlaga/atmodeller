@@ -66,6 +66,7 @@ from atmodeller.initial_solution import generate_initial_guess
 from atmodeller.jax_utils import (
     FloatArray,
     MultiAttemptSolution,
+    implicit_polish,
     perturb_around_converged,
     vmap_axes_spec,
 )
@@ -228,16 +229,24 @@ def make_batch_retry_solver_from_parameters(parameters: Parameters) -> Callable:
     return batch_retry_solver
 
 
-def make_tau_sweep_solver(batch_retry_solver: Callable) -> Callable:
+def make_tau_sweep_solver(batch_retry_solver: Callable, batch_solver: Callable) -> Callable:
     """Gets a solver function that performs a tau sweep for active stability systems.
 
-    Closes over the provided ``batch_retry_solver``. The returned callable first attempts a solve
-    at ``TAU``; if all batch elements converge it returns immediately, otherwise it runs a
-    full log-spaced sweep from ``TAU_MAX`` down to ``TAU`` for every batch element.
+    Closes over the provided ``batch_retry_solver`` and ``batch_solver``. The returned callable
+    first attempts a solve at ``TAU``; if all batch elements converge it returns immediately,
+    otherwise it runs a full log-spaced sweep from ``TAU_MAX`` down to ``TAU`` for every batch
+    element.
+
+    The solves in the sweep only locate the root. The derivatives of the solution are attached
+    once at the end by a final solve at ``TAU`` (see
+    :func:`~atmodeller.jax_utils.implicit_polish`), so they are those of the root at ``TAU`` and
+    do not depend on the sweep.
 
     Args:
         batch_retry_solver: Pre-built batch retry solver, e.g. from
             :func:`make_batch_retry_solver_from_parameters`
+        batch_solver: Pre-built batch solver, e.g. from :func:`make_batch_solver`, used for the
+            final solve that attaches the derivatives
 
     Returns:
         Callable that returns a :class:`atmodeller.containers.MultiAttemptSolution` object
@@ -299,6 +308,7 @@ def make_tau_sweep_solver(batch_retry_solver: Callable) -> Callable:
                 subkey,
                 parameters.solver_parameters.max_starts - 1,
                 parameters.solver_parameters.atol,
+                implicit_gradient=False,
             )
 
             new_solution: Float[Array, "... solution"] = new_sol.value
@@ -323,6 +333,7 @@ def make_tau_sweep_solver(batch_retry_solver: Callable) -> Callable:
             subkey,
             parameters.solver_parameters.max_starts - 1,
             parameters.solver_parameters.atol,
+            implicit_gradient=False,
         )
         first_solution: Float[Array, "... solution"] = first_sol.value
         # jax.debug.print("first_solution = {out}", out=first_solution)
@@ -372,6 +383,12 @@ def make_tau_sweep_solver(batch_retry_solver: Callable) -> Callable:
             operand=(key, first_solution, first_converged, first_steps),
         )
 
+        # The sweep finishes at TAU, so attach the derivatives of the root at TAU
+        polished_solution: Float[Array, "... solution"] = implicit_polish(
+            batch_solver, multi_sol.value, multi_sol.converged, initial_parameters
+        )
+        multi_sol = eqx.tree_at(lambda m: m.solution.value, multi_sol, polished_solution)
+
         return multi_sol
 
     return tau_sweep_solver
@@ -402,7 +419,9 @@ def make_solver(parameters: Parameters) -> Callable:
         Callable that returns a :class:`~atmodeller.output.Output` object
     """
     batch_retry_solver: Callable = make_batch_retry_solver_from_parameters(parameters)
-    tau_sweep_solver: Callable = make_tau_sweep_solver(batch_retry_solver)
+    tau_sweep_solver: Callable = make_tau_sweep_solver(
+        batch_retry_solver, make_batch_solver(parameters)
+    )
 
     # For debugging to determine if this function is jittable in isolation
     # @eqx.filter_jit
@@ -501,7 +520,9 @@ def make_solver_with_jit_single_path(parameters: Parameters) -> Callable:
         JIT-compiled callable that returns a :class:`~atmodeller.output.Output` object
     """
     batch_retry_solver: Callable = make_batch_retry_solver_from_parameters(parameters)
-    tau_sweep_solver: Callable = make_tau_sweep_solver(batch_retry_solver)
+    tau_sweep_solver: Callable = make_tau_sweep_solver(
+        batch_retry_solver, make_batch_solver(parameters)
+    )
 
     # Determine the solver path at construction time (Python-level evaluation).
     has_active_stability: bool = bool(
