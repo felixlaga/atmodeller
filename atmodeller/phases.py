@@ -52,7 +52,7 @@ outputs.
 """
 
 import logging
-from collections.abc import Callable, Iterable
+from collections.abc import Iterable
 from typing import TYPE_CHECKING, ClassVar, Generic, Self, TypeVar
 
 import equinox as eqx
@@ -64,7 +64,7 @@ from molmass import Formula
 from atmodeller import override
 from atmodeller.containers import ChemicalSpecies, SpeciesCollection, get_formula_matrix
 from atmodeller.interfaces import RedoxBufferProtocol, SpeciesProtocol, TSpecies_co
-from atmodeller.jax_utils import FloatArray, as_j64, masked_logsumexp, safe_exp, to_hashable
+from atmodeller.jax_utils import FloatArray, as_j64, masked_logsumexp, safe_exp
 from atmodeller.sci_utils import GAS_CONSTANT_BAR
 from atmodeller.thermodata._redox_buffers import IronWustiteBuffer
 
@@ -146,8 +146,6 @@ class BasePhase(eqx.Module, Generic[TSpecies_co]):
     to the phase's actual total mass"""
     background_molar_mass: FloatArray
     """Molar mass of the background (untracked) component"""
-    vmap_log_activity: Callable
-    """Vectorized log activity functions for each species in the phase"""
     output_class: AbstractClassVar[type["PhaseOutput"]]
     """Output class for the phase"""
 
@@ -162,22 +160,6 @@ class BasePhase(eqx.Module, Generic[TSpecies_co]):
         self.species = SpeciesCollection(species)
         self.background_mass = as_j64(background_mass)
         self.background_molar_mass = as_j64(background_molar_mass)
-
-        log_activity_funcs: list[Callable] = [
-            to_hashable(species_.activity.log_activity) for species_ in self.species
-        ]
-
-        def apply_log_activity(
-            index: Integer[Array, ""],
-            temperature: FloatArray,
-            pressure: FloatArray,
-            mole_fractions: FloatArray,
-        ) -> FloatArray:
-            return lax.switch(index, log_activity_funcs, temperature, pressure, mole_fractions)
-
-        self.vmap_log_activity = eqx.filter_vmap(
-            apply_log_activity, in_axes=(0, None, None, None), out_axes=-1
-        )
 
         logger.info(
             "Creating %s: %s",
@@ -234,6 +216,11 @@ class BasePhase(eqx.Module, Generic[TSpecies_co]):
     ) -> Float[Array, "... n_species"]:
         """Gets the log activity of each species in the phase.
 
+        Each activity model is applied directly, in a loop that is unrolled at trace time. The
+        models are read from :attr:`species` when called, so their parameters are part of the
+        pytree and can be traced and differentiated. This also avoids :func:`jax.lax.switch` under
+        :func:`jax.vmap`, which would evaluate every activity model for every species.
+
         Args:
             log_number_moles: Log number of moles of each species in the phase
             temperature: Temperature (K)
@@ -251,13 +238,21 @@ class BasePhase(eqx.Module, Generic[TSpecies_co]):
         # jax.debug.print("before log_activity: log_mole_fractions = {out}", out=log_mole_fractions)
 
         # Log activity coefficient of pure species
-        log_activity: Float[Array, "... n_species"] = self.vmap_log_activity(
-            jnp.arange(self.species.number_species),
-            temperature,
-            pressure,
-            jnp.exp(log_mole_fractions),
+        mole_fractions: Float[Array, "... n_species"] = jnp.exp(log_mole_fractions)
+        batch_shape: tuple[int, ...] = jnp.broadcast_shapes(
+            jnp.shape(temperature), jnp.shape(pressure), log_mole_fractions.shape[:-1]
         )
-        log_activity: Float[Array, "... n_species"] = log_activity + log_mole_fractions
+        log_activity: Float[Array, "... n_species"] = jnp.stack(
+            [
+                jnp.broadcast_to(
+                    species_.activity.log_activity(temperature, pressure, mole_fractions),
+                    batch_shape,
+                )
+                for species_ in self.species
+            ],
+            axis=-1,
+        )
+        log_activity = log_activity + log_mole_fractions
 
         return log_activity
 

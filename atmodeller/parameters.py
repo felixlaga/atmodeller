@@ -18,19 +18,18 @@ Note:
     ``update`` methods to preserve leaf signatures and avoid unnecessary retracing.
 """
 
-from collections.abc import Callable, Mapping
+from collections.abc import Mapping
 from typing import Literal, Optional, Self, cast
 
 import equinox as eqx
 import jax.numpy as jnp
 import jax.tree_util as jtu
-from jax import lax
-from jaxtyping import Array, ArrayLike, Bool, Float, Integer
+from jaxtyping import Array, ArrayLike, Bool, Float
 from molmass import Composition, CompositionItem, Formula
 
 from atmodeller.containers import SolverParameters, SpeciesCollection
 from atmodeller.interfaces import ActivityConstraintProtocol, SpeciesProtocol
-from atmodeller.jax_utils import FloatArray, as_j64, get_batch_size, stack_broadcast, to_hashable
+from atmodeller.jax_utils import FloatArray, as_j64, get_batch_size, stack_broadcast
 from atmodeller.reactions import ReactionSystem
 from atmodeller.state import BaseThermodynamicState
 
@@ -194,35 +193,16 @@ class ActivityConstraintSet(eqx.Module):
         )
         # jax.debug.print("broadcast_shape = {out}", out=broadcast_shape)
 
-        def make_broadcasting_log_activity(log_activity_func: Callable) -> Callable:
-            """Wrapper to ensure output is shape consistent for :func:`jax.lax.switch`"""
-
-            def wrapped_log_activity(temperature: ArrayLike, pressure: ArrayLike) -> Array:
-                out = log_activity_func(temperature, pressure)
-                return jnp.broadcast_to(out, broadcast_shape)
-
-            return wrapped_log_activity
-
-        activity_funcs: list[Callable] = [
-            to_hashable(make_broadcasting_log_activity(constraint.log_activity))
-            for constraint in self.ordered_constraints
-        ]
-        # jax.debug.print("activity_funcs = {out}", out=activity_funcs)
-
-        # TODO: this is likely legacy code, but in case something imminently breaks it is kept here
-        # for now - DJB, 15/04/2026.
-        # Temperature must be a float array to ensure branches have identical types
-        # temperature = as_j64(temperature)
-
-        def apply_activity(index: ArrayLike, temperature: ArrayLike, pressure: ArrayLike) -> Array:
-            # jax.debug.print("index = {out}", out=index)
-            return lax.switch(index, activity_funcs, temperature, pressure)
-
-        indices: Integer[Array, " species"] = jnp.arange(len(self.ordered_constraints))
-        vmap_activity: Callable = eqx.filter_vmap(
-            apply_activity, in_axes=(0, None, None), out_axes=-1
+        # Each constraint is applied directly, in a loop that is unrolled at trace time. This
+        # avoids jax.lax.switch under jax.vmap, which would evaluate every constraint for every
+        # species.
+        log_activity: Float[Array, "... species"] = jnp.stack(
+            [
+                jnp.broadcast_to(constraint.log_activity(temperature, pressure), broadcast_shape)
+                for constraint in self.ordered_constraints
+            ],
+            axis=-1,
         )
-        log_activity: Float[Array, "... species"] = vmap_activity(indices, temperature, pressure)
         # jax.debug.print("log_activity = {out}", out=log_activity)
 
         return log_activity
