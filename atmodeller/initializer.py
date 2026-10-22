@@ -598,9 +598,11 @@ class ElementPotentialInitializer(eqx.Module):
        the other becomes undersaturated.
     3. Every solve is an element sweep followed by damped Newton:
 
-       - *Sweep* (FastChem): ``sweeps`` Gauss-Seidel passes over the elements in order of
-         decreasing abundance, each solving its own element's mass balance exactly for
-         :math:`\lambda_e` (see below).
+       - *Sweep* (FastChem): up to ``sweeps`` Gauss-Seidel passes over the elements in order
+         of decreasing abundance, each solving its own element's mass balance exactly for
+         :math:`\lambda_e` (see below). Each 1-D Newton stops when its step is below
+         ``sweep_step_tolerance`` (at most ``sweep_iterations``), and the passes stop when no
+         :math:`\lambda_e` changes by more than ``sweep_tolerance``.
        - *Newton*: least-squares direction from the damped normal equations (see below),
          scaled so that no :math:`\lambda_e` and no carried species' log moles change by more
          than ``max_log_step``; stops when the residual norm is below ``residual_tolerance``, or
@@ -674,12 +676,13 @@ class ElementPotentialInitializer(eqx.Module):
 
     .. rubric:: JAX
 
-    The guess is computed per system and vmapped over the batch by the solver. The sweep, the switching passes and the 1-D Newton iterations have fixed counts
-    (``lax.fori_loop``); each Newton solve is a ``lax.while_loop``, which under vmap runs until
-    every system in the batch has converged (or hit the cap). The element order comes from
-    ``argsort`` of the (possibly traced) abundances. Gradients are stopped through the guess,
-    since the equilibrium solve is differentiated implicitly (and ``while_loop`` is not
-    reverse-differentiable).
+    The guess is computed per system and vmapped over the batch by the solver. The switching
+    passes and the loop over elements in a sweep have fixed counts (``lax.fori_loop``). The
+    sweep passes, the 1-D Newton iterations, and each Newton solve are ``lax.while_loop``, which
+    under vmap run until every system in the batch has converged (or hit the cap). The element
+    order comes from ``argsort`` of the (possibly traced) abundances. Gradients are stopped
+    through the guess, since the equilibrium solve is differentiated implicitly (and
+    ``while_loop`` is not reverse-differentiable).
 
     Args:
         newton_iterations: Maximum number of damped Newton iterations per solve. Defaults to
@@ -687,9 +690,14 @@ class ElementPotentialInitializer(eqx.Module):
         residual_tolerance: Residual norm at which a Newton solve stops. Defaults to ``1e-10``.
         max_log_step: Maximum change in the log moles of any carried species (or in any
             :math:`\lambda_e`) per Newton iteration. Defaults to ``2.0``.
-        sweeps: Gauss-Seidel element sweeps at the start of every Newton solve. Defaults to
-            ``3``.
-        sweep_iterations: 1-D Newton iterations per element in a sweep. Defaults to ``30``.
+        sweeps: Maximum number of Gauss-Seidel element sweeps at the start of every Newton
+            solve. Defaults to ``3``.
+        sweep_iterations: Maximum number of 1-D Newton iterations per element in a sweep.
+            Defaults to ``30``.
+        sweep_step_tolerance: Step size at which a 1-D Newton iteration in a sweep stops.
+            Defaults to ``1e-10``.
+        sweep_tolerance: Largest change in any :math:`\lambda_e` over a sweep below which the
+            sweeps stop. Defaults to ``1e-8``.
         damping: Damping :math:`\mu` of the normal equations for the Newton direction. Defaults
             to ``1e-6``.
     """
@@ -702,9 +710,14 @@ class ElementPotentialInitializer(eqx.Module):
     r"""Maximum change in the log moles of any carried species (or in any :math:`\lambda_e`) per
     Newton iteration"""
     sweeps: int = eqx.field(static=True, default=3)
-    """Gauss-Seidel element sweeps at the start of every Newton solve"""
+    """Maximum number of Gauss-Seidel element sweeps at the start of every Newton solve"""
     sweep_iterations: int = eqx.field(static=True, default=30)
-    """1-D Newton iterations per element in a sweep (each step is at most the log residual)"""
+    """Maximum number of 1-D Newton iterations per element in a sweep (each step is at most the
+    log residual)"""
+    sweep_step_tolerance: float = eqx.field(static=True, default=1e-10)
+    """Step size at which a 1-D Newton iteration in a sweep stops"""
+    sweep_tolerance: float = eqx.field(static=True, default=1e-8)
+    r"""Largest change in any :math:`\lambda_e` over a sweep below which the sweeps stop"""
     damping: float = eqx.field(static=True, default=1e-6)
     r"""Damping :math:`\mu` of the normal equations for the Newton direction, which keeps
     :math:`J^\mathsf{T} J + \mu^2 I` positive definite in degenerate steps"""
@@ -865,24 +878,44 @@ class ElementPotentialInitializer(eqx.Module):
                 # beta_s: ln n_s without its a_es lambda_e term
                 beta: Array = formula_matrix.T @ lam - gibbs + sigma - a_e * lam[e]
 
-                def newton(_, x):
+                def newton_step(x):
                     terms: Array = jnp.where(carrier, log_a[e] + a_e * x + beta, -jnp.inf)
                     log_g: Array = logsumexp(terms)
                     # f' = mean stoichiometry of the carriers, >= 1 (floor for non-integer
                     # formulae)
                     slope: Array = jnp.maximum(jnp.sum(jnp.exp(terms - log_g) * a_e), 1.0)
                     # Clipped only as a guard against extreme values
-                    return x - jnp.clip((log_g - log_target) / slope, -50.0, 50.0)
+                    return jnp.clip((log_g - log_target) / slope, -50.0, 50.0)
 
-                x: Array = lax.fori_loop(0, self.sweep_iterations, newton, lam[e])
+                # 1-D Newton until the step is below sweep_step_tolerance. The problem is convex
+                # with slope >= 1, so it converges in a few iterations; an element that is
+                # already solved stops after one.
+                def unfinished(carry):
+                    i, _, dx = carry
+                    return (i < self.sweep_iterations) & (jnp.abs(dx) > self.sweep_step_tolerance)
+
+                def newton(carry):
+                    i, x, _ = carry
+                    dx: Array = newton_step(x)
+                    return i + 1, x - dx, dx
+
+                x: Array = lax.while_loop(unfinished, newton, (0, lam[e], jnp.array(jnp.inf)))[1]
                 return lam.at[e].set(jnp.where(solvable & jnp.isfinite(x), x, lam[e]))
 
-            lam: Array = lax.fori_loop(
-                0,
-                self.sweeps,
-                lambda _, lam: lax.fori_loop(0, n_elements, element, lam),
-                z[:n_elements],
-            )
+            # Sweeps until no lambda_e changes by more than sweep_tolerance (at most sweeps), so a
+            # state that is already converged costs a single sweep
+            def sweeping(carry):
+                i, _, change = carry
+                return (i < self.sweeps) & (change > self.sweep_tolerance)
+
+            def one_sweep(carry):
+                i, lam, _ = carry
+                lam_new: Array = lax.fori_loop(0, n_elements, element, lam)
+                return i + 1, lam_new, jnp.max(jnp.abs(lam_new - lam))
+
+            lam: Array = lax.while_loop(
+                sweeping, one_sweep, (0, z[:n_elements], jnp.array(jnp.inf))
+            )[1]
             # Reset ln N_gas so that the normalised gas moles of STEP 3 equal the swept ones
             log_p_sum_new: Array = logsumexp(
                 jnp.where(gas, jnp.clip(formula_matrix.T @ lam - gibbs, -300.0, 300.0), -jnp.inf)
