@@ -33,7 +33,7 @@ import jax.numpy as jnp
 from jaxtyping import Array, ArrayLike, Float, PRNGKeyArray
 
 from atmodeller.containers import SolverParameters
-from atmodeller.initializer import HeuristicInitializer
+from atmodeller.initializer import ElementPotentialInitializer
 from atmodeller.initializer_base import InitializerProtocol
 from atmodeller.interfaces import ActivityConstraintProtocol
 from atmodeller.output import Output
@@ -57,7 +57,8 @@ class EquilibriumModel(eqx.Module):
         parameters: Fully prepared model parameters, including state, constraints, and solver
             settings.
         initializer: Initializer for the cold initial guess, used for batch elements without an
-            initial guess. Defaults to :class:`~atmodeller.initializer.HeuristicInitializer`.
+            initial guess. Defaults to
+            :class:`~atmodeller.initializer.ElementPotentialInitializer`.
     """
 
     parameters: Parameters
@@ -67,7 +68,7 @@ class EquilibriumModel(eqx.Module):
 
     def __init__(self, parameters: Parameters, initializer: InitializerProtocol | None = None):
         self.parameters = parameters
-        self.initializer = HeuristicInitializer() if initializer is None else initializer
+        self.initializer = ElementPotentialInitializer() if initializer is None else initializer
         self.solver = make_solver_with_jit(parameters, self.initializer)
         self.key = jax.random.PRNGKey(0)
 

@@ -9,10 +9,9 @@ This module provides the concrete implementations of
 :class:`~atmodeller.initializer_base.InitializerProtocol`:
 
 - :class:`HeuristicInitializer`: Uses the heuristic guess from
-  :func:`generate_auto_initial_guess`. This is the default initializer of
-  :class:`~atmodeller.classes.EquilibriumModel`.
+  :func:`generate_auto_initial_guess`
 - :class:`ElementPotentialInitializer`: Solves an ideal-gas equilibrium in the element
-  potentials
+  potentials. This is the default initializer of :class:`~atmodeller.classes.EquilibriumModel`.
 
 It also contains the heuristic used by :class:`HeuristicInitializer`. All heuristic functions are
 designed to be compatible with both :func:`jax.vmap`, as used by the engine and solver routines,
@@ -497,10 +496,7 @@ def generate_auto_initial_guess(parameters: Parameters) -> Float[Array, "... twi
 
 
 class HeuristicInitializer(eqx.Module):
-    """Initializer that uses the heuristic guess from :func:`generate_auto_initial_guess`
-
-    This is the default initializer of :class:`~atmodeller.classes.EquilibriumModel`.
-    """
+    """Initializer that uses the heuristic guess from :func:`generate_auto_initial_guess`"""
 
     def start(self, parameters: Parameters) -> Float[Array, " twice_species"]:
         """Cold initial guess from :func:`generate_auto_initial_guess`.
@@ -547,7 +543,8 @@ class ElementPotentialInitializer(eqx.Module):
     r"""Initializer that solves an ideal-gas equilibrium in the element potentials
 
     The cold guess is the solution of a simplified equilibrium problem: ideal gas, pure
-    condensates and standard Gibbs energies held fixed, solved for the element potentials.
+    condensates and standard Gibbs energies held fixed, solved for the element potentials. This
+    is the default initializer of :class:`~atmodeller.classes.EquilibriumModel`.
 
     Notation: :math:`\lambda_e` is the potential of element :math:`e` in units of :math:`RT`,
     :math:`a_{es}` the formula matrix (moles of element :math:`e` in species :math:`s`),
