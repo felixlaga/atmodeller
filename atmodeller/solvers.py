@@ -51,7 +51,7 @@ import jax.numpy as jnp
 import optimistix as optx
 from equinox._enum import EnumerationItem
 from jax import lax
-from jaxtyping import Array, Bool, Float, Integer, PRNGKeyArray
+from jaxtyping import Array, Bool, Float, Integer, PRNGKeyArray, PyTree
 from optimistix import Solution
 
 from atmodeller.constants import (
@@ -426,6 +426,8 @@ def make_solver(
     initializer_: InitializerProtocol = (
         WarmHeuristicInitializer() if initializer is None else initializer
     )
+    # Computed outside JIT, where the batched (JAX) and static (NumPy) leaves can be told apart
+    parameters_vmap_axes: PyTree = vmap_axes_spec(parameters)
     batch_retry_solver: Callable = make_batch_retry_solver_from_parameters(parameters)
     tau_sweep_solver: Callable = make_tau_sweep_solver(
         batch_retry_solver, make_batch_solver(parameters)
@@ -454,7 +456,9 @@ def make_solver(
         Returns:
             :class:`~atmodeller.output.Output` object
         """
-        base_solution_array = initializer_.iterate(parameters, base_solution_array)
+        base_solution_array = initializer_.iterate(
+            parameters, base_solution_array, parameters_vmap_axes
+        )
 
         # Define the condition to check if active stability is enabled
         condition: Bool[Array, ""] = jnp.any(parameters.reaction_system.species.active_stability)
@@ -538,6 +542,8 @@ def make_solver_with_jit_single_path(
     initializer_: InitializerProtocol = (
         WarmHeuristicInitializer() if initializer is None else initializer
     )
+    # Computed outside JIT, where the batched (JAX) and static (NumPy) leaves can be told apart
+    parameters_vmap_axes: PyTree = vmap_axes_spec(parameters)
     batch_retry_solver: Callable = make_batch_retry_solver_from_parameters(parameters)
     tau_sweep_solver: Callable = make_tau_sweep_solver(
         batch_retry_solver, make_batch_solver(parameters)
@@ -556,7 +562,9 @@ def make_solver_with_jit_single_path(
     ) -> Output:
         """Tau sweep solver path for systems with active stability species."""
         _, subkey = jax.random.split(key)
-        base_solution_array = initializer_.iterate(parameters, base_solution_array)
+        base_solution_array = initializer_.iterate(
+            parameters, base_solution_array, parameters_vmap_axes
+        )
         multi_sol = tau_sweep_solver(base_solution_array, parameters, subkey)
         return Output(parameters, multi_sol)
 
@@ -568,7 +576,9 @@ def make_solver_with_jit_single_path(
     ) -> Output:
         """Generic batch retry solver path for systems without active stability."""
         _, subkey = jax.random.split(key)
-        base_solution_array = initializer_.iterate(parameters, base_solution_array)
+        base_solution_array = initializer_.iterate(
+            parameters, base_solution_array, parameters_vmap_axes
+        )
         multi_sol = batch_retry_solver(
             base_solution_array,
             parameters,
@@ -607,6 +617,8 @@ def make_solver_with_jit_batch_only(
     initializer_: InitializerProtocol = (
         WarmHeuristicInitializer() if initializer is None else initializer
     )
+    # Computed outside JIT, where the batched (JAX) and static (NumPy) leaves can be told apart
+    parameters_vmap_axes: PyTree = vmap_axes_spec(parameters)
     batch_solver: Callable = make_batch_solver(parameters)
 
     @eqx.filter_jit
@@ -618,7 +630,9 @@ def make_solver_with_jit_batch_only(
         """Basic batch solver path without retry or tau-sweep enhancements."""
         # Note: key is unused in basic batch solver, but included for interface compatibility
         del key
-        base_solution_array = initializer_.iterate(parameters, base_solution_array)
+        base_solution_array = initializer_.iterate(
+            parameters, base_solution_array, parameters_vmap_axes
+        )
         multi_sol = batch_solver(base_solution_array, parameters)
         return Output(parameters, multi_sol)
 
