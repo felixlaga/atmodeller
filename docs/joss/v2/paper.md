@@ -495,7 +495,8 @@ JAX-based retrieval code ExoSkyrer [@Lee2026]. It has also been adopted as a
 chemistry module in `PROTEUS` [@Lichtenberg2021; @Nicholls2024; @Nicholls2025],
 a community-developed framework for modelling the coupled evolution of planetary
 interiors and atmospheres. `Atmodeller` grew out of `CALLIOPE`, a prototype
-volatile module previously used in `PROTEUS`.
+volatile module that originated in @Bower2022 and @Sossi2023 and was previously
+used in `PROTEUS`.
 
 Beyond these applications, `Atmodeller` brings to planetary science the
 vectorised and differentiable modelling that JAX has made practical in other
