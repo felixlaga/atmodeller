@@ -1,6 +1,7 @@
-# SPDX-FileCopyrightText: 2024 Dan J. Bower <dbower@eaps.ethz.ch>
+# SPDX-FileCopyrightText: 2024-2026 Dan J. Bower <dbower@eaps.ethz.ch>
+# SPDX-FileCopyrightText: 2024-2026 Paolo A. Sossi
 #
-# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-License-Identifier: Apache-2.0
 
 """Solubility laws for hydrogen species
 
