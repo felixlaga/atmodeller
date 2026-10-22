@@ -58,8 +58,10 @@ dependencies = [
     "optax==0.2.5; sys_platform == 'darwin' and platform_machine == 'x86_64'",
     "optax>0.2.5; sys_platform != 'darwin' or platform_machine != 'x86_64'",
     "optimistix>=0.1.0",
-    # Linear solves in the element-potential initial guess (also an optimistix dependency)
-    "lineax>=0.0.8",
+    # Linear solves in the element-potential initial guess (also an optimistix dependency).
+    # lineax 0.1.x requires jax>=0.10, so Intel macOS (jax pinned above) stays on 0.0.8
+    "lineax==0.0.8; sys_platform == 'darwin' and platform_machine == 'x86_64'",
+    "lineax>=0.1.1; sys_platform != 'darwin' or platform_machine != 'x86_64'",
     "equinox>=0.13.8",
 ]
 
