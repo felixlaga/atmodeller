@@ -24,6 +24,7 @@ both vectorized and batch-processing workflows throughout the codebase.
 import equinox as eqx
 import jax
 import jax.numpy as jnp
+import lineax as lx
 import numpy as np
 from jax import lax
 from jax.scipy.special import logsumexp
@@ -600,10 +601,10 @@ class ElementPotentialInitializer(eqx.Module):
        - *Sweep* (FastChem): ``sweeps`` Gauss-Seidel passes over the elements in order of
          decreasing abundance, each solving its own element's mass balance exactly for
          :math:`\lambda_e` (see below).
-       - *Newton*: least-squares direction (``lstsq`` of the Jacobian, since the fixed-shape
-         system has zero rows), scaled so that no :math:`\lambda_e` and no carried species' log
-         moles change by more than ``max_log_step``; stops when the residual norm is below
-         ``residual_tolerance``, or after ``newton_iterations``.
+       - *Newton*: least-squares direction from the damped normal equations (see below),
+         scaled so that no :math:`\lambda_e` and no carried species' log moles change by more
+         than ``max_log_step``; stops when the residual norm is below ``residual_tolerance``, or
+         after ``newton_iterations``.
 
     4. Absent condensates are given the solver's stability representation: the solver's
        residual for an absent condensate is :math:`-\nu (d_c + \zeta_c)`, so
@@ -649,6 +650,28 @@ class ElementPotentialInitializer(eqx.Module):
     swept ones. An element is skipped if it is not mass constrained, if :math:`C_e \geq b_e`, or
     if no gas species contains it. The sweep ignores every row other than the mass balances.
 
+    .. rubric:: Newton direction
+
+    The fixed-shape system has zero rows (inactive constraints, such as an element without a mass
+    balance or a gas without an imposed fugacity, which may differ between batch elements) and
+    zero columns (the slots of gas species, whose moles follow from :math:`\lambda`). The
+    Jacobian :math:`J` is therefore taken only over the *live* unknowns: :math:`\lambda`,
+    :math:`\ln N_\mathrm{gas}`, and the slots of condensates and dissolved species. These are
+    fixed by the species and found once, outside JIT. The direction solves the damped normal
+    equations
+
+    .. math::
+
+        (J^\mathsf{T} J + \mu^2 I)\, \Delta z = -J^\mathsf{T} r
+
+    by Cholesky factorisation (``damping`` is :math:`\mu`). Zero rows drop out of
+    :math:`J^\mathsf{T} J`, so every constraint row is kept and constraints can differ between
+    batch elements. The damping keeps the matrix positive definite in degenerate steps, such as an
+    element that is neither mass constrained nor fixed by a fugacity, or one whose carriers are all
+    clipped, where it gives a zero step, as the minimum-norm least-squares solution would. Compared
+    with a singular value decomposition of the full Jacobian, this needs fewer Jacobian columns and
+    a much cheaper factorisation.
+
     .. rubric:: JAX
 
     The guess is computed per system and vmapped over the batch by the solver. The sweep, the switching passes and the 1-D Newton iterations have fixed counts
@@ -667,6 +690,8 @@ class ElementPotentialInitializer(eqx.Module):
         sweeps: Gauss-Seidel element sweeps at the start of every Newton solve. Defaults to
             ``3``.
         sweep_iterations: 1-D Newton iterations per element in a sweep. Defaults to ``30``.
+        damping: Damping :math:`\mu` of the normal equations for the Newton direction. Defaults
+            to ``1e-6``.
     """
 
     newton_iterations: int = eqx.field(static=True, default=100)
@@ -680,6 +705,9 @@ class ElementPotentialInitializer(eqx.Module):
     """Gauss-Seidel element sweeps at the start of every Newton solve"""
     sweep_iterations: int = eqx.field(static=True, default=30)
     """1-D Newton iterations per element in a sweep (each step is at most the log residual)"""
+    damping: float = eqx.field(static=True, default=1e-6)
+    r"""Damping :math:`\mu` of the normal equations for the Newton direction, which keeps
+    :math:`J^\mathsf{T} J + \mu^2 I` positive definite in degenerate steps"""
 
     def start(self, parameters: Parameters) -> Float[Array, " twice_species"]:
         """Cold initial guess from the element-potential equilibrium.
@@ -730,6 +758,17 @@ class ElementPotentialInitializer(eqx.Module):
         constrained: Bool[Array, " n_elements"] = ~jnp.isnan(abundance) & (abundance > 0)
         log_b: Float[Array, " n_elements"] = jnp.log(jnp.where(constrained, abundance, 1.0))
         imposed: Bool[Array, " n_species"] = gas & parameters.activity_constraints.active()
+
+        # Live unknowns of z = [lambda, ln N_gas, slots] for the Newton direction: lambda,
+        # ln N_gas, and the slots of condensates and dissolved species (gas-species slots are
+        # never used, so their Jacobian columns are always zero). Built with NumPy from the gas
+        # mask (from the static phase structure) and in_reaction, so the indices are static
+        # under JIT; constraint-dependent masks are traced and are not used here.
+        gas_static: np.ndarray = np.asarray(reaction_system.phase_system.gas_species_mask)
+        slot_used: np.ndarray = (~gas_static & in_reaction) | (~in_reaction & has_dissolution)
+        live: np.ndarray = np.concatenate(
+            [np.arange(n_elements + 1), n_elements + 1 + np.flatnonzero(slot_used)]
+        )
 
         # -----------------------------------------------------------------------------------
         # STEP 2. Even-split start and standard Gibbs energies (at the start pressure, held
@@ -863,7 +902,24 @@ class ElementPotentialInitializer(eqx.Module):
 
             def newton(carry):
                 k, z, r = carry
-                dz: Array = jnp.linalg.lstsq(jax.jacfwd(residual)(z, present), -r)[0]
+                # Jacobian over the live unknowns only (the other entries of z are held fixed)
+                jacobian = lx.materialise(
+                    lx.JacobianLinearOperator(
+                        lambda z_live, _: residual(z.at[live].set(z_live), present), z[live]
+                    )
+                )
+                # Damped normal equations (J^T J + mu^2 I) dz = -J^T r, solved by Cholesky.
+                # Inactive constraint rows are zero and drop out of J^T J; the damping keeps the
+                # operator positive definite if a direction is undetermined in this step.
+                normal = jacobian.T @ jacobian + self.damping**2 * lx.IdentityLinearOperator(
+                    jax.eval_shape(lambda: z[live])
+                )
+                normal = lx.TaggedLinearOperator(normal, lx.positive_semidefinite_tag)
+                dz_live: Array = lx.linear_solve(
+                    normal, -jacobian.T.mv(r), lx.Cholesky(), throw=False
+                ).value
+                # Unused slots get no step
+                dz: Array = jnp.zeros_like(z).at[live].set(dz_live)
                 dz = jnp.where(jnp.isfinite(dz), dz, 0.0)
                 _, dlog_n = jax.jvp(lambda z_: log_moles(z_, present)[0], (z,), (dz,))
                 biggest: Array = jnp.maximum(
