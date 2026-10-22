@@ -62,7 +62,7 @@ from atmodeller.constants import (
     TAU_NUM,
 )
 from atmodeller.engine import compute_implied_log_stability, objective_function
-from atmodeller.initial_solution import generate_initial_guess
+from atmodeller.initial_solution import InitializerProtocol, WarmHeuristicInitializer
 from atmodeller.jax_utils import (
     FloatArray,
     MultiAttemptSolution,
@@ -394,7 +394,9 @@ def make_tau_sweep_solver(batch_retry_solver: Callable, batch_solver: Callable) 
     return tau_sweep_solver
 
 
-def make_solver(parameters: Parameters) -> Callable:
+def make_solver(
+    parameters: Parameters, initializer: InitializerProtocol | None = None
+) -> Callable:
     """General assembly function that constructs and returns the dual-path solver.
 
     Builds a :func:`make_batch_retry_solver_from_parameters` and a tau sweep solver from
@@ -414,10 +416,15 @@ def make_solver(parameters: Parameters) -> Callable:
     Args:
         parameters: Parameters used to derive the vmapping axes and build the sub-solvers at
             construction time
+        initializer: Initializer for the initial guess. Defaults to
+            :class:`~atmodeller.initial_solution.WarmHeuristicInitializer`.
 
     Returns:
         Callable that returns a :class:`~atmodeller.output.Output` object
     """
+    initializer_: InitializerProtocol = (
+        WarmHeuristicInitializer() if initializer is None else initializer
+    )
     batch_retry_solver: Callable = make_batch_retry_solver_from_parameters(parameters)
     tau_sweep_solver: Callable = make_tau_sweep_solver(
         batch_retry_solver, make_batch_solver(parameters)
@@ -446,7 +453,7 @@ def make_solver(parameters: Parameters) -> Callable:
         Returns:
             :class:`~atmodeller.output.Output` object
         """
-        base_solution_array = generate_initial_guess(parameters, base_solution_array)
+        base_solution_array = initializer_.iterate(parameters, base_solution_array)
 
         # Define the condition to check if active stability is enabled
         condition: Bool[Array, ""] = jnp.any(parameters.reaction_system.species.active_stability)
@@ -478,7 +485,9 @@ def make_solver(parameters: Parameters) -> Callable:
 
 # For testing and debugging
 # @eqx.debug.assert_max_traces(max_traces=1)
-def make_solver_with_jit_dual_path(parameters: Parameters) -> Callable:
+def make_solver_with_jit_dual_path(
+    parameters: Parameters, initializer: InitializerProtocol | None = None
+) -> Callable:
     """Gets a JIT-compiled solver with both runtime branches compiled.
 
     A convenience wrapper around :func:`make_solver` that applies :func:`equinox.filter_jit` to
@@ -491,11 +500,13 @@ def make_solver_with_jit_dual_path(parameters: Parameters) -> Callable:
     Args:
         parameters: Parameters used to derive the vmapping axes and build the sub-solvers at
             construction time
+        initializer: Initializer for the initial guess. Defaults to
+            :class:`~atmodeller.initial_solution.WarmHeuristicInitializer`.
 
     Returns:
         Callable that returns a :class:`~atmodeller.output.Output` object
     """
-    dual_path_solver: Callable = make_solver(parameters)
+    dual_path_solver: Callable = make_solver(parameters, initializer)
 
     return eqx.filter_jit(dual_path_solver)
 
@@ -503,7 +514,9 @@ def make_solver_with_jit_dual_path(parameters: Parameters) -> Callable:
 # Useful for debugging to ensure that the solver is not being re-compiled unnecessarily during
 # development iterations
 # @eqx.debug.assert_max_traces(max_traces=5)
-def make_solver_with_jit_single_path(parameters: Parameters) -> Callable:
+def make_solver_with_jit_single_path(
+    parameters: Parameters, initializer: InitializerProtocol | None = None
+) -> Callable:
     """Gets a JIT-compiled solver with optimized compilation by eliminating unused branches.
 
     This function inspects ``active_stability`` at construction time (Python-level) to determine
@@ -515,10 +528,15 @@ def make_solver_with_jit_single_path(parameters: Parameters) -> Callable:
         parameters: Parameters used to derive the vmapping axes and build the sub-solvers at
             construction time. The ``active_stability`` structure is inspected to choose the
             solver path.
+        initializer: Initializer for the initial guess. Defaults to
+            :class:`~atmodeller.initial_solution.WarmHeuristicInitializer`.
 
     Returns:
         JIT-compiled callable that returns a :class:`~atmodeller.output.Output` object
     """
+    initializer_: InitializerProtocol = (
+        WarmHeuristicInitializer() if initializer is None else initializer
+    )
     batch_retry_solver: Callable = make_batch_retry_solver_from_parameters(parameters)
     tau_sweep_solver: Callable = make_tau_sweep_solver(
         batch_retry_solver, make_batch_solver(parameters)
@@ -537,7 +555,7 @@ def make_solver_with_jit_single_path(parameters: Parameters) -> Callable:
     ) -> Output:
         """Tau sweep solver path for systems with active stability species."""
         _, subkey = jax.random.split(key)
-        base_solution_array = generate_initial_guess(parameters, base_solution_array)
+        base_solution_array = initializer_.iterate(parameters, base_solution_array)
         multi_sol = tau_sweep_solver(base_solution_array, parameters, subkey)
         return Output(parameters, multi_sol)
 
@@ -549,7 +567,7 @@ def make_solver_with_jit_single_path(parameters: Parameters) -> Callable:
     ) -> Output:
         """Generic batch retry solver path for systems without active stability."""
         _, subkey = jax.random.split(key)
-        base_solution_array = generate_initial_guess(parameters, base_solution_array)
+        base_solution_array = initializer_.iterate(parameters, base_solution_array)
         multi_sol = batch_retry_solver(
             base_solution_array,
             parameters,
@@ -563,7 +581,9 @@ def make_solver_with_jit_single_path(parameters: Parameters) -> Callable:
     return solver_with_stability if has_active_stability else solver_without_stability
 
 
-def make_solver_with_jit_batch_only(parameters: Parameters) -> Callable:
+def make_solver_with_jit_batch_only(
+    parameters: Parameters, initializer: InitializerProtocol | None = None
+) -> Callable:
     """Gets a JIT-compiled solver with minimal compilation overhead.
 
     This is the fastest compilation option: it uses only :func:`make_batch_solver` without
@@ -577,10 +597,15 @@ def make_solver_with_jit_batch_only(parameters: Parameters) -> Callable:
 
     Args:
         parameters: Parameters used to derive the vmapping axes at construction time
+        initializer: Initializer for the initial guess. Defaults to
+            :class:`~atmodeller.initial_solution.WarmHeuristicInitializer`.
 
     Returns:
         JIT-compiled callable that returns a :class:`~atmodeller.output.Output` object
     """
+    initializer_: InitializerProtocol = (
+        WarmHeuristicInitializer() if initializer is None else initializer
+    )
     batch_solver: Callable = make_batch_solver(parameters)
 
     @eqx.filter_jit
@@ -592,7 +617,7 @@ def make_solver_with_jit_batch_only(parameters: Parameters) -> Callable:
         """Basic batch solver path without retry or tau-sweep enhancements."""
         # Note: key is unused in basic batch solver, but included for interface compatibility
         del key
-        base_solution_array = generate_initial_guess(parameters, base_solution_array)
+        base_solution_array = initializer_.iterate(parameters, base_solution_array)
         multi_sol = batch_solver(base_solution_array, parameters)
         return Output(parameters, multi_sol)
 

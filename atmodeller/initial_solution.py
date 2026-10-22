@@ -12,6 +12,8 @@ ensures seamless integration with both vectorized and batch-processing workflows
 codebase.
 """
 
+from typing import Protocol, runtime_checkable
+
 import equinox as eqx
 import jax.numpy as jnp
 from jax import lax
@@ -484,34 +486,167 @@ def generate_auto_initial_guess(parameters: Parameters) -> Float[Array, "... twi
     return result
 
 
-def generate_initial_guess(
-    parameters: Parameters, initial_guess: Float[Array, "... twice_species"]
-) -> Float[Array, "... twice_species"]:
-    """Generates an initial guess for the solution vector.
+@runtime_checkable
+class InitializerProtocol(Protocol):
+    """Protocol for an initializer that provides the initial guess for the solver
 
-    This function checks the provided ``initial_guess`` for NaN values. If any NaNs are present for
-    a given batch element, an automatic initial guess is generated for that element using
+    An initializer separates the first (cold) guess from subsequent (warm) guesses. Whether a
+    previous solution is available is determined by the data rather than by stored state: rows of
+    ``previous`` that contain ``NaN`` have no previous solution. Implementations should be
+    stateless :class:`equinox.Module` instances without array fields so that they are static
+    under JIT and reusing an initializer never triggers retracing.
+    """
+
+    def start(self, parameters: Parameters) -> Float[Array, "... twice_species"]:
+        """Cold initial guess that does not use a previous solution.
+
+        Args:
+            parameters: Parameters
+
+        Returns:
+            Concatenated array of [log_number_moles, log_stability]
+        """
+        ...
+
+    def iterate(
+        self, parameters: Parameters, previous: Float[Array, "... twice_species"]
+    ) -> Float[Array, "... twice_species"]:
+        """Initial guess given a previous solution.
+
+        Args:
+            parameters: Parameters
+            previous: Previous solution. Rows with ``NaN`` have no previous solution.
+
+        Returns:
+            Concatenated array of [log_number_moles, log_stability]
+        """
+        ...
+
+
+class HeuristicInitializer(eqx.Module):
+    """Initializer that always uses the automatic heuristic guess
+
+    The previous solution is ignored, so every solve starts from
     :func:`generate_auto_initial_guess`.
+    """
+
+    def start(self, parameters: Parameters) -> Float[Array, "... twice_species"]:
+        """Cold initial guess from :func:`generate_auto_initial_guess`.
+
+        Args:
+            parameters: Parameters
+
+        Returns:
+            Concatenated array of [log_number_moles, log_stability]
+        """
+        return generate_auto_initial_guess(parameters)
+
+    def iterate(
+        self, parameters: Parameters, previous: Float[Array, "... twice_species"]
+    ) -> Float[Array, "... twice_species"]:
+        """Initial guess that ignores the previous solution.
+
+        Args:
+            parameters: Parameters
+            previous: Previous solution, which is ignored except for its shape
+
+        Returns:
+            Concatenated array of [log_number_moles, log_stability]
+        """
+        return jnp.broadcast_to(self.start(parameters), previous.shape)
+
+
+class WarmStartInitializer(eqx.Module):
+    """Initializer that always uses the previous solution
+
+    There is no cold path, so a previous solution must be provided for every batch element.
+    """
+
+    def start(self, parameters: Parameters) -> Float[Array, "... twice_species"]:
+        """Not available, since a warm start requires a previous solution.
+
+        Raises:
+            NotImplementedError: Always
+        """
+        raise NotImplementedError(
+            f"{type(self).__name__} has no cold start; provide a previous solution"
+        )
+
+    def iterate(
+        self, parameters: Parameters, previous: Float[Array, "... twice_species"]
+    ) -> Float[Array, "... twice_species"]:
+        """Initial guess from the previous solution.
+
+        Args:
+            parameters: Parameters (unused)
+            previous: Previous solution
+
+        Returns:
+            The previous solution
+        """
+        del parameters
+
+        return eqx.error_if(
+            previous,
+            jnp.any(jnp.isnan(previous)),
+            "Warm start requires a previous solution without NaNs.",
+        )
+
+
+class WarmHeuristicInitializer(eqx.Module):
+    """Initializer that uses the previous solution where available and a cold guess otherwise
+
+    For each batch element, the previous solution is used unless it contains ``NaN``, in which
+    case the cold guess from ``cold`` is used. The cold guess is only evaluated if at least one
+    batch element requires it.
 
     Args:
-        parameters: Parameters
-
-    Returns:
-        Concatenated array of [log_number_moles, log_stability]
+        cold: Initializer that provides the cold guess. Defaults to
+            :class:`HeuristicInitializer`.
     """
-    auto_initial_guess: Float[Array, "... twice_species"] = generate_auto_initial_guess(parameters)
 
-    # Mask: True for rows where any entry is NaN along the last axis
-    nan_mask: Bool[Array, " ... 1"] = jnp.any(jnp.isnan(initial_guess), axis=-1, keepdims=True)
-    # Select auto_initial_guess for rows with any NaN, otherwise keep initial_guess
-    result: Float[Array, "... twice_species"] = jnp.where(
-        nan_mask, auto_initial_guess, initial_guess
-    )
+    cold: InitializerProtocol = HeuristicInitializer()
 
-    result = eqx.error_if(
-        result,
-        jnp.any(jnp.isnan(result)),
-        "NaN encountered in initial guess, which will break the solver.",
-    )
+    def start(self, parameters: Parameters) -> Float[Array, "... twice_species"]:
+        """Cold initial guess from ``cold``.
 
-    return result
+        Args:
+            parameters: Parameters
+
+        Returns:
+            Concatenated array of [log_number_moles, log_stability]
+        """
+        return self.cold.start(parameters)
+
+    def iterate(
+        self, parameters: Parameters, previous: Float[Array, "... twice_species"]
+    ) -> Float[Array, "... twice_species"]:
+        """Initial guess from the previous solution, with a cold guess for rows containing NaN.
+
+        Args:
+            parameters: Parameters
+            previous: Previous solution. Rows with ``NaN`` have no previous solution.
+
+        Returns:
+            Concatenated array of [log_number_moles, log_stability]
+        """
+        # Mask: True for rows where any entry is NaN along the last axis
+        nan_mask: Bool[Array, "... 1"] = jnp.any(jnp.isnan(previous), axis=-1, keepdims=True)
+
+        def _fill_from_cold(previous: Float[Array, "... twice_species"]) -> Array:
+            """Selects the cold guess for rows with any NaN, otherwise keeps the previous row."""
+            return jnp.where(nan_mask, self.start(parameters), previous)
+
+        # The guess is generated on explicitly batched parameters outside vmap, so the predicate is
+        # a scalar and the cold guess is skipped when every row has a previous solution.
+        result: Float[Array, "... twice_species"] = lax.cond(
+            jnp.any(nan_mask), _fill_from_cold, lambda previous: previous, previous
+        )
+
+        result = eqx.error_if(
+            result,
+            jnp.any(jnp.isnan(result)),
+            "NaN encountered in initial guess, which will break the solver.",
+        )
+
+        return result

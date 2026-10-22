@@ -32,6 +32,7 @@ import jax.numpy as jnp
 from jaxtyping import Array, ArrayLike, Float, PRNGKeyArray
 
 from atmodeller.containers import SolverParameters
+from atmodeller.initial_solution import InitializerProtocol, WarmHeuristicInitializer
 from atmodeller.interfaces import ActivityConstraintProtocol
 from atmodeller.output import Output
 from atmodeller.parameters import Parameters
@@ -46,21 +47,27 @@ SolverCallable = Callable[
 class EquilibriumModel(eqx.Module):
     """Main user-facing API to run equilibrium calculations
 
-    The model bundles immutable :class:`~atmodeller.parameters.Parameters`, a compiled solver
-    closure, and a random key used by stochastic solver routines.
+    The model bundles immutable :class:`~atmodeller.parameters.Parameters`, an initializer for
+    the solver's initial guess, a compiled solver closure, and a random key used by stochastic
+    solver routines.
 
     Args:
         parameters: Fully prepared model parameters, including state, constraints, and solver
             settings.
+        initializer: Initializer for the initial guess. Defaults to
+            :class:`~atmodeller.initial_solution.WarmHeuristicInitializer`, which uses the guess
+            passed to :meth:`solve` where available and the automatic heuristic otherwise.
     """
 
     parameters: Parameters
+    initializer: InitializerProtocol = eqx.field(static=True)
     solver: SolverCallable
     key: PRNGKeyArray
 
-    def __init__(self, parameters: Parameters):
+    def __init__(self, parameters: Parameters, initializer: InitializerProtocol | None = None):
         self.parameters = parameters
-        self.solver = make_solver_with_jit(parameters)
+        self.initializer = WarmHeuristicInitializer() if initializer is None else initializer
+        self.solver = make_solver_with_jit(parameters, self.initializer)
         self.key = jax.random.PRNGKey(0)
 
     @classmethod
@@ -72,6 +79,7 @@ class EquilibriumModel(eqx.Module):
         mass_constraints: Mapping[str, ArrayLike] | None = None,
         mass_units: Literal["mass", "moles"] = "mass",
         solver_parameters: SolverParameters | None = None,
+        initializer: InitializerProtocol | None = None,
     ) -> Self:
         """Builds a model by constructing :class:`~atmodeller.parameters.Parameters` internally.
 
@@ -85,6 +93,7 @@ class EquilibriumModel(eqx.Module):
             mass_constraints: Optional mass-constraint mapping. Defaults to ``None``.
             mass_units: Units used for ``mass_constraints``. Defaults to ``"mass"``.
             solver_parameters: Optional solver parameter object. Defaults to ``None``.
+            initializer: Optional initializer for the initial guess. Defaults to ``None``.
 
         Returns:
             A new :class:`EquilibriumModel` instance
@@ -97,7 +106,7 @@ class EquilibriumModel(eqx.Module):
             solver_parameters=solver_parameters,
         )
 
-        return cls(parameters)
+        return cls(parameters, initializer)
 
     def solve(self, base_solution_array: Float[Array, "#n_batch twice_species"]) -> Output:
         """Runs the solver and returns the output state.
@@ -110,7 +119,9 @@ class EquilibriumModel(eqx.Module):
 
         Args:
             base_solution_array: Initial guess for the solver, typically a broadcasted array of
-                log number moles and log stabilities.
+                log number moles and log stabilities. It is passed to the model's initializer,
+                which by default uses it for rows without ``NaN`` and the automatic heuristic
+                otherwise.
 
         Returns:
             An :class:`~atmodeller.output.Output` instance
@@ -148,7 +159,7 @@ class EquilibriumModel(eqx.Module):
         Returns:
             A new instance of :class:`EquilibriumModel` with a rebuilt solver
         """
-        solver_rebuilt: SolverCallable = make_solver_with_jit(self.parameters)
+        solver_rebuilt: SolverCallable = make_solver_with_jit(self.parameters, self.initializer)
         model_rebuilt: EquilibriumModel = eqx.tree_at(lambda m: m.solver, self, solver_rebuilt)
 
         return cast(Self, model_rebuilt)
