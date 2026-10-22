@@ -39,21 +39,23 @@ bibliography: paper.bib
 
 Throughout the formation and evolution of rocky and volatile-rich planets,
 volatiles are exchanged between planetary reservoirs such as the atmosphere and
-the mantle. Gas species react with one another, dissolve into molten interiors,
-and may condense, and at high temperatures and pressures they behave
-non-ideally. Modelling these processes requires a self-consistent treatment of
-chemical equilibrium and mass balance. `Atmodeller` is a Python library built on
-JAX [@jax2018github] that performs these calculations. It combines the
-convenience of a high-level language with just-in-time compilation, automatic
-vectorisation, and automatic differentiation. The library is modular: its
-subpackages for solubility laws, equations of state, and thermodynamic data can
-each be used on their own, without solving a full chemical system. Applications
-include the magma ocean stage of young planets, volcanic outgassing on Earth and
-other Solar System bodies, and interior--atmosphere coupling on exoplanets such
-as super-Earths and sub-Neptunes [@Bower2025]. Because its core is a general
-thermodynamic solver, `Atmodeller` can also be used for laboratory
-geochemistry, for example to calculate the equilibrium gas composition in a
-gas-mixing furnace.
+the mantle, notably through volcanic outgassing. Gas species react with one
+another, dissolve into molten silicates, and may condense, and at high
+temperatures and pressures they behave non-ideally. Modelling these processes
+requires a self-consistent treatment of chemical equilibrium and mass balance.
+`Atmodeller` is a Python library built on JAX [@jax2018github] that performs
+these calculations. It combines the convenience of a high-level language with
+just-in-time compilation, automatic vectorisation, and automatic
+differentiation. The library is modular: its subpackages for solubility laws
+that describe partitioning of volatile species between vapour and liquid,
+equations of state that capture non-ideal gas behaviour, and thermodynamic data
+for both gaseous and condensed phases can each be used on their own.
+Applications include the magma ocean stage of young planets, volcanic outgassing
+on Earth and other Solar System bodies, and interior--atmosphere coupling on
+exoplanets such as super-Earths and sub-Neptunes [@Bower2025]. Because its
+engine is a general thermodynamic solver, `Atmodeller` can also be used for
+laboratory geochemistry, for example to calculate the equilibrium gas
+composition in a gas-mixing furnace and the stability of pure condensed phases.
 
 # Statement of need
 
@@ -75,38 +77,39 @@ gas-mixing furnace.
 Calculating how volatiles partition between a planet's interior and atmosphere
 requires solving gas-phase speciation, condensate stability, and volatile
 solubility in melt together, often at pressures where gases are far from ideal.
-Existing equilibrium codes typically address only part of this problem (see
-State of the Field). `Atmodeller` solves it within one framework and is designed
-for researchers in planetary science, exoplanet science, and geochemistry who
-need such calculations, either standalone or as one component of a larger model.
-Its class-based interface, built with Equinox [@kidger2021equinox], lets users
-assemble a model from the species, solubility laws, and equations of state they
-require. A model can represent a particular planet, specified by its mass and
-radius, or be solved per kilogram of material when no specific planet is in
-mind. Because these components are interchangeable and the reaction network is
-derived automatically from the chosen species, a hierarchy of models of
-increasing complexity can be built with the same code. This modularity suits
-both rapid exploration and coupling to other numerical frameworks, which
-commonly use Python as the interface between components. The high-level
-interface and example notebooks also make `Atmodeller` suitable for teaching.
+Existing equilibrium codes typically address only parts of this problem (see
+State of the Field). `Atmodeller` solves a variety of problems within one
+framework and is designed for researchers in planetary science, exoplanet
+science, and geochemistry who need such calculations, either standalone or as
+one component of a larger model. Its class-based interface, built with Equinox
+[@kidger2021equinox], lets users assemble a model from the species, solubility
+laws, and equations of state they require. A model can represent a particular
+planet, specified by its mass and radius, or be solved per kilogram of material
+at a given pressure-temperature. Because these components are interchangeable
+and the reaction network is derived automatically from the user defined species,
+a hierarchy of models of increasing complexity can be built with the same code.
+This modularity suits both rapid exploration and coupling to other numerical
+frameworks, which commonly use Python as the interface between components. The
+high-level interface and example notebooks also make `Atmodeller` suitable for
+teaching.
 
 Thermodynamic data, solubility laws, and equations of state for planetary
-conditions are often uncertain, calibrated over limited ranges, and revised as
-new experiments become available. Exploring how the choice of model affects the
-results therefore requires a transparent and flexible framework, in which users
-can select between alternative models and modify or add their own. In
-`Atmodeller`, each model is documented with its original source and calibration
-range, and new models can be added by implementing a short protocol, often a
-single method.
+conditions are often uncertain, calibrated over limited
+pressure--temperature--composition ranges, and revised as new experiments become
+available. Exploring how the choice of model affects the results therefore
+requires a transparent and flexible framework, in which users can select between
+alternative models and modify or add their own. In `Atmodeller`, each model is
+documented with its original source and calibration range, and new models can be
+added by implementing a short protocol, often a single method.
 
 Because `Atmodeller` is built on JAX, the equilibrium solution, such as the
 number of moles of each species, can be differentiated automatically with
 respect to the input parameters in both forward and reverse mode. The
 derivatives are obtained from the implicit function theorem at the converged
-solution, so they are exact and independent of the iterations the solver took
-to find it. Forward mode efficiently gives the full Jacobian with respect to a
-few inputs, which can be supplied to an outer solver to help solve coupled or
-nested models quickly and robustly. Reverse mode gives the gradient of a scalar
+solution, so they are exact and independent of the iterations the solver took to
+find it. Forward mode efficiently gives the full Jacobian with respect to a few
+inputs, which can be supplied to an outer solver to help solve coupled or nested
+models quickly and robustly. Reverse mode gives the gradient of a scalar
 objective, such as a likelihood, with respect to many inputs at a cost
 comparable to a single solve.
 
@@ -124,7 +127,7 @@ make parameter sweeps, Monte Carlo sampling, and Bayesian parameter estimation
 practical, including with gradient-based samplers such as Hamiltonian Monte
 Carlo.
 
-# State of the Field
+# State of the field
 % Authors must describe how their software compares to other commonly-used
 % packages in the research area. When related tools exist, authors must provide
 % a clear “build vs. contribute” justification explaining:
@@ -142,34 +145,44 @@ Chemical equilibrium codes used in planetary science generally originate from
 one of two communities, astrophysics or the Earth sciences, and their design
 reflects the priorities of each. Codes from astrophysics are built around
 gas-phase thermochemistry for the low-pressure environments of stellar and
-planetary atmospheres, and therefore typically assume ideal-gas behaviour. Codes
-from the Earth sciences instead emphasise condensed phases and solutions, and
-describe fluid behaviour at the high pressures and temperatures of planetary
-interiors. `Atmodeller` bridges these two traditions, and we compare it with
+planetary atmospheres, and therefore typically assume ideal-gas behaviour.
+Non-ideal equations of state are well established in astrophysics, but they are
+mostly used outside chemical equilibrium calculations, such as for computing the
+structure of stars and gas giants under extreme interior conditions. The stellar
+evolution code `MESA` [@Paxton2011; @Jermyn2023], for example, blends several
+such equations of state, including one for dense H--He mixtures [@Chabrier2021],
+but does not solve for chemical speciation. By contrast, codes from the Earth
+sciences emphasise condensed phases and solutions, and describe fluid behaviour
+at the high pressures and temperatures of planetary interiors, but they are
+typically calibrated for Earth-like compositions and pressure--temperature
+conditions. `Atmodeller` bridges these two traditions, and we compare it with
 representative codes from each below. Rather than survey the full capabilities
 of each code, we focus on the features most relevant to `Atmodeller`:
 
 - `CEA` [@Gordon1994] minimises the Gibbs energy of multiphase systems and
-  remains widely used, including for lava-world atmospheres [@Charnoz2023],
-  while Python codes such as `TEA` [@Blecic2016] apply the same approach to the
-  gas phase alone. These codes assume ideal-gas behaviour, treat condensates as
-  pure phases, and do not include volatile dissolution in melt.
+  remains widely used, including for lava-world atmospheres for which gases can
+  be approximated as ideal [@Charnoz2023], while Python codes such as `TEA`
+  [@Blecic2016] apply the same approach to the gas phase alone. These codes
+  assume ideal-gas behaviour, treat condensates as pure phases, and do not
+  include volatile dissolution in melt.
 - `GGchem` [@Woitke2018] provides equilibrium constants for around 550 molecules
-  and Gibbs free energies for about 250 condensates, including 38 liquids, valid
-  down to 100 K. It assumes ideal-gas behaviour, does not include volatile
-  dissolution in melt, and selects the stable condensate set using
-  supersaturation monitoring with hand-crafted criteria, which requires
-  continuation from high to low temperature for robust convergence.
+  and Gibbs free energies for about 250 condensates, including 38 liquids, with
+  data valid down to 100 K. It assumes ideal-gas behaviour, considers only pure
+  condensates, and does not include volatile dissolution in silicate melt. The
+  stable condensate set is selected by monitoring supersaturation, which
+  converges most reliably when continued from high to low temperature.
 - `FastChem Cond` [@Kitzmann2024] extends the gas-phase chemistry of `FastChem`
-  with about 290 liquid and solid condensates, and determines condensate
+  with several hundred liquid and solid condensates, and determines condensate
   stability using the approach of @Leal2016. Candidate condensates are
   preselected as those with activities above unity in the gas-phase solution,
   and the gas-phase and condensate systems are solved alternately until they
   converge, rather than as a single system. It assumes ideal-gas behaviour,
   considers only pure condensates, and does not include volatile dissolution in
-  melt.
+  silicate melt.
 - `MAGMA` [@Fegley1987; @Schaefer2004] has long been the reference code for
-  computing the vapour above silicate melts, using an ideal mixing of complex
+  computing the composition and speciation of the vapour phase in equilibrium
+  with volatile-free silicate melts, using an ideal mixing of complex
+  % Paolo comment here was empty
   components model for melt activities and solving for the oxygen fugacity by
   mass balance. It has never undergone an official open-source release.
 - `VapoRock` [@Wolf2023] computes the partial pressures of 34 gas species in the
@@ -187,9 +200,9 @@ of each code, we focus on the features most relevant to `Atmodeller`:
   volatile-bearing atmospheres by coupling the vaporisation reactions to
   `FastChem` gas-phase chemistry for C, H, N, S, and P, using nested
   `scipy.optimize.fsolve` iterations to reconcile the oxygen partial pressures
-  of the melt and atmosphere. It assumes ideal-gas behaviour, does not
-  include volatile dissolution in melt or condensation, and assumes that all
-  atmospheric oxygen derives from vaporisation of the melt.
+  of the melt and atmosphere. It assumes ideal-gas behaviour, does not include
+  volatile dissolution in melt or condensation, and assumes that all atmospheric
+  oxygen derives from vaporisation of the melt.
 - `EVo` [@Liggins2022] models volcanic degassing in the C–O–H–S–N system,
   coupling gas speciation to melt solubility and redox along decompression
   paths. Its gas species are fixed by the choice of chemical system and the
@@ -200,20 +213,21 @@ of each code, we focus on the features most relevant to `Atmodeller`:
   `scipy.optimize.fsolve`.
 - The global chemical equilibrium model [@Schlichting2022; @Young2023;
   @Werlen2025] couples the atmosphere, silicate melt, and metal of super-Earths
-  and sub-Neptunes. It considers planetary interfaces at different temperatures,
-  so is not strictly a pure equilibrium model but rather a coupled
-  thermochemistry model. Separate versions of the code have been developed for
-  different chemical systems, each defining its own species and reactions. Gases and 
-  the silicate melt are treated as ideal, while non-ideal mixing is included for 
-  light elements in the metal. Solutions are obtained by minimising a residual 
-  cost function with gradient-based optimisers from an ensemble of initial guesses
-  [@Grimm2026].
+  and sub-Neptunes. Current releases consider planetary interfaces at different
+  temperatures, so it is not strictly a pure equilibrium model but rather a
+  coupled thermochemistry model. Separate versions of the code have been
+  developed for different chemical systems, each defining its own species and
+  reactions. Gases and the silicate melt are treated as ideal, while non-ideal
+  mixing is included for light elements in the metal. Solutions are obtained by
+  minimising a residual cost function with gradient-based optimisers from an
+  ensemble of initial guesses [@Grimm2026].
 - `Reaktoro` [@Leal2015] is oriented towards aqueous geochemistry and does not
   provide solubility laws for volatiles in silicate melts, although these could
   be added. `Atmodeller` adopts the same strategy as `Reaktoro` for determining
   species stability [@Leal2016], in which every candidate species is included in
-  the system and assigned a stability variable, removing the need for heuristic
-  selection of the stable species.
+  the system and assigned a stability variable. The full solve therefore
+  requires no heuristic selection of the stable species, which is used only by
+  the initialiser to construct the initial guess.
 - General-purpose frameworks such as `Cantera` [@Cantera] and `GEMS`
   [@Kulik2013] provide comprehensive multiphase equilibrium solvers with
   extensive non-ideal models, including real-gas equations of state. However,
@@ -222,9 +236,9 @@ of each code, we focus on the features most relevant to `Atmodeller`:
   surface pressure set by the atmospheric mass. They also solve each condition
   separately, without vectorisation over conditions or derivatives of the
   equilibrium solution. Conversely, melt solubility models such as `VESIcal`
-  [@Iacovino2021; @Wieser2022] compute volatile saturation and degassing in 
-  silicate melts but do not solve for gas-phase speciation. Commercial packages 
-  such as `FactSage` and `Thermo-Calc` offer extensive thermodynamic databases, 
+  [@Iacovino2021; @Wieser2022] compute volatile saturation and degassing in
+  silicate melts but do not solve for gas-phase speciation. Commercial packages
+  such as `FactSage` and `Thermo-Calc` offer extensive thermodynamic databases,
   but are closed-source and require a paid licence.
 - Many other models embed simple chemistry, often involving only a handful of
   species, within a broader and frequently time-dependent simulation. In these
@@ -232,13 +246,15 @@ of each code, we focus on the features most relevant to `Atmodeller`:
   hard-coded species, thermodynamic data, and solubility laws. We do not
   consider them here because they are not standalone chemistry packages, are not
   always publicly available, and cannot readily be extended, modified, or reused
-  independently of the host model.
+  independently of the host model. Indeed, such coupled models, which are often
+  written in Python to connect their components, are natural candidates to adopt
+  `Atmodeller` as their chemistry module.
 
 No existing open-source code combines real-gas equations of state, volatile
 solubility in silicate melt, and coupling to solid and metal reservoirs with
 automatic determination of species stability. `Atmodeller` is designed to fill
 this gap, and many of its equations of state and solubility laws are tested
-against published data.
+against published experimental and ab-initio constraints.
 
 The codes above also lack the differentiability and vectorisation that
 `Atmodeller` provides. Jacobians are commonly constructed internally for use by
@@ -282,9 +298,9 @@ JAX.
 ways:
 
 1. **Thermodynamic phases.** The gas, silicate melt, silicate solid, metal, and
-   pure condensed phases are represented explicitly, and any combination can be
-   included. Species within a condensed phase form a solution, so mole fractions
-   and activities are computed self-consistently, with optional
+   pure condensed phases are represented explicitly, and any combination thereof
+   can be included. Species within a condensed phase form a solution, so mole
+   fractions and activities are computed self-consistently, with optional
    activity-coefficient models such as that for Si in liquid Fe [@Badro2015]. A
    phase can include a background mass, such as a silicate mantle or an iron
    core, into which tracked species dissolve but which does not itself react.
@@ -299,8 +315,8 @@ ways:
    the stability of graphite relative to diamond.
 5. **A modular thermodynamic database.** Thermodynamic data are accessed through
    a database interface that users can extend with their own data. New species
-   include graphite and diamond [@Gustafson1986], carbonates,
-   Fe$_2$O$_3$, and deuterated species.
+   include graphite and diamond [@Gustafson1986], carbonates, Fe$_2$O$_3$, and
+   deuterated species.
 6. **Planetary structure.** The surface pressure can be calculated from a
    scaling law for planets with thick envelopes [@Schlichting2022], in addition
    to the hydrostatic balance for a thin atmosphere, or set directly for
@@ -375,7 +391,7 @@ with XLA. JAX was designed around automatic differentiation: gradients are a
 core transformation of the library, composable with compilation and
 vectorisation, rather than an add-on supplied by separate tools as in many other
 languages. Because JAX follows a functional programming paradigm, `Atmodeller`
-uses `Equinox` [@kidger2021equinox] to provide a class-based design in which
+uses `Equinox` [@kidger2021equinox] to facilitate a class-based design in which
 physical entities, such as planets, phases, species, solubility laws, and
 equations of state, are encapsulated as immutable modules that JAX can transform
 directly. The physics and chemistry therefore remain readable and easy to
@@ -474,10 +490,10 @@ post-process the outcomes of planet formation models [@Polman2026], and has been
 coupled to time-dependent models to explore the consequences of atmospheric loss
 on rocky planets [@Cherubim2025]. Several of these studies were led by groups
 outside the development team [@Cherubim2025; @Polman2026], and `Atmodeller` has
-been adopted independently as an optional chemical-equilibrium backend in the 
-JAX-based retrieval code ExoSkyrer [@Lee2026]. It has also been adopted as a 
-chemistry module in `PROTEUS` [@Lichtenberg2021; @Nicholls2024; @Nicholls2025], a
-community-developed framework for modelling the coupled evolution of planetary
+been adopted independently as an optional chemical-equilibrium backend in the
+JAX-based retrieval code ExoSkyrer [@Lee2026]. It has also been adopted as a
+chemistry module in `PROTEUS` [@Lichtenberg2021; @Nicholls2024; @Nicholls2025],
+a community-developed framework for modelling the coupled evolution of planetary
 interiors and atmospheres. `Atmodeller` grew out of `CALLIOPE`, a prototype
 volatile module previously used in `PROTEUS`.
 
@@ -567,12 +583,17 @@ the authors reviewed in full.
 
 # Acknowledgements
 
+Atmodeller was created as part of a SERI-funded ERC Starting grant '2ATMO'
+granted to P. Sossi (Contract no. MB22.00033), with additional funding provided
+through a Swiss National Science Foundation (SNSF) Eccellenza Professorship
+(#203668).
+
 `Atmodeller` has benefitted from the work of many in the chemical equilibrium
 community, including the authors of the studies and codes cited above, both for
-elucidating methodology and numerical techniques and for making their codes
-open source and available for benchmarking and code comparison. We also thank
-the JAX community, and Patrick Kidger and Johanna Haffner in particular, for
-their sustained efforts in developing and supporting the JAX ecosystem on which
+elucidating methodology and numerical techniques and for making their codes open
+source and available for benchmarking and code comparison. We also thank the JAX
+community, and Patrick Kidger and Johanna Haffner in particular, for their
+sustained efforts in developing and supporting the JAX ecosystem on which
 `Atmodeller` is built.
 
 # References
