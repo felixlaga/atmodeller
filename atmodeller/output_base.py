@@ -26,7 +26,7 @@ from jax.tree_util import tree_map
 from jaxtyping import Array, ArrayLike, Bool, Float, PyTree
 
 from atmodeller import override
-from atmodeller.initial_solution import generate_auto_initial_guess
+from atmodeller.initializer import generate_auto_initial_guess
 from atmodeller.jax_utils import (
     FloatArray,
     MultiAttemptSolution,

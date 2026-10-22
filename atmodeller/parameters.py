@@ -173,7 +173,7 @@ class ActivityConstraintSet(eqx.Module):
             This method is designed to be fully compatible with both :func:`jax.vmap` and explicit
             batched input. It supports broadcasting of ``temperature`` and ``pressure`` to match
             the batch size, as required by output routines that call
-            :func:`atmodeller.initial_solution.auto_initial_guess` with batched input outside of
+            :func:`atmodeller.initializer.generate_auto_initial_guess` with batched input outside of
             :func:`jax.vmap`, while also working with per-instance vectorization as used by the
             engine and solver.
 

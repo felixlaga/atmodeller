@@ -62,7 +62,8 @@ from atmodeller.constants import (
     TAU_NUM,
 )
 from atmodeller.engine import compute_implied_log_stability, objective_function
-from atmodeller.initial_solution import InitializerProtocol, WarmHeuristicInitializer
+from atmodeller.initializer import WarmHeuristicInitializer
+from atmodeller.initializer_base import InitializerProtocol
 from atmodeller.jax_utils import (
     FloatArray,
     MultiAttemptSolution,
@@ -417,7 +418,7 @@ def make_solver(
         parameters: Parameters used to derive the vmapping axes and build the sub-solvers at
             construction time
         initializer: Initializer for the initial guess. Defaults to
-            :class:`~atmodeller.initial_solution.WarmHeuristicInitializer`.
+            :class:`~atmodeller.initializer.WarmHeuristicInitializer`.
 
     Returns:
         Callable that returns a :class:`~atmodeller.output.Output` object
@@ -501,7 +502,7 @@ def make_solver_with_jit_dual_path(
         parameters: Parameters used to derive the vmapping axes and build the sub-solvers at
             construction time
         initializer: Initializer for the initial guess. Defaults to
-            :class:`~atmodeller.initial_solution.WarmHeuristicInitializer`.
+            :class:`~atmodeller.initializer.WarmHeuristicInitializer`.
 
     Returns:
         Callable that returns a :class:`~atmodeller.output.Output` object
@@ -529,7 +530,7 @@ def make_solver_with_jit_single_path(
             construction time. The ``active_stability`` structure is inspected to choose the
             solver path.
         initializer: Initializer for the initial guess. Defaults to
-            :class:`~atmodeller.initial_solution.WarmHeuristicInitializer`.
+            :class:`~atmodeller.initializer.WarmHeuristicInitializer`.
 
     Returns:
         JIT-compiled callable that returns a :class:`~atmodeller.output.Output` object
@@ -598,7 +599,7 @@ def make_solver_with_jit_batch_only(
     Args:
         parameters: Parameters used to derive the vmapping axes at construction time
         initializer: Initializer for the initial guess. Defaults to
-            :class:`~atmodeller.initial_solution.WarmHeuristicInitializer`.
+            :class:`~atmodeller.initializer.WarmHeuristicInitializer`.
 
     Returns:
         JIT-compiled callable that returns a :class:`~atmodeller.output.Output` object

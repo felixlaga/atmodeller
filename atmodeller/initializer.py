@@ -2,17 +2,25 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-"""Initial solution estimation
+"""Initializers for the solver's initial guess
 
-All functions in this module are designed to be compatible with both :func:`jax.vmap`, as used by
-the engine and solver routines, and with explicit batched input arrays, as used by output routines.
-This means that each function should correctly handle both single-instance and batched input,
-broadcasting and returning outputs with shapes consistent with the input batch dimensions. This
-ensures seamless integration with both vectorized and batch-processing workflows throughout the
-codebase.
+This module provides the concrete implementations of
+:class:`~atmodeller.initializer_base.InitializerProtocol`:
+
+- :class:`HeuristicInitializer`: Always uses the heuristic guess from
+  :func:`generate_auto_initial_guess`
+- :class:`WarmStartInitializer`: Always uses the previous solution
+- :class:`WarmHeuristicInitializer`: Uses the previous solution where available and a cold
+  initializer otherwise. This is the default initializer of
+  :class:`~atmodeller.classes.EquilibriumModel`.
+
+It also contains the heuristic used by :class:`HeuristicInitializer`. All heuristic functions are
+designed to be compatible with both :func:`jax.vmap`, as used by the engine and solver routines,
+and with explicit batched input arrays, as used by output routines. This means that each function
+should correctly handle both single-instance and batched input, broadcasting and returning outputs
+with shapes consistent with the input batch dimensions. This ensures seamless integration with
+both vectorized and batch-processing workflows throughout the codebase.
 """
-
-from typing import Protocol, runtime_checkable
 
 import equinox as eqx
 import jax.numpy as jnp
@@ -21,6 +29,7 @@ from jax.scipy.special import logsumexp
 from jaxtyping import Array, Bool, Float, Integer
 
 from atmodeller.engine import compute_implied_log_stability
+from atmodeller.initializer_base import InitializerProtocol
 from atmodeller.jax_utils import FloatArray
 from atmodeller.parameters import Parameters
 
@@ -484,43 +493,6 @@ def generate_auto_initial_guess(parameters: Parameters) -> Float[Array, "... twi
     )
 
     return result
-
-
-@runtime_checkable
-class InitializerProtocol(Protocol):
-    """Protocol for an initializer that provides the initial guess for the solver
-
-    An initializer separates the first (cold) guess from subsequent (warm) guesses. Whether a
-    previous solution is available is determined by the data rather than by stored state: rows of
-    ``previous`` that contain ``NaN`` have no previous solution. Implementations should be
-    stateless :class:`equinox.Module` instances without array fields so that they are static
-    under JIT and reusing an initializer never triggers retracing.
-    """
-
-    def start(self, parameters: Parameters) -> Float[Array, "... twice_species"]:
-        """Cold initial guess that does not use a previous solution.
-
-        Args:
-            parameters: Parameters
-
-        Returns:
-            Concatenated array of [log_number_moles, log_stability]
-        """
-        ...
-
-    def iterate(
-        self, parameters: Parameters, previous: Float[Array, "... twice_species"]
-    ) -> Float[Array, "... twice_species"]:
-        """Initial guess given a previous solution.
-
-        Args:
-            parameters: Parameters
-            previous: Previous solution. Rows with ``NaN`` have no previous solution.
-
-        Returns:
-            Concatenated array of [log_number_moles, log_stability]
-        """
-        ...
 
 
 class HeuristicInitializer(eqx.Module):

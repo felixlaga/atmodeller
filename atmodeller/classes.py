@@ -32,7 +32,8 @@ import jax.numpy as jnp
 from jaxtyping import Array, ArrayLike, Float, PRNGKeyArray
 
 from atmodeller.containers import SolverParameters
-from atmodeller.initial_solution import InitializerProtocol, WarmHeuristicInitializer
+from atmodeller.initializer import WarmHeuristicInitializer
+from atmodeller.initializer_base import InitializerProtocol
 from atmodeller.interfaces import ActivityConstraintProtocol
 from atmodeller.output import Output
 from atmodeller.parameters import Parameters
@@ -55,7 +56,7 @@ class EquilibriumModel(eqx.Module):
         parameters: Fully prepared model parameters, including state, constraints, and solver
             settings.
         initializer: Initializer for the initial guess. Defaults to
-            :class:`~atmodeller.initial_solution.WarmHeuristicInitializer`, which uses the guess
+            :class:`~atmodeller.initializer.WarmHeuristicInitializer`, which uses the guess
             passed to :meth:`solve` where available and the automatic heuristic otherwise.
     """
 
