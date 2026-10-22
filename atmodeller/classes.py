@@ -32,7 +32,7 @@ import jax.numpy as jnp
 from jaxtyping import Array, ArrayLike, Float, PRNGKeyArray
 
 from atmodeller.containers import SolverParameters
-from atmodeller.initializer import WarmHeuristicInitializer
+from atmodeller.initializer import HeuristicInitializer
 from atmodeller.initializer_base import InitializerProtocol
 from atmodeller.interfaces import ActivityConstraintProtocol
 from atmodeller.output import Output
@@ -55,9 +55,8 @@ class EquilibriumModel(eqx.Module):
     Args:
         parameters: Fully prepared model parameters, including state, constraints, and solver
             settings.
-        initializer: Initializer for the initial guess. Defaults to
-            :class:`~atmodeller.initializer.WarmHeuristicInitializer`, which uses the guess
-            passed to :meth:`solve` where available and the automatic heuristic otherwise.
+        initializer: Initializer for the cold initial guess, used for batch elements without an
+            initial guess. Defaults to :class:`~atmodeller.initializer.HeuristicInitializer`.
     """
 
     parameters: Parameters
@@ -67,7 +66,7 @@ class EquilibriumModel(eqx.Module):
 
     def __init__(self, parameters: Parameters, initializer: InitializerProtocol | None = None):
         self.parameters = parameters
-        self.initializer = WarmHeuristicInitializer() if initializer is None else initializer
+        self.initializer = HeuristicInitializer() if initializer is None else initializer
         self.solver = make_solver_with_jit(parameters, self.initializer)
         self.key = jax.random.PRNGKey(0)
 
@@ -94,7 +93,7 @@ class EquilibriumModel(eqx.Module):
             mass_constraints: Optional mass-constraint mapping. Defaults to ``None``.
             mass_units: Units used for ``mass_constraints``. Defaults to ``"mass"``.
             solver_parameters: Optional solver parameter object. Defaults to ``None``.
-            initializer: Optional initializer for the initial guess. Defaults to ``None``.
+            initializer: Optional initializer for the cold initial guess. Defaults to ``None``.
 
         Returns:
             A new :class:`EquilibriumModel` instance
@@ -120,9 +119,8 @@ class EquilibriumModel(eqx.Module):
 
         Args:
             base_solution_array: Initial guess for the solver, typically a broadcasted array of
-                log number moles and log stabilities. It is passed to the model's initializer,
-                which by default uses it for rows without ``NaN`` and the automatic heuristic
-                otherwise.
+                log number moles and log stabilities. Rows are used as given, and rows that
+                contain ``NaN`` are replaced by the cold guess of the model's initializer.
 
         Returns:
             An :class:`~atmodeller.output.Output` instance

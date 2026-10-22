@@ -51,7 +51,7 @@ import jax.numpy as jnp
 import optimistix as optx
 from equinox._enum import EnumerationItem
 from jax import lax
-from jaxtyping import Array, Bool, Float, Integer, PRNGKeyArray, PyTree
+from jaxtyping import Array, Bool, Float, Integer, PRNGKeyArray
 from optimistix import Solution
 
 from atmodeller.constants import (
@@ -62,7 +62,7 @@ from atmodeller.constants import (
     TAU_NUM,
 )
 from atmodeller.engine import compute_implied_log_stability, objective_function
-from atmodeller.initializer import WarmHeuristicInitializer
+from atmodeller.initializer import HeuristicInitializer
 from atmodeller.initializer_base import InitializerProtocol
 from atmodeller.jax_utils import (
     FloatArray,
@@ -108,6 +108,87 @@ def solve_single(initial_guess: FloatArray, parameters: Parameters) -> optx.Solu
     # jax.debug.print("solution = {out}", out=sol.value)
 
     return sol
+
+
+def make_initial_guess_function(
+    parameters: Parameters, initializer: InitializerProtocol | None = None
+) -> Callable:
+    """Gets a function that completes a batched initial guess with the initializer's cold guess.
+
+    Rows of the initial guess are used as given, and rows that contain ``NaN`` are replaced by the
+    cold guess from ``initializer``. The initializer acts on a single system, so it is wrapped
+    with :func:`equinox.filter_vmap` with the vmapping axes fixed from ``parameters`` at
+    construction time, as for :func:`make_batch_solver`. The decision to evaluate it is made for
+    the whole batch, outside the vmap, so that the cold guess is skipped when no row contains
+    ``NaN``.
+
+    Args:
+        parameters: Parameters used to derive the vmapping axes at construction time
+        initializer: Initializer for the cold initial guess. Defaults to
+            :class:`~atmodeller.initializer.HeuristicInitializer`.
+
+    Returns:
+        Callable that returns the initial guess with shape ``(batch, solution)``
+    """
+    initializer_: InitializerProtocol = (
+        HeuristicInitializer() if initializer is None else initializer
+    )
+
+    def cold_start(
+        parameters: Parameters, base_solution: Float[Array, " solution"]
+    ) -> Float[Array, " solution"]:
+        """Cold guess for a single system; the solution sets the batch size, as for solving"""
+        del base_solution
+
+        return initializer_.start(parameters)
+
+    cold_start_vmapped: Callable = eqx.filter_vmap(
+        cold_start, in_axes=(vmap_axes_spec(parameters), LOG_NUMBER_MOLES_VMAP_AXES)
+    )
+
+    def initial_guess_function(
+        parameters: Parameters, base_solution_array: Float[Array, "batch solution"]
+    ) -> Float[Array, "batch solution"]:
+        """Replaces rows of ``base_solution_array`` that contain ``NaN`` with the cold guess.
+
+        Args:
+            parameters: Parameters
+            base_solution_array: Initial guess with shape ``(batch, solution)``. Rows that
+                contain ``NaN`` have no initial guess.
+
+        Returns:
+            Initial guess with shape ``(batch, solution)``
+        """
+        # Mask: True for rows where any entry is NaN along the last axis
+        nan_mask: Bool[Array, "batch 1"] = jnp.any(
+            jnp.isnan(base_solution_array), axis=-1, keepdims=True
+        )
+
+        def fill_from_cold_start(
+            base_solution_array: Float[Array, "batch solution"],
+        ) -> Float[Array, "batch solution"]:
+            """Selects the cold guess for rows with any NaN, otherwise keeps the given row."""
+            return jnp.where(
+                nan_mask,
+                cold_start_vmapped(parameters, base_solution_array),
+                base_solution_array,
+            )
+
+        # The predicate is a scalar for the whole batch, so the cold guess is skipped when every
+        # row has an initial guess
+        result: Float[Array, "batch solution"] = lax.cond(
+            jnp.any(nan_mask), fill_from_cold_start, lambda x: x, base_solution_array
+        )
+
+        result = eqx.error_if(
+            result,
+            jnp.any(jnp.isnan(result)),
+            "NaN encountered in initial guess, which will break the solver.",
+        )
+
+        return result
+
+    return initial_guess_function
 
 
 def make_batch_solver(parameters: Parameters) -> Callable:
@@ -417,17 +498,13 @@ def make_solver(
     Args:
         parameters: Parameters used to derive the vmapping axes and build the sub-solvers at
             construction time
-        initializer: Initializer for the initial guess. Defaults to
-            :class:`~atmodeller.initializer.WarmHeuristicInitializer`.
+        initializer: Initializer for the cold initial guess. Defaults to
+            :class:`~atmodeller.initializer.HeuristicInitializer`.
 
     Returns:
         Callable that returns a :class:`~atmodeller.output.Output` object
     """
-    initializer_: InitializerProtocol = (
-        WarmHeuristicInitializer() if initializer is None else initializer
-    )
-    # Computed outside JIT, where the batched (JAX) and static (NumPy) leaves can be told apart
-    parameters_vmap_axes: PyTree = vmap_axes_spec(parameters)
+    initial_guess_function: Callable = make_initial_guess_function(parameters, initializer)
     batch_retry_solver: Callable = make_batch_retry_solver_from_parameters(parameters)
     tau_sweep_solver: Callable = make_tau_sweep_solver(
         batch_retry_solver, make_batch_solver(parameters)
@@ -456,9 +533,7 @@ def make_solver(
         Returns:
             :class:`~atmodeller.output.Output` object
         """
-        base_solution_array = initializer_.iterate(
-            parameters, base_solution_array, parameters_vmap_axes
-        )
+        base_solution_array = initial_guess_function(parameters, base_solution_array)
 
         # Define the condition to check if active stability is enabled
         condition: Bool[Array, ""] = jnp.any(parameters.reaction_system.species.active_stability)
@@ -505,8 +580,8 @@ def make_solver_with_jit_dual_path(
     Args:
         parameters: Parameters used to derive the vmapping axes and build the sub-solvers at
             construction time
-        initializer: Initializer for the initial guess. Defaults to
-            :class:`~atmodeller.initializer.WarmHeuristicInitializer`.
+        initializer: Initializer for the cold initial guess. Defaults to
+            :class:`~atmodeller.initializer.HeuristicInitializer`.
 
     Returns:
         Callable that returns a :class:`~atmodeller.output.Output` object
@@ -533,17 +608,13 @@ def make_solver_with_jit_single_path(
         parameters: Parameters used to derive the vmapping axes and build the sub-solvers at
             construction time. The ``active_stability`` structure is inspected to choose the
             solver path.
-        initializer: Initializer for the initial guess. Defaults to
-            :class:`~atmodeller.initializer.WarmHeuristicInitializer`.
+        initializer: Initializer for the cold initial guess. Defaults to
+            :class:`~atmodeller.initializer.HeuristicInitializer`.
 
     Returns:
         JIT-compiled callable that returns a :class:`~atmodeller.output.Output` object
     """
-    initializer_: InitializerProtocol = (
-        WarmHeuristicInitializer() if initializer is None else initializer
-    )
-    # Computed outside JIT, where the batched (JAX) and static (NumPy) leaves can be told apart
-    parameters_vmap_axes: PyTree = vmap_axes_spec(parameters)
+    initial_guess_function: Callable = make_initial_guess_function(parameters, initializer)
     batch_retry_solver: Callable = make_batch_retry_solver_from_parameters(parameters)
     tau_sweep_solver: Callable = make_tau_sweep_solver(
         batch_retry_solver, make_batch_solver(parameters)
@@ -562,9 +633,7 @@ def make_solver_with_jit_single_path(
     ) -> Output:
         """Tau sweep solver path for systems with active stability species."""
         _, subkey = jax.random.split(key)
-        base_solution_array = initializer_.iterate(
-            parameters, base_solution_array, parameters_vmap_axes
-        )
+        base_solution_array = initial_guess_function(parameters, base_solution_array)
         multi_sol = tau_sweep_solver(base_solution_array, parameters, subkey)
         return Output(parameters, multi_sol)
 
@@ -576,9 +645,7 @@ def make_solver_with_jit_single_path(
     ) -> Output:
         """Generic batch retry solver path for systems without active stability."""
         _, subkey = jax.random.split(key)
-        base_solution_array = initializer_.iterate(
-            parameters, base_solution_array, parameters_vmap_axes
-        )
+        base_solution_array = initial_guess_function(parameters, base_solution_array)
         multi_sol = batch_retry_solver(
             base_solution_array,
             parameters,
@@ -608,17 +675,13 @@ def make_solver_with_jit_batch_only(
 
     Args:
         parameters: Parameters used to derive the vmapping axes at construction time
-        initializer: Initializer for the initial guess. Defaults to
-            :class:`~atmodeller.initializer.WarmHeuristicInitializer`.
+        initializer: Initializer for the cold initial guess. Defaults to
+            :class:`~atmodeller.initializer.HeuristicInitializer`.
 
     Returns:
         JIT-compiled callable that returns a :class:`~atmodeller.output.Output` object
     """
-    initializer_: InitializerProtocol = (
-        WarmHeuristicInitializer() if initializer is None else initializer
-    )
-    # Computed outside JIT, where the batched (JAX) and static (NumPy) leaves can be told apart
-    parameters_vmap_axes: PyTree = vmap_axes_spec(parameters)
+    initial_guess_function: Callable = make_initial_guess_function(parameters, initializer)
     batch_solver: Callable = make_batch_solver(parameters)
 
     @eqx.filter_jit
@@ -630,9 +693,7 @@ def make_solver_with_jit_batch_only(
         """Basic batch solver path without retry or tau-sweep enhancements."""
         # Note: key is unused in basic batch solver, but included for interface compatibility
         del key
-        base_solution_array = initializer_.iterate(
-            parameters, base_solution_array, parameters_vmap_axes
-        )
+        base_solution_array = initial_guess_function(parameters, base_solution_array)
         multi_sol = batch_solver(base_solution_array, parameters)
         return Output(parameters, multi_sol)
 

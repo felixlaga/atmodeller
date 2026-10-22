@@ -7,14 +7,11 @@
 This module provides the concrete implementations of
 :class:`~atmodeller.initializer_base.InitializerProtocol`:
 
-- :class:`HeuristicInitializer`: Always uses the heuristic guess from
-  :func:`generate_auto_initial_guess`
-- :class:`WarmStartInitializer`: Always uses the previous solution
-- :class:`WarmHeuristicInitializer`: Uses the previous solution where available and a cold
-  initializer otherwise. This is the default initializer of
+- :class:`HeuristicInitializer`: Uses the heuristic guess from
+  :func:`generate_auto_initial_guess`. This is the default initializer of
   :class:`~atmodeller.classes.EquilibriumModel`.
 - :class:`ElementPotentialInitializer`: Solves an ideal-gas equilibrium in the element
-  potentials for the cold guess
+  potentials
 
 It also contains the heuristic used by :class:`HeuristicInitializer`. All heuristic functions are
 designed to be compatible with both :func:`jax.vmap`, as used by the engine and solver routines,
@@ -30,11 +27,10 @@ import jax.numpy as jnp
 import numpy as np
 from jax import lax
 from jax.scipy.special import logsumexp
-from jaxtyping import Array, Bool, Float, Integer, PyTree
+from jaxtyping import Array, Bool, Float, Integer
 
 from atmodeller.engine import compute_implied_log_stability
-from atmodeller.initializer_base import InitializerProtocol
-from atmodeller.jax_utils import FloatArray, vmap_axes_spec
+from atmodeller.jax_utils import FloatArray
 from atmodeller.parameters import Parameters
 
 LOG_TRACE_VALUE: float = -20.0
@@ -500,156 +496,21 @@ def generate_auto_initial_guess(parameters: Parameters) -> Float[Array, "... twi
 
 
 class HeuristicInitializer(eqx.Module):
-    """Initializer that always uses the automatic heuristic guess
+    """Initializer that uses the heuristic guess from :func:`generate_auto_initial_guess`
 
-    The previous solution is ignored, so every solve starts from
-    :func:`generate_auto_initial_guess`.
+    This is the default initializer of :class:`~atmodeller.classes.EquilibriumModel`.
     """
 
-    def start(
-        self, parameters: Parameters, vmap_axes: PyTree | None = None
-    ) -> Float[Array, "... twice_species"]:
+    def start(self, parameters: Parameters) -> Float[Array, " twice_species"]:
         """Cold initial guess from :func:`generate_auto_initial_guess`.
 
-        The heuristic handles batched parameters directly, so ``vmap_axes`` is not needed.
-
         Args:
-            parameters: Parameters
-            vmap_axes: vmap axes of ``parameters`` (unused)
+            parameters: Parameters of a single system
 
         Returns:
             Concatenated array of [log_number_moles, log_stability]
         """
-        del vmap_axes
-
         return generate_auto_initial_guess(parameters)
-
-    def iterate(
-        self,
-        parameters: Parameters,
-        previous: Float[Array, "... twice_species"],
-        vmap_axes: PyTree | None = None,
-    ) -> Float[Array, "... twice_species"]:
-        """Initial guess that ignores the previous solution.
-
-        Args:
-            parameters: Parameters
-            previous: Previous solution, which is ignored except for its shape
-            vmap_axes: vmap axes of ``parameters`` (unused)
-
-        Returns:
-            Concatenated array of [log_number_moles, log_stability]
-        """
-        return jnp.broadcast_to(self.start(parameters), previous.shape)
-
-
-class WarmStartInitializer(eqx.Module):
-    """Initializer that always uses the previous solution
-
-    There is no cold path, so a previous solution must be provided for every batch element.
-    """
-
-    def start(
-        self, parameters: Parameters, vmap_axes: PyTree | None = None
-    ) -> Float[Array, "... twice_species"]:
-        """Not available, since a warm start requires a previous solution.
-
-        Raises:
-            NotImplementedError: Always
-        """
-        raise NotImplementedError(
-            f"{type(self).__name__} has no cold start; provide a previous solution"
-        )
-
-    def iterate(
-        self,
-        parameters: Parameters,
-        previous: Float[Array, "... twice_species"],
-        vmap_axes: PyTree | None = None,
-    ) -> Float[Array, "... twice_species"]:
-        """Initial guess from the previous solution.
-
-        Args:
-            parameters: Parameters (unused)
-            previous: Previous solution
-            vmap_axes: vmap axes of ``parameters`` (unused)
-
-        Returns:
-            The previous solution
-        """
-        del parameters, vmap_axes
-
-        return eqx.error_if(
-            previous,
-            jnp.any(jnp.isnan(previous)),
-            "Warm start requires a previous solution without NaNs.",
-        )
-
-
-class WarmHeuristicInitializer(eqx.Module):
-    """Initializer that uses the previous solution where available and a cold guess otherwise
-
-    For each batch element, the previous solution is used unless it contains ``NaN``, in which
-    case the cold guess from ``cold`` is used. The cold guess is only evaluated if at least one
-    batch element requires it.
-
-    Args:
-        cold: Initializer that provides the cold guess. Defaults to
-            :class:`HeuristicInitializer`.
-    """
-
-    cold: InitializerProtocol = HeuristicInitializer()
-
-    def start(
-        self, parameters: Parameters, vmap_axes: PyTree | None = None
-    ) -> Float[Array, "... twice_species"]:
-        """Cold initial guess from ``cold``.
-
-        Args:
-            parameters: Parameters
-            vmap_axes: vmap axes of ``parameters``, passed to ``cold``. Defaults to ``None``.
-
-        Returns:
-            Concatenated array of [log_number_moles, log_stability]
-        """
-        return self.cold.start(parameters, vmap_axes)
-
-    def iterate(
-        self,
-        parameters: Parameters,
-        previous: Float[Array, "... twice_species"],
-        vmap_axes: PyTree | None = None,
-    ) -> Float[Array, "... twice_species"]:
-        """Initial guess from the previous solution, with a cold guess for rows containing NaN.
-
-        Args:
-            parameters: Parameters
-            previous: Previous solution. Rows with ``NaN`` have no previous solution.
-            vmap_axes: vmap axes of ``parameters``, passed to ``cold``. Defaults to ``None``.
-
-        Returns:
-            Concatenated array of [log_number_moles, log_stability]
-        """
-        # Mask: True for rows where any entry is NaN along the last axis
-        nan_mask: Bool[Array, "... 1"] = jnp.any(jnp.isnan(previous), axis=-1, keepdims=True)
-
-        def _fill_from_cold(previous: Float[Array, "... twice_species"]) -> Array:
-            """Selects the cold guess for rows with any NaN, otherwise keeps the previous row."""
-            return jnp.where(nan_mask, self.start(parameters, vmap_axes), previous)
-
-        # The guess is generated on explicitly batched parameters outside vmap, so the predicate is
-        # a scalar and the cold guess is skipped when every row has a previous solution.
-        result: Float[Array, "... twice_species"] = lax.cond(
-            jnp.any(nan_mask), _fill_from_cold, lambda previous: previous, previous
-        )
-
-        result = eqx.error_if(
-            result,
-            jnp.any(jnp.isnan(result)),
-            "NaN encountered in initial guess, which will break the solver.",
-        )
-
-        return result
 
 
 def _gibbs_over_RT_all_species(
@@ -685,9 +546,7 @@ class ElementPotentialInitializer(eqx.Module):
     r"""Initializer that solves an ideal-gas equilibrium in the element potentials
 
     The cold guess is the solution of a simplified equilibrium problem: ideal gas, pure
-    condensates and standard Gibbs energies held fixed, solved for the element potentials. The
-    previous solution is ignored, so for warm starts wrap it in
-    :class:`WarmHeuristicInitializer`.
+    condensates and standard Gibbs energies held fixed, solved for the element potentials.
 
     Notation: :math:`\lambda_e` is the potential of element :math:`e` in units of :math:`RT`,
     :math:`a_{es}` the formula matrix (moles of element :math:`e` in species :math:`s`),
@@ -794,8 +653,7 @@ class ElementPotentialInitializer(eqx.Module):
 
     .. rubric:: JAX
 
-    Batched parameters are vmapped per system, with the vmap axes passed by the solver. The
-    sweep, the switching passes and the 1-D Newton iterations have fixed counts
+    The guess is computed per system and vmapped over the batch by the solver. The sweep, the switching passes and the 1-D Newton iterations have fixed counts
     (``lax.fori_loop``); each Newton solve is a ``lax.while_loop``, which under vmap runs until
     every system in the batch has converged (or hit the cap). The element order comes from
     ``argsort`` of the (possibly traced) abundances. Gradients are stopped through the guess,
@@ -825,55 +683,8 @@ class ElementPotentialInitializer(eqx.Module):
     sweep_iterations: int = eqx.field(static=True, default=30)
     """1-D Newton iterations per element in a sweep (each step is at most the log residual)"""
 
-    def start(
-        self, parameters: Parameters, vmap_axes: PyTree | None = None
-    ) -> Float[Array, "... twice_species"]:
+    def start(self, parameters: Parameters) -> Float[Array, " twice_species"]:
         """Cold initial guess from the element-potential equilibrium.
-
-        Args:
-            parameters: Parameters, batched or not
-            vmap_axes: vmap axes of ``parameters``. Defaults to ``None``, which computes them
-                from ``parameters`` (only valid outside JIT).
-
-        Returns:
-            Concatenated array of [log_number_moles, log_stability], with a leading batch axis
-            if ``parameters`` is batched
-        """
-        if vmap_axes is None:
-            vmap_axes = vmap_axes_spec(parameters)
-
-        # The guess needs no gradients (the solve is differentiated implicitly), and reverse-mode
-        # differentiation cannot pass through the while loops
-        parameters = jax.tree_util.tree_map(
-            lambda x: lax.stop_gradient(x) if eqx.is_inexact_array(x) else x, parameters
-        )
-
-        if any(axis == 0 for axis in jax.tree_util.tree_leaves(vmap_axes)):
-            return eqx.filter_vmap(self._start_single, in_axes=(vmap_axes,))(parameters)
-
-        return self._start_single(parameters)
-
-    def iterate(
-        self,
-        parameters: Parameters,
-        previous: Float[Array, "... twice_species"],
-        vmap_axes: PyTree | None = None,
-    ) -> Float[Array, "... twice_species"]:
-        """Initial guess that ignores the previous solution.
-
-        Args:
-            parameters: Parameters
-            previous: Previous solution, which is ignored except for its shape
-            vmap_axes: vmap axes of ``parameters``. Defaults to ``None``, which computes them
-                from ``parameters`` (only valid outside JIT).
-
-        Returns:
-            Concatenated array of [log_number_moles, log_stability]
-        """
-        return jnp.broadcast_to(self.start(parameters, vmap_axes), previous.shape)
-
-    def _start_single(self, parameters: Parameters) -> Float[Array, " twice_species"]:
-        """Element-potential guess for a single (unbatched) system
 
         Args:
             parameters: Parameters of a single system
@@ -881,6 +692,12 @@ class ElementPotentialInitializer(eqx.Module):
         Returns:
             Concatenated array of [log_number_moles, log_stability]
         """
+        # The guess needs no gradients (the solve is differentiated implicitly), and reverse-mode
+        # differentiation cannot pass through the while loops
+        parameters = jax.tree_util.tree_map(
+            lambda x: lax.stop_gradient(x) if eqx.is_inexact_array(x) else x, parameters
+        )
+
         # -----------------------------------------------------------------------------------
         # STEP 1. Setup: species classes, formula matrix, element budgets, constraints.
         #
