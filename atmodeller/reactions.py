@@ -26,14 +26,13 @@ Primary entry point:
 import logging
 import pprint
 from abc import abstractmethod
-from collections.abc import Callable, Iterable
+from collections.abc import Iterable
 from typing import Optional, cast
 
 import equinox as eqx
 import jax.numpy as jnp
 import numpy as np
-from jax import lax
-from jaxtyping import Array, ArrayLike, Bool, Float, Integer
+from jaxtyping import Array, ArrayLike, Bool, Float
 
 from atmodeller.constants import DISSOLUTION_PPMW_FLOOR, GAS_STATE, SILICATE_MELT_PHASE_INDEX
 from atmodeller.containers import SpeciesCollection, get_formula_matrix
@@ -47,7 +46,6 @@ from atmodeller.jax_utils import (
     masked_logsumexp,
     partial_rref,
     safe_exp,
-    to_hashable,
 )
 from atmodeller.phases import BasePhase, GasPhase
 from atmodeller.thermodata import default_properties
@@ -267,8 +265,6 @@ class ReactionNetwork(BaseReactionBlock):
     """Stability mask for reaction matrix expanded to full species space"""
     reaction_stability_matrix_full: NpFloat
     """Reaction stability matrix expanded to full species space"""
-    vmap_gibbs: Callable
-    """Vectorised Gibbs free energy function for reaction species"""
 
     def __init__(self, species: Iterable[SpeciesProtocol]):
         self.species = SpeciesCollection(species)
@@ -290,17 +286,6 @@ class ReactionNetwork(BaseReactionBlock):
         self.reaction_stability_matrix_full = (
             self.reaction_matrix_full * self.reaction_stability_mask_full
         )
-
-        gibbs_funcs: list[Callable] = [
-            to_hashable(species_.get_gibbs_over_RT) for species_ in self.species.reaction_species
-        ]
-
-        def apply_gibbs(
-            index: Integer[Array, ""], temperature: FloatArray, pressure: FloatArray
-        ) -> FloatArray:
-            return lax.switch(index, gibbs_funcs, temperature, pressure)
-
-        self.vmap_gibbs = eqx.filter_vmap(apply_gibbs, in_axes=(0, None, None), out_axes=-1)
 
         self.output_to_logger()
 
@@ -324,6 +309,41 @@ class ReactionNetwork(BaseReactionBlock):
             - len(self.species.reaction_species.unique_elements),
         )
 
+    def get_gibbs_over_RT(
+        self, temperature: FloatArray, pressure: FloatArray
+    ) -> Float[Array, "... n_reaction_species"]:
+        """Gets the standard Gibbs energy over RT of each reaction species.
+
+        Each species' Gibbs energy is evaluated directly, in a loop that is unrolled at trace
+        time. The thermodynamic data are read from :attr:`species` when called, so updated data
+        are used and their parameters are part of the pytree. This also avoids
+        :func:`jax.lax.switch` under :func:`jax.vmap`, which would evaluate every species' data
+        for every species.
+
+        Note:
+            Reverse-mode differentiation with respect to thermodynamic data that are made array
+            leaves fails in the batched solver, because of an Equinox bug in transposing a
+            vmapped linear solve with an unbatched right-hand side
+            (https://github.com/patrick-kidger/equinox/issues/1274). Forward mode works. The
+            data are normally Python floats, which are not differentiated.
+
+        Args:
+            temperature: Temperature (K)
+            pressure: Pressure (bar)
+
+        Returns:
+            Standard Gibbs energy over RT of each reaction species
+        """
+        shape: tuple[int, ...] = jnp.broadcast_shapes(jnp.shape(temperature), jnp.shape(pressure))
+
+        return jnp.stack(
+            [
+                jnp.broadcast_to(species_.get_gibbs_over_RT(temperature, pressure), shape)
+                for species_ in self.species.reaction_species
+            ],
+            axis=-1,
+        )
+
     def get_log_Kp(
         self, temperature: FloatArray, pressure: FloatArray
     ) -> Float[Array, "... n_reactions"]:
@@ -336,9 +356,7 @@ class ReactionNetwork(BaseReactionBlock):
         Returns:
             Log of the equilibrium constant of each reaction
         """
-        gibbs_values: Float[Array, "... n_species"] = self.vmap_gibbs(
-            jnp.arange(self.species.reaction_species.number_species), temperature, pressure
-        )
+        gibbs_values: Float[Array, "... n_species"] = self.get_gibbs_over_RT(temperature, pressure)
         # jax.debug.print("gibbs_values = {out}", out=gibbs_values)
         reaction_matrix: Float[Array, "n_reactions n_species"] = jnp.asarray(self.reaction_matrix)
         # jax.debug.print("reaction_matrix = {out}", out=reaction_matrix)
