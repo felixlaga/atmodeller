@@ -35,9 +35,21 @@ MAX_LOG_FUGACITY_COEFFICIENT: float = 15.0
 class Chabrier(RealGas):
     r"""Chabrier EOS from :cite:t:`CD21`
 
-    This uses rho-T-P tables to lookup density (rho). Note that the numerical integration can be
-    unstable at low pressures causing nans/zeros to propagate through calculations and crash
-    simulations. Therefore, it is recommended to use the polynomial fit version if possible.
+    This uses rho-T-P tables to lookup density (rho), from which the log fugacity is integrated
+    from 1 bar.
+
+    .. note::
+        The tabulated densities are not reliable in two ranges, which the bounded versions do not
+        exclude:
+
+        - At very low densities, roughly :math:`P/T \lesssim 10^{-7}` bar/K (below about
+          :math:`10^{-3}` bar at :math:`10^4` K and :math:`10^{-5}` bar at 300 K), the densities
+          are erroneous; for He the compressibility factor ranges from 0.05 to 5 instead of 1.
+        - At high pressures and low temperatures the densities jump to unphysical values, with
+          compressibility factors of up to about :math:`10^8` and log fugacities of up to about
+          :math:`10^{10}`: for :math:`\mathrm{H}_2` between about 460 and 780 K above about
+          :math:`10^5` bar, and for the :math:`\mathrm{H}_2`-He mixtures between about 270 and
+          380 K above about :math:`2.5 \times 10^6` bar. He is unaffected.
 
     Args:
         log10_density_func: Spline lookup for density from :cite:t:`CD21` T-P-rho tables
@@ -254,8 +266,8 @@ class Chabrier(RealGas):
 class ChabrierFunction(RealGasBase):
     r"""Chabrier EOS from :cite:t:`CD21` using a function fit.
 
-    This provides a faster and more robust alternative to the full Chabrier EOS, which requires
-    numerical integration and can be unstable at low pressures.
+    This provides a faster alternative to the full Chabrier EOS, which integrates the tabulated
+    volume.
 
     Args:
         coeffs: Coefficients for the log fugacity coefficient function
