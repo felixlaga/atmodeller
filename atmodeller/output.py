@@ -72,10 +72,10 @@ class Output(eqx.Module):
 
     parameters: Parameters
     multi_attempt_solution: MultiAttemptSolution
-    initial_guess: Float[Array, "#n_batch twice_species"]
+    initial_guess: Float[Array, "n_batch twice_species"]
 
     @property
-    def solution(self) -> Float[Array, "#n_batch twice_species"]:
+    def solution(self) -> Float[Array, "n_batch twice_species"]:
         """Solution array for all species i.e. log number of moles and log stability"""
         return self.multi_attempt_solution.value
 

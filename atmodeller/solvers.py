@@ -516,7 +516,7 @@ def make_solver(
     def dispatch_solver(
         parameters: Parameters,
         key: PRNGKeyArray,
-        base_solution_array: Float[Array, "#n_batch twice_species"],
+        base_solution_array: Float[Array, "n_batch twice_species"],
     ) -> Output:
         """JIT-compiled entry point that dispatches to the appropriate solver branch.
 
@@ -629,7 +629,7 @@ def make_solver_with_jit_single_path(
     def solver_with_stability(
         parameters: Parameters,
         key: PRNGKeyArray,
-        base_solution_array: Float[Array, "#n_batch twice_species"],
+        base_solution_array: Float[Array, "n_batch twice_species"],
     ) -> Output:
         """Tau sweep solver path for systems with active stability species."""
         _, subkey = jax.random.split(key)
@@ -641,7 +641,7 @@ def make_solver_with_jit_single_path(
     def solver_without_stability(
         parameters: Parameters,
         key: PRNGKeyArray,
-        base_solution_array: Float[Array, "#n_batch twice_species"],
+        base_solution_array: Float[Array, "n_batch twice_species"],
     ) -> Output:
         """Generic batch retry solver path for systems without active stability."""
         _, subkey = jax.random.split(key)
@@ -688,7 +688,7 @@ def make_solver_with_jit_batch_only(
     def batch_only_solver(
         parameters: Parameters,
         key: PRNGKeyArray,
-        base_solution_array: Float[Array, "#n_batch twice_species"],
+        base_solution_array: Float[Array, "n_batch twice_species"],
     ) -> Output:
         """Basic batch solver path without retry or tau-sweep enhancements."""
         # Note: key is unused in basic batch solver, but included for interface compatibility

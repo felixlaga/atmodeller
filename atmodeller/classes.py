@@ -45,7 +45,7 @@ from atmodeller.state import BaseThermodynamicState
 logger: logging.Logger = logging.getLogger(__name__)
 
 SolverCallable = Callable[
-    [Parameters, PRNGKeyArray, Float[Array, "#n_batch twice_species"]], Output
+    [Parameters, PRNGKeyArray, Float[Array, "n_batch twice_species"]], Output
 ]
 
 
@@ -113,7 +113,7 @@ class EquilibriumModel(eqx.Module):
 
         return cls(parameters, initializer)
 
-    def solve(self, base_solution_array: Float[Array, "#n_batch twice_species"]) -> Output:
+    def solve(self, base_solution_array: Float[Array, "n_batch twice_species"]) -> Output:
         """Runs the solver and returns the output state.
 
         Note:
@@ -165,7 +165,7 @@ class EquilibriumModel(eqx.Module):
         Returns:
             An :class:`~atmodeller.output.Output` instance
         """
-        base_solution_array: Float[Array, "#n_batch twice_species"] = jnp.full(
+        base_solution_array: Float[Array, "n_batch twice_species"] = jnp.full(
             (
                 self.parameters.batch_size,
                 self.parameters.reaction_system.species.number_species * 2,

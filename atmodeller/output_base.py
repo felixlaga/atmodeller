@@ -204,7 +204,7 @@ class BaseOutputDict(eqx.Module):
 
     parameters: Parameters
     multi_attempt_solution: MultiAttemptSolution
-    initial_guess: Float[Array, "#n_batch twice_species"]
+    initial_guess: Float[Array, "n_batch twice_species"]
 
     @abstractmethod
     def _phase_output_to_dict(self, phase_output: PhaseOutput[BasePhase]) -> dict[str, Any]:
@@ -259,12 +259,12 @@ class BaseOutputDict(eqx.Module):
         return log_stability
 
     @property
-    def solution(self) -> Float[Array, "#n_batch twice_species"]:
+    def solution(self) -> Float[Array, "n_batch twice_species"]:
         """Solution array for all species i.e. log number of moles and log stability"""
         return self.multi_attempt_solution.value
 
     def _solution_array_to_dict(
-        self, solution_array: Float[Array, "#n_batch twice_species"], suffix: str = ""
+        self, solution_array: Float[Array, "n_batch twice_species"], suffix: str = ""
     ) -> dict[str, ArrayLike]:
         """Converts a solution array to a dictionary mapping.
 
@@ -297,7 +297,7 @@ class BaseOutputDict(eqx.Module):
         """
         out: dict[str, ArrayLike] = self._solution_array_to_dict(self.solution, suffix="_solution")
 
-        guess: Float[Array, "#n_batch twice_species"] = jnp.atleast_2d(self.initial_guess)
+        guess: Float[Array, "n_batch twice_species"] = self.initial_guess
         out.update(self._solution_array_to_dict(guess, suffix="_guess"))
 
         # Compute error metrics for active solution quantities
