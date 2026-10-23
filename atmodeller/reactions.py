@@ -772,6 +772,6 @@ class ReactionSystem(BaseReactionBlock):
         )
 
         return (
-            jnp.einsum("rs,...s->...r", self.dissolution.get_matrix(), log_activity)
+            jnp.einsum("rs,...s->...r", self.dissolution.dissolution_matrix, log_activity)
             - log_Kp_dissolution
         )
