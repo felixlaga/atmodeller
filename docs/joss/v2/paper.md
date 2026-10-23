@@ -262,18 +262,19 @@ status, failed solves are retried from perturbed initial guesses, and systems
 with stability variables are solved by continuation.
 
 JAX was chosen because models can be written in Python yet run as fast compiled
-code that can also be vectorised and differentiated. The cost is a discipline
-that shapes the design: functions must be pure, static configuration must be
-kept apart from traced quantities, branching that breaks or obscures gradients
-must be avoided, and array shapes must be fixed at compile time. The last
-determines how phase stability is treated. Many equilibrium codes add and remove
-condensates during the solve, which changes the size of the system. `Atmodeller`
-instead includes every candidate species throughout and assigns each a stability
-variable [@Leal2016], so the system has a fixed size. It is larger, but it is
-compiled once, can be vectorised over conditions with different stable phase
-assemblages, and can be differentiated through. Because JAX handles compilation,
-`Atmodeller` itself is pure Python, installs with `pip`, and runs on Linux,
-macOS, and Windows.
+code that can also be vectorised and differentiated. Compilation takes time,
+however, and can dominate the total run time of a small model that is solved
+only once. A further cost is a discipline that shapes the design: functions must
+be pure, static configuration must be kept apart from traced quantities,
+branching that breaks or obscures gradients must be avoided, and array shapes
+must be fixed at compile time. The last determines how phase stability is
+treated. Many equilibrium codes add and remove condensates during the solve,
+which changes the size of the system. `Atmodeller` instead includes every
+candidate species throughout and assigns each a stability variable [@Leal2016],
+so the system has a fixed size. It is larger, but it is compiled once, can be
+vectorised over conditions with different stable phase assemblages, and can be
+differentiated through. Because JAX handles compilation, `Atmodeller` itself is
+pure Python, installs with `pip`, and runs on Linux, macOS, and Windows.
 
 # Research impact statement
 
