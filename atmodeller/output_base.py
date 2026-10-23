@@ -1028,6 +1028,7 @@ class OutputElementsSpeciesDict(BaseOutputDict):
             constraints_dict["activity"] = jnp.exp(species_log_activity[nn])
 
         out["solution"] = self.solution_to_dict()
+        out["initial_guess"] = self.initial_guess_to_dict()
         out["solver"] = self.solver_to_dict()
         out["state"] = self.state_to_dict()
 

@@ -147,7 +147,7 @@ def _gas_abundance(dicts: dict[str, dict[str, Any]], key: str) -> dict[str, Opti
 def test_to_dict(cho_output: Output, cho_dicts: dict[str, dict[str, Any]]) -> None:
     """Output formats, the default format, batch expansion, and the solution"""
     for out in cho_dicts.values():
-        assert {"gas", "solution", "solver", "state"} <= set(out)
+        assert {"gas", "solution", "initial_guess", "solver", "state"} <= set(out)
 
     natural: dict[str, Any] = cho_dicts["natural"]["gas"]["species"]
     assert "H2O_g" in natural["names"]
