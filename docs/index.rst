@@ -16,7 +16,6 @@ Atmodeller was created as part of a SERI-funded ERC Starting grant '2ATMO' grant
 
    about.rst
    installation.rst
-   tutorials/index
    examples/index
    output.rst
    common_tasks.rst
