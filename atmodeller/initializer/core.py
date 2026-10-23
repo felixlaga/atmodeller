@@ -36,13 +36,22 @@ def max_moles_by_limiting_element(
     element_abundance: Float[Array, "... n_elements"],
     mask: Bool[Array, "... n_species"],
 ) -> Float[Array, "... n_species"]:
-    """Maximum moles by limiting element for species in ``mask``
+    r"""Maximum moles by limiting element for species in ``mask``
 
     For each species in ``mask``, the mole count is estimated by asking: given the available
     element budget, how many moles of this species could be formed if that element were shared
     equally among all masked species that contain it? The tightest such constraint across all
-    elements that appear in the species formula determines the estimate. Returns ``NaN`` for
-    species not in ``mask`` or not constrained by any available element.
+    elements that appear in the species formula determines the estimate. For species :math:`s` in
+    the mask :math:`M`, with formula matrix :math:`a_{es}` and element abundance :math:`b_e`,
+
+    .. math::
+
+        \hat{n}_s = \min_{e:\ a_{es} > 0,\ b_e\ \text{not NaN}}
+            \frac{b_e}{\sum_{s' \in M} a_{es'}},
+
+    which is the moles at which the masked species that contain element :math:`e`, all with the
+    same moles, together use all of :math:`e`. Returns ``NaN`` for species not in ``mask`` or not constrained by any
+    available element.
 
     Args:
         formula_matrix: Matrix of elemental formulas for each species

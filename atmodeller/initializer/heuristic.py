@@ -5,15 +5,13 @@
 
 """Heuristic initializer for the solver's initial guess
 
-Provides :class:`HeuristicInitializer`: element budgets are allocated to species by the
-limiting-reagent principle, with condensates predicted stable from a reaction-quotient signal.
+Provides :class:`HeuristicInitializer`, which allocates element budgets to species by the
+limiting-reagent principle and predicts the stable condensates from the reaction affinities. See
+its docstring for the method.
 
-All methods of the initializer are designed to be compatible with both :func:`jax.vmap`, as used by
-the engine and solver routines, and with explicit batched input arrays, as used by output routines.
-This means that each function should correctly handle both single-instance and batched input,
-broadcasting and returning outputs with shapes consistent with the input batch dimensions. This
-ensures seamless integration with both vectorized and batch-processing workflows throughout the
-codebase.
+The methods accept a single system, as under :func:`jax.vmap` in the solver, or explicitly batched
+parameters with leading batch dimensions, as in the output routines, and return arrays with the
+same leading dimensions.
 """
 
 import equinox as eqx
@@ -29,20 +27,117 @@ from atmodeller.parameters import Parameters
 
 
 class HeuristicInitializer(eqx.Module):
-    """Initializer that allocates element budgets heuristically
+    r"""Initializer that allocates element budgets heuristically
 
-    Element budgets are allocated by the limiting-reagent principle: first to the condensates
-    predicted stable, then to the other species. Condensate stability is predicted iteratively from
-    a reaction-quotient signal with ideal activities. Imposed fugacities set the moles of their gas
-    species, and log stabilities follow from the implied-stability relation.
+    The cold guess shares the budget of each element among the species that contain it, by the
+    limiting-reagent principle, without solving for equilibrium. The thermodynamics is used only to
+    decide which condensates are present: a condensate is predicted stable if a reaction that forms
+    it has a positive affinity at the allocated moles. The guess is cheap, but the moles of the
+    gas species can be far from equilibrium, which
+    :class:`~atmodeller.initializer.element_potential.ElementPotentialInitializer` (the default)
+    solves for.
+
+    Notation: :math:`b_e` is the budget of element :math:`e` (moles; undefined if :math:`e` is not
+    mass constrained), :math:`a_{es}` the formula matrix (moles of element :math:`e` in species
+    :math:`s`), :math:`n_s` the moles of species :math:`s`, :math:`\phi` the
+    ``condensate_allocation_fraction``, :math:`\epsilon = \exp(\texttt{LOG\_TRACE\_VALUE})` the trace
+    moles (:data:`~atmodeller.initializer.core.LOG_TRACE_VALUE`), :math:`S` the set of condensates
+    predicted stable, :math:`\nu_{rs}` the stoichiometry of species :math:`s` in reaction
+    :math:`r` of the solver's reaction network, and :math:`K_r` and :math:`Q_r` the equilibrium
+    constant and the reaction quotient of reaction :math:`r`.
+
+    .. rubric:: Limiting-element estimate
+
+    For a set :math:`M` of species,
+    :func:`~atmodeller.initializer.core.max_moles_by_limiting_element` gives
+
+    .. math::
+
+        \hat{n}_s(b, M) = \min_{e:\ a_{es} > 0,\ b_e\ \text{defined}}
+            \frac{b_e}{\sum_{s' \in M} a_{es'}}, \qquad s \in M,
+
+    the moles of :math:`s` if all species of :math:`M` that contain element :math:`e` had the same
+    moles and together used all of :math:`e`. The tightest element sets the estimate, which is
+    undefined for a species that contains no mass-constrained element.
+
+    .. rubric:: Allocation for a given set of stable condensates
+
+    1. *Condensates*: :math:`n_c = \phi\, \hat{n}_c(b, S)` for :math:`c \in S`, and
+       :math:`n_c = \epsilon` otherwise. With :math:`\phi < 1` part of each budget is left to the
+       other species, which would otherwise start unrealistically small.
+    2. *Other species except* O\ :sub:`2`: :math:`n_s = \hat{n}_s(b', M)`, with the remaining
+       budget :math:`b'_e = \max(b_e - \sum_{c \in S} a_{ec} n_c,\ 0)` and :math:`M` the gas and
+       dissolved species other than O\ :sub:`2`, and :math:`n_s = 0` where the estimate is
+       undefined.
+    3. O\ :sub:`2` (*if it is a gas species*): the oxygen not used in step 2,
+       :math:`n_{\mathrm{O_2}} = b''_\mathrm{O} / a_{\mathrm{O},\mathrm{O_2}}` with
+       :math:`b''_e = \max(b'_e - \sum_{s \in M} a_{es} n_s,\ 0)`. O\ :sub:`2` is left out of
+       step 2 because an equal share of the oxygen would give it as much as the major O-bearing
+       species, which is usually far too much.
+    4. *Fallbacks*: a species with zero moles (its elements are used up, or it contains no
+       mass-constrained element) gets :math:`\epsilon`. An undefined estimate, which arises only for
+       O\ :sub:`2` when oxygen is not mass constrained, is replaced by the geometric mean of the
+       moles of the other species of step 2 that have nonzero moles.
+
+    .. rubric:: Stability of condensates
+
+    From an allocation, the activities are estimated as ideal: for a gas species
+    :math:`\ln a_s = \ln (n_s / N_\mathrm{gas}) + \ln P`, with :math:`N_\mathrm{gas}` the total gas
+    moles and :math:`P = P(n)` the pressure of the system, and :math:`\ln a_s = 0` for condensates
+    and dissolved species (dilution and non-ideality are ignored, since they need the solution).
+    Condensate :math:`c` is predicted stable if, for some reaction :math:`r`,
+
+    .. math::
+
+        \nu_{rc} \left( \ln K_r(T, P) - \sum_s \nu_{rs} \ln a_s \right) > 0,
+
+    that is, if the reaction, written in the direction that forms :math:`c`, has a positive
+    affinity. Only species with a stability unknown in the solver enter as :math:`c`.
+
+    The set is found by fixed-point iteration: :math:`S_0 = \emptyset`, and :math:`S_{k+1}` is
+    :math:`S_k` together with the condensates predicted stable from the allocation for
+    :math:`S_k`. The first pass is therefore a gas-only pre-screen. The set never shrinks, so the
+    iteration stops, when it no longer grows, after at most :math:`n_\mathrm{condensates} + 1`
+    passes. The solver makes the final decision on which condensates are present.
+
+    .. rubric:: Guess
+
+    - The moles are the allocation for the final set :math:`S`: steps 1 and 4 for condensates,
+      steps 2 to 4 for the other species.
+    - A gas species :math:`i` with an imposed fugacity :math:`f_i` gets the moles that give it the
+      partial pressure :math:`f_i` relative to the other gas species:
+
+      .. math::
+
+          \ln n_i = \ln f_i(T, P) - \ln P
+              + \ln \sum_{s \in \text{gas, no imposed fugacity}} n_s,
+
+      with :math:`P` the pressure of the allocation.
+    - The log stabilities :math:`\ln \zeta_s` follow from the implied-stability relation
+      (:func:`~atmodeller.engine.compute_implied_log_stability`), with :math:`\tau` the solver's
+      stability parameter (``tau``),
+
+      .. math::
+
+          \ln \zeta_s = \min_{e:\ a_{es} > 0} \ln b_e + \ln \tau - \ln n_s,
+
+      so a condensate in :math:`S` starts with a small stability and a condensate outside
+      :math:`S` (at :math:`\epsilon`) with a large one.
+    - An error is raised if the guess contains ``NaN``.
+
+    .. rubric:: JAX
+
+    The methods accept a single system or explicitly batched parameters. The stability iteration
+    is a ``lax.while_loop``; with batched parameters it runs until the set has stopped growing for
+    every system. The O\ :sub:`2` steps are ``lax.cond`` on whether O\ :sub:`2` is a species.
 
     Args:
-        condensate_allocation_fraction: Fraction of the element budget to allocate to
+        condensate_allocation_fraction: Fraction :math:`\phi` of the element budget to allocate to
             predicted-stable condensates. Defaults to ``0.5``.
     """
 
     condensate_allocation_fraction: float = 0.5
-    """Fraction of the element budget to allocate to predicted-stable condensates
+    r"""Fraction :math:`\phi` of the element budget to allocate to predicted-stable condensates
 
     This value, although arbitrary to some extent, prevents condensates from being allocated an
     excessively large portion of the element budget, which can drive gas species to unrealistically
@@ -52,17 +147,8 @@ class HeuristicInitializer(eqx.Module):
     def start(self, parameters: Parameters) -> Float[Array, "... twice_species"]:
         """Cold initial guess from the heuristic.
 
-        The heuristic handles both a single system and explicitly batched parameters, as used by
-        the output routines.
-
-        The algorithm:
-          - Iteratively predicts stable condensates by allocating element budgets and evaluating
-            stability signals until convergence.
-          - Allocates element budgets to predicted-stable condensates first, then distributes the
-            remainder to other species.
-          - Handles fugacity constraints for gas species if present.
-          - Initializes log stability for predicted-stable condensates and uses a default value for
-            others.
+        See the class docstring for the method. Unlike the protocol, this also accepts explicitly
+        batched parameters, as used by the output routines.
 
         Args:
             parameters: Parameters, for a single system or batched
@@ -100,10 +186,9 @@ class HeuristicInitializer(eqx.Module):
         ) -> Bool[Array, "... n_species"]:
             """One stability-prediction pass
 
-            Given a set of already-known-stable condensates, allocates element budget to them
-            first, distributes the remainder to gas species, computes ideal activities, evaluates
-            the reaction K vs Q signal, and returns the monotone union of the new predictions with
-            the input mask.
+            Given the condensates predicted stable so far, allocates the element budget (to them
+            first), evaluates the stability signal with ideal activities, and returns the union of
+            the new predictions with the input mask.
 
             Args:
                 condensate_stable_known: Boolean mask of condensates predicted stable so far
@@ -125,14 +210,14 @@ class HeuristicInitializer(eqx.Module):
             # jax.debug.print("new_predictions in stability pass = {out}", out=new_predictions)
             # jax.debug.print("new_predictions = {out}", out=new_predictions)
 
-            # Monotone union: condensates are never retracted once predicted stable. This ensures
-            # the set grows by at least one entry per iteration, guaranteeing fixed-point
-            # convergence without a cap. The solver makes the definitive stable/absent decision.
+            # Monotone union: condensates are never retracted once predicted stable, so the set
+            # either grows or is unchanged, and the iteration terminates without a cap. The solver
+            # makes the definitive stable/absent decision.
             return condensate_stable_known | new_predictions
 
-        # Iterate until the predicted-stable set stops growing.
-        # Initialize with no condensates known stable; the first body call is the gas-only
-        # pre-screen. The monotone union in _one_stability_pass guarantees termination.
+        # Iterate until the predicted-stable set stops growing. Start with no condensates known
+        # stable, so the first pass is the gas-only pre-screen. The monotone union in
+        # _one_stability_pass guarantees termination.
         init_stable: Bool[Array, " n_species"] = jnp.zeros_like(condensate_mask)
         # jax.debug.print("init_stable = {out}", out=init_stable)
         first_stable: Bool[Array, "... n_species"] = _one_stability_pass(init_stable)
@@ -159,9 +244,8 @@ class HeuristicInitializer(eqx.Module):
             parameters, element_abundance, condensate_stable_predicted
         )
 
-        # Combine: predicted-stable condensates use their budget estimate; all others use the
-        # non-condensate remainder. Fallback for species not covered by any constrained element:
-        # geometric mean of finite estimates keeps missing species at a comparable magnitude.
+        # Condensates take their allocation (trace if not predicted stable) and the other species
+        # the allocation of the remaining budget
         n_estimate: Float[Array, "... n_species"] = jnp.where(
             condensate_mask, n_condensate, n_other
         )
@@ -170,7 +254,8 @@ class HeuristicInitializer(eqx.Module):
         log_number_moles: Float[Array, "... n_species"] = jnp.log(n_estimate)
         # jax.debug.print("log_number_moles = {out}", out=log_number_moles)
 
-        # Fugacity-constrained gas species
+        # Gas species with an imposed fugacity: moles that give the imposed partial pressure
+        # relative to the total moles of the other gas species
         log_n_gas_known_total: Float[Array, "..."] = logsumexp(
             jnp.where(gas_no_imposed_fugacity, log_number_moles, -jnp.inf), axis=-1, keepdims=True
         )
@@ -179,13 +264,13 @@ class HeuristicInitializer(eqx.Module):
         pressure: Float[Array, "..."] = parameters.state.get_pressure(log_number_moles)
         # jax.debug.print("pressure = {out}", out=pressure)
 
-        # Pressure must be 1-D in this function
+        # Pressure has the batch shape here
         log_fug: Float[Array, "... n_species"] = parameters.activity_constraints.log_activity(
             temperature, pressure
         )
         # jax.debug.print("log_fug = {out}", out=log_fug)
 
-        # Pressure must be a column vector
+        # Pressure as a column vector to broadcast over species
         log_n_fug: Float[Array, "... n_species"] = (
             log_fug + log_n_gas_known_total - jnp.log(pressure)[..., None]
         )
@@ -197,7 +282,7 @@ class HeuristicInitializer(eqx.Module):
         # jax.debug.print("log_number_moles (fugacity) = {out}", out=log_number_moles)
 
         log_stability = compute_implied_log_stability(parameters, log_number_moles)
-        # jax.debug.print("log_stability = {out}", out=log_stability
+        # jax.debug.print("log_stability = {out}", out=log_stability)
 
         result: Float[Array, "... twice_species"] = jnp.concatenate(
             (log_number_moles, log_stability), axis=-1
@@ -220,11 +305,10 @@ class HeuristicInitializer(eqx.Module):
     ) -> tuple[Float[Array, "... n_species"], Float[Array, "... n_species"]]:
         """Allocates the element budget between predicted-stable condensates and other species.
 
-        This method first assigns as much of each element as possible to the species predicted to
-        be stable condensates, according to the limiting-reagent principle. It then computes the
-        remaining element budget and allocates it to the non-condensate species, again using the
-        limiting-reagent logic. Finally, fallback logic is applied to assign small nonzero values
-        or the geometric mean.
+        Steps 1 to 4 of the allocation in the class docstring: a fraction of the budget to the
+        predicted-stable condensates by the limiting-element estimate, the remainder to the other
+        species except O2, the oxygen left to O2, and fallbacks for species with zero or undefined
+        moles.
 
         Args:
             parameters: Parameters
@@ -252,11 +336,9 @@ class HeuristicInitializer(eqx.Module):
 
         n_condensate = n_condensate * self.condensate_allocation_fraction
 
-        # Assign fallback values to unconstrained (NaN) entries after stable-condensate allocation.
-        # Species with NaN allocation are considered unstable or absent for element accounting and
-        # are assigned a small trace value (exp(LOG_TRACE_VALUE)). This ensures they do not consume
-        # element budget and prevents NaN propagation. Any values assigned to non-condensate
-        # species here are ignored in subsequent steps by masking.
+        # Species outside the predicted-stable set (NaN) get the trace value exp(LOG_TRACE_VALUE).
+        # They do not consume element budget, because only predicted-stable condensates enter
+        # element_used below, and the entries of non-condensate species are not used.
         n_condensate_fallback: Float[Array, "... n_species"] = jnp.where(
             jnp.isnan(n_condensate), jnp.exp(LOG_TRACE_VALUE), n_condensate
         )
@@ -277,9 +359,8 @@ class HeuristicInitializer(eqx.Module):
         )
         # jax.debug.print("remaining_b = {out}", out=remaining_b)
 
-        # If present, exclude O2 from the remaining budget, because otherwise the initial estimate
-        # for O2 tends to be unreasonably high since oxygen is equally shared among all O-bearing
-        # species.
+        # If present, exclude O2 from the shared allocation, because an equal share of oxygen would
+        # give it as much as the major O-bearing species. O2 instead takes the oxygen left over.
         O2_index: Float[Array, ""] = parameters.reaction_system.phase_system.gas.O2_index
         non_condensate_no_O2_mask: Bool[Array, "... n_species"] = lax.cond(
             jnp.isnan(O2_index),
@@ -293,8 +374,8 @@ class HeuristicInitializer(eqx.Module):
         n_other: Float[Array, "... n_species"] = max_moles_by_limiting_element(
             formula_matrix, remaining_b, non_condensate_no_O2_mask
         )
-        # NaNs are either O2 (if present) or condensates, both of which should be zeroed for
-        # calculating the budget
+        # NaN for condensates, O2 (if present) and species without a mass-constrained element, all
+        # zeroed for calculating the budget
         n_other = jnp.where(jnp.isnan(n_other), 0.0, n_other)
         # jax.debug.print("n_other = {out}", out=n_other)
 
@@ -315,7 +396,7 @@ class HeuristicInitializer(eqx.Module):
             formula_matrix: Float[Array, "n_elements n_species"],
             O2_index_int: Integer[Array, ""],
         ) -> Float[Array, "... n_species"]:
-            """Allocates remaining O budget to O2 if O2 is present in the system."""
+            """Allocates the remaining O budget to O2. NaN if O is not mass constrained."""
             # NOTE: A sentinel value is required since all branches of lax.cond are traced, but
             # O_index will only ever be meaningful if O2 is present in the system.
             O_index: int = (
@@ -341,11 +422,10 @@ class HeuristicInitializer(eqx.Module):
         )
         # jax.debug.print("n_other after O2 allocation = {out}", out=n_other)
 
-        # Apply fallback logic to non-condensate species. If a species is unconstrained by any
-        # available element or constrained to zero moles, fallback values are assigned. For
-        # unconstrained species, the fallback value is the geometric mean of the finite estimates,
-        # which keeps the magnitude of missing species comparable to known ones. For exhausted
-        # elements, the fallback value is a small trace value.
+        # Fallbacks for non-condensate species. Zero moles (elements used up, or no mass-constrained
+        # element) become the trace value. NaN, which at this point arises only for O2 when O is not
+        # mass constrained, becomes the geometric mean of the valid estimates, which keeps it at a
+        # magnitude comparable to the other species.
         unconstrained: Bool[Array, "... n_species"] = jnp.isnan(n_other) & ~condensate_mask
         # jax.debug.print("unconstrained = {out}", out=unconstrained)
         exhausted: Bool[Array, "... n_species"] = n_other == 0 & ~condensate_mask
@@ -369,14 +449,15 @@ class HeuristicInitializer(eqx.Module):
     def _get_log_activity_estimate(
         self, parameters: Parameters, species_abundance: Float[Array, "... n_species"]
     ) -> Float[Array, "... n_species"]:
-        """Estimates log activity for gas species based on ideal-gas assumptions.
+        r"""Estimates log activity for gas species based on ideal-gas assumptions.
 
-        For gas species, the log activity is estimated as log(x_i * P) = log(n_i/n_total) + log(P).
-        For non-gas species (melt, solid, pure-phase condensates), the log activity is set to 0,
-        i.e. unit activity. This ignores dilution (mole fraction < 1) and activity coefficients
-        for melt/solid solution species, but is intentional: the pre-screen is a cheap heuristic
-        and calling the EOS/mixing models here would be circular and expensive. Activity
-        coefficients are in any case unavailable without a complete solution.
+        For gas species, the log activity is the log partial pressure,
+        :math:`\ln a_s = \ln (n_s / N_\mathrm{gas}) + \ln P`. For other species (condensates and
+        dissolved species), the log activity is set to 0, i.e. unit activity. This ignores
+        dilution (mole fraction < 1) and activity coefficients for melt/solid solution species,
+        but is intentional: the pre-screen is a cheap heuristic and calling the EOS/mixing models
+        here would be circular and expensive. Activity coefficients are in any case unavailable
+        without a complete solution.
 
         Args:
             parameters: Parameters containing the reaction system and state information
@@ -416,12 +497,13 @@ class HeuristicInitializer(eqx.Module):
     def _get_stability_signal(
         self, parameters: Parameters, species_abundance: Float[Array, "... n_species"]
     ) -> Float[Array, "... n_reactions n_species"]:
-        """Computes the stability signal for each reaction and condensate species.
+        r"""Computes the stability signal for each reaction and condensate species.
 
-        The stability signal is defined as sm[r,c] * (log_Kp[r] - log_Q[r]), where sm is the
-        stability matrix, Kp is the equilibrium constant, and Q is the reaction quotient. A
-        positive signal means the reaction is driven toward condensate formation given the current
-        assumed activities.
+        The stability signal is :math:`\nu^\zeta_{rc} (\ln K_r - \ln Q_r)`, where
+        :math:`\nu^\zeta` is the reaction stability matrix (the reaction matrix restricted to
+        species with a stability unknown), :math:`K_r` the equilibrium constant and :math:`Q_r`
+        the reaction quotient from the estimated activities. A positive signal means that the
+        reaction is driven toward forming the condensate.
 
         Args:
             parameters: Parameters containing the reaction system information
