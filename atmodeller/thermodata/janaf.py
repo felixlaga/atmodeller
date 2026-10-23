@@ -59,8 +59,8 @@ class NasaGlennThermodynamicProperties(ThermodynamicProperties):
     def get_index(self, temperature: ArrayLike) -> Integer[Array, "..."]:
         """Gets the index of the temperature range for the given temperature
 
-        This assumes the temperature is within one of the ranges and will produce unexpected output
-        if the temperature is outside the ranges.
+        Outside the ranges, the nearest range is used, so the data are extrapolated from the
+        lowest range below it and from the highest range above it.
 
         Args:
             temperature: Temperature in K
@@ -76,7 +76,10 @@ class NasaGlennThermodynamicProperties(ThermodynamicProperties):
         bool_mask: Bool[Array, "... N"] = (T_min <= temperature[..., None]) & (
             temperature[..., None] <= T_max
         )
+        # Below the lowest range the mask is all False, so argmax gives the lowest range (index 0)
         index: Integer[Array, "..."] = jnp.argmax(bool_mask, axis=-1)
+        # Above the highest range, use the highest range rather than the lowest
+        index = jnp.where(temperature > jnp.max(T_max), jnp.argmax(T_max), index)
 
         return index
 
