@@ -131,14 +131,10 @@ class PhaseSystem(eqx.Module):
     Args:
         gas: Gas phase
         other_phases: Tuple of other phases
-
-    Attributes:
-        phases: All phases, where the first phase is always the gas phase by construction
-        species: All species
     """
 
     phases: tuple[BasePhase, ...]
-    """all phases, where the first phase is always the gas phase by construction"""
+    """All phases, where the first phase is always the gas phase by construction"""
     species: SpeciesCollection[SpeciesProtocol]
     """All species"""
     _phase_indices: dict[int, PhaseIndex]
