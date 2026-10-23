@@ -31,7 +31,7 @@ from jax.scipy.special import logsumexp
 from jaxtyping import Array, Bool, Float, Integer
 
 from atmodeller.engine import compute_implied_log_stability
-from atmodeller.jax_utils import FloatArray
+from atmodeller.jax_utils import FloatArray, safe_exp
 from atmodeller.parameters import Parameters
 
 LOG_TRACE_VALUE: float = -20.0
@@ -669,10 +669,9 @@ class ElementPotentialInitializer(eqx.Module):
     by Cholesky factorisation (``damping`` is :math:`\mu`). Zero rows drop out of
     :math:`J^\mathsf{T} J`, so every constraint row is kept and constraints can differ between
     batch elements. The damping keeps the matrix positive definite in degenerate steps, such as an
-    element that is neither mass constrained nor fixed by a fugacity, or one whose carriers are all
-    clipped, where it gives a zero step, as the minimum-norm least-squares solution would. Compared
-    with a singular value decomposition of the full Jacobian, this needs fewer Jacobian columns and
-    a much cheaper factorisation.
+    element that is neither mass constrained nor fixed by a fugacity, where it gives a zero step, as
+    the minimum-norm least-squares solution would. Compared with a singular value decomposition of
+    the full Jacobian, this needs fewer Jacobian columns and a much cheaper factorisation.
 
     .. rubric:: JAX
 
@@ -803,14 +802,17 @@ class ElementPotentialInitializer(eqx.Module):
         # -----------------------------------------------------------------------------------
         def log_moles(z: Array, present: Array) -> tuple[Array, Array, Array]:
             lam, log_n_gas, slots = z[:n_elements], z[n_elements], z[n_elements + 1 :]
-            log_p: Array = jnp.clip(formula_matrix.T @ lam - gibbs, -300.0, 300.0)
+            # Not clipped, since a clip would zero the derivatives of the log-space rows (fugacity,
+            # pressure closure, dissolution); logsumexp is stable, and moles are formed with
+            # safe_exp
+            log_p: Array = formula_matrix.T @ lam - gibbs
             log_p_sum: Array = logsumexp(jnp.where(gas, log_p, -jnp.inf))
             log_n: Array = jnp.where(
                 gas,
                 log_p - log_p_sum + log_n_gas,
                 jnp.where((condensate & present) | dissolved, slots, LOG_TRACE_VALUE),
             )
-            return jnp.clip(log_n, -300.0, 300.0), log_p, log_p_sum
+            return log_n, log_p, log_p_sum
 
         # -----------------------------------------------------------------------------------
         # STEP 4. Residual (fixed shape; inapplicable rows zero). See the class docstring.
@@ -823,7 +825,7 @@ class ElementPotentialInitializer(eqx.Module):
             log_n, log_p, log_p_sum = log_moles(z, present)
             pressure: Array = parameters.state.get_pressure(log_n)
             carried: Array = gas | (condensate & present) | dissolved
-            element_moles: Array = formula_matrix @ jnp.where(carried, jnp.exp(log_n), 0.0)
+            element_moles: Array = formula_matrix @ jnp.where(carried, safe_exp(log_n), 0.0)
             mass: Array = jnp.where(
                 constrained, jnp.log(jnp.where(constrained, element_moles, 1.0)) - log_b, 0.0
             )
@@ -865,7 +867,7 @@ class ElementPotentialInitializer(eqx.Module):
             log_n, _, log_p_sum = log_moles(z, present)
             sigma: Array = z[n_elements] - log_p_sum
             outside_gas: Array = formula_matrix @ jnp.where(
-                (condensate & present) | dissolved, jnp.exp(log_n), 0.0
+                (condensate & present) | dissolved, safe_exp(log_n), 0.0
             )
 
             def element(k, lam):
@@ -918,7 +920,7 @@ class ElementPotentialInitializer(eqx.Module):
             )[1]
             # Reset ln N_gas so that the normalised gas moles of STEP 3 equal the swept ones
             log_p_sum_new: Array = logsumexp(
-                jnp.where(gas, jnp.clip(formula_matrix.T @ lam - gibbs, -300.0, 300.0), -jnp.inf)
+                jnp.where(gas, formula_matrix.T @ lam - gibbs, -jnp.inf)
             )
             return z.at[:n_elements].set(lam).at[n_elements].set(log_p_sum_new + sigma)
 
