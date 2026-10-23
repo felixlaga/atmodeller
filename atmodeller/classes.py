@@ -33,8 +33,7 @@ import jax.numpy as jnp
 from jaxtyping import Array, ArrayLike, Float, PRNGKeyArray
 
 from atmodeller.containers import SolverParameters
-from atmodeller.initializer import ElementPotentialInitializer
-from atmodeller.initializer_base import InitializerProtocol
+from atmodeller.initializer import ElementPotentialInitializer, InitializerProtocol
 from atmodeller.interfaces import ActivityConstraintProtocol
 from atmodeller.output import Output
 from atmodeller.parameters import Parameters
@@ -58,7 +57,7 @@ class EquilibriumModel(eqx.Module):
             settings.
         initializer: Initializer for the cold initial guess, used for batch elements without an
             initial guess. Defaults to
-            :class:`~atmodeller.initializer.ElementPotentialInitializer`.
+            :class:`~atmodeller.initializer.element_potential.ElementPotentialInitializer`.
     """
 
     parameters: Parameters

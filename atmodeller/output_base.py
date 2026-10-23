@@ -27,7 +27,7 @@ from jax.tree_util import tree_map
 from jaxtyping import Array, ArrayLike, Bool, Float, PyTree
 
 from atmodeller import override
-from atmodeller.initializer import generate_auto_initial_guess
+from atmodeller.initializer import HeuristicInitializer
 from atmodeller.jax_utils import (
     FloatArray,
     MultiAttemptSolution,
@@ -293,7 +293,7 @@ class BaseOutputDict(eqx.Module):
         out: dict[str, ArrayLike] = self._solution_array_to_dict(self.solution, suffix="_solution")
 
         guess: Float[Array, "#n_batch twice_species"] = jnp.atleast_2d(
-            generate_auto_initial_guess(self.parameters)
+            HeuristicInitializer().start(self.parameters)
         )
         out.update(self._solution_array_to_dict(guess, suffix="_guess"))
 
