@@ -3,10 +3,11 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-"""Tests for C-H-O systems
+"""Tests for H-O and C-H-O systems
 
-The comparisons with FactSage and FastChem are rows of a single batched model of C-H-O gas with
-graphite, so that the solver is compiled once. Graphite is unstable in the gas-only comparisons.
+Cases that share species are rows of one batched model, so that the solver is compiled once per
+set of species. The C-H-O comparisons with FactSage and FastChem are rows of a model of C-H-O gas
+with graphite, which is unstable in the gas-only comparisons.
 """
 
 import logging
@@ -17,13 +18,14 @@ import numpy as np
 import pytest
 from jaxtyping import ArrayLike
 
-from atmodeller import debug_logger
+from atmodeller import __version__, debug_logger
 from atmodeller.classes import EquilibriumModel
 from atmodeller.containers import ChemicalSpecies, ReservoirSpecies
 from atmodeller.interfaces import ActivityConstraintProtocol, SolubilityProtocol, SpeciesProtocol
+from atmodeller.jax_utils import NpFloat
 from atmodeller.output import Output
 from atmodeller.output_base import OutputNamedArraysDict
-from atmodeller.parameters import Parameters
+from atmodeller.parameters import FixedActivityConstraint, Parameters
 from atmodeller.phases import PurePhase
 from atmodeller.sci_utils import earth
 from atmodeller.solubility import get_solubility_models
@@ -33,6 +35,10 @@ from atmodeller.thermodata import IronWustiteBuffer
 logger: logging.Logger = debug_logger()
 logger.setLevel(logging.DEBUG)
 
+RTOL: float = 1.0e-6
+"""Relative tolerance"""
+ATOL: float = 1.0e-6
+"""Absolute tolerance"""
 TOLERANCE: float = 5.0e-2
 """Tolerance of log output to satisfy comparison with FactSage and FastChem"""
 
@@ -54,12 +60,179 @@ CO2_d: ReservoirSpecies = ReservoirSpecies.create_dissolved(
     "CO2", solubility=solubility_models["CO2_basalt_dixon95"], include_in_phase_mass=False
 )
 
-OCEAN: float = float(earth.oceans_to_hydrogen_mass(1))
+OCEAN: float = float(np.asarray(earth.oceans_to_hydrogen_mass(1)))
 """Mass of H in one Earth ocean (kg)"""
+
+
+def test_version() -> None:
+    """Test version."""
+    assert __version__ == "2.0.0"
+
+
+def test_H2O() -> None:
+    """Tests a single species (H2O)."""
+    gas_species: tuple[ChemicalSpecies, ...] = (H2O_g,)
+    melt_species: tuple[SpeciesProtocol, ...] = (H2O_d,)
+
+    planet: BaseThermodynamicState = Planet.from_species(
+        gas_species, silicate_melt_species=melt_species
+    )
+
+    oceans: ArrayLike = 2
+    h_kg: ArrayLike = earth.oceans_to_hydrogen_mass(oceans)
+    mass_constraints: dict[str, ArrayLike] = {"H": h_kg}
+
+    parameters: Parameters = Parameters(planet, mass_constraints=mass_constraints)
+
+    model: EquilibriumModel = EquilibriumModel(parameters)
+
+    output: Output = model.solve_with_default()
+
+    target: dict[str, Any] = {
+        "gas": {"species": {"partial_pressure": {"H2O_g": 1.031222661909767}}}
+    }
+
+    # output.to_excel("test_H2O")
+
+    assert output.compare(target, rtol=RTOL, atol=ATOL)
+
+
+def test_H_O() -> None:
+    """Tests H2-H2O at the IW buffer by applying an oxygen abundance constraint."""
+    gas_species: tuple[ChemicalSpecies, ...] = (H2_g, H2O_g, O2_g)
+
+    planet: BaseThermodynamicState = Planet.from_species(gas_species)
+
+    oceans: ArrayLike = 1
+    h_kg: ArrayLike = earth.oceans_to_hydrogen_mass(oceans)
+    o_kg: ArrayLike = 6.25774e20
+    mass_constraints: dict[str, ArrayLike] = {"H": h_kg, "O": o_kg}
+
+    parameters: Parameters = Parameters(planet, mass_constraints=mass_constraints)
+
+    model: EquilibriumModel = EquilibriumModel(parameters)
+
+    output: Output = model.solve_with_default()
+
+    fastchem_result: dict[str, Any] = {
+        "gas": {
+            "species": {
+                "partial_pressure": {
+                    "H2O_g": 76.45861543,
+                    "H2_g": 73.84378192,
+                    "O2_g": 8.91399329e-08,
+                }
+            }
+        }
+    }
+
+    # output.to_excel("test_H_O")
+
+    assert output.compare(fastchem_result, log=True, rtol=TOLERANCE, atol=TOLERANCE)
+
+
+# Each case is (temperature, fO2 shift relative to IW, H oceans, H2 fugacity, and the expected
+# partial pressures of H2O, H2 and O2). A NaN H2 fugacity is unconstrained.
+HO_CASES: dict[str, tuple[float, float, float, float, tuple[float, float, float]]] = {
+    "fH2=1e-8, IW-1": (
+        2000, -1, 1, 1.0e-8,
+        (3.262913506271090e-09, 1.000000000000005e-08, 8.838513516896060e-09),
+    ),
+    "fH2=1e-7, IW": (
+        2000, 0, 1, 1.0e-7,
+        (1.031823848794260e-07, 9.999999999999959e-08, 8.838513516896038e-08),
+    ),
+    "fH2=1e-6, IW+1": (
+        2000, 1, 1, 1.0e-6,
+        (3.262913506271089e-06, 1.000000000000000e-06, 8.838513516896018e-07),
+    ),
+    "1500 K": (
+        1500, 0, 1, np.nan,
+        (2.5664832779576274e-01, 3.133425134391215e-01, 2.394194493859145e-12),
+    ),
+    "2000 K": (
+        2000, 0, 1, np.nan,
+        (2.570630296667669e-01, 2.491346075855462e-01, 8.838513516896051e-08),
+    ),
+    "2500 K": (
+        2500, 0, 1, np.nan,
+        (2.5720073676678623e-01, 2.2655541184547373e-01, 4.544970468047982e-05),
+    ),
+    "3000 K": (
+        3000, 0, 1, np.nan,
+        (2.572575286659322e-01, 2.1993754236733598e-01, 2.7394226348237743e-03),
+    ),
+    "IW-10": (
+        2000, -10, 1, np.nan,
+        (2.9750112030316336e-04, 2.883254933977426e01, 8.838513516896015e-18),
+    ),
+    "IW-3.33": (
+        2000, -10 / 3, 1, np.nan,
+        (1.609211286541073e-01, 7.238926631964266e00, 4.1024745645760365e-11),
+    ),
+    "IW+3.33": (
+        2000, 10 / 3, 1, np.nan,
+        (2.582847658398107e-01, 5.392952102069516e-03, 1.904200012911654e-04),
+    ),
+    "IW+10": (
+        2000, 10, 1, np.nan,
+        (2.585229792463592e-01, 2.5054952892245634e-06, 8.838513516896026e02),
+    ),
+    "10 oceans": (
+        2000, 0, 10, np.nan,
+        (2.42596290006555e01, 2.3511405584397032e01, 8.83851351689605e-08),
+    ),
+    "100 oceans": (
+        2000, 0, 100, np.nan,
+        (1.6102351856877922e03, 1.560571785164134e03, 8.838513516896051e-08),
+    ),
+}  # fmt: skip
+
+
+def test_H_fO2() -> None:
+    """Tests H2-H2O at the IW buffer with H2O solubility, in one batch
+
+    The batch varies the temperature, fO2 shift, H budget and an imposed H2 fugacity.
+    """
+    gas_species: tuple[ChemicalSpecies, ...] = (H2_g, H2O_g, O2_g)
+    melt_species: tuple[SpeciesProtocol, ...] = (H2O_d,)
+
+    def column(index: int) -> NpFloat:
+        return np.array([case[index] for case in HO_CASES.values()], dtype=float)
+
+    planet: BaseThermodynamicState = Planet.from_species(
+        gas_species, silicate_melt_species=melt_species, temperature=column(0)
+    )
+    activity_constraints: dict[str, ActivityConstraintProtocol] = {
+        "O2_g": IronWustiteBuffer(column(1)),
+        "H2_g": FixedActivityConstraint(column(3)),
+    }
+    h_kg: ArrayLike = earth.oceans_to_hydrogen_mass(column(2))
+    mass_constraints: dict[str, ArrayLike] = {"H": h_kg}
+
+    parameters: Parameters = Parameters(
+        planet, activity_constraints=activity_constraints, mass_constraints=mass_constraints
+    )
+
+    output: Output = EquilibriumModel(parameters).solve_with_default()
+
+    expected: NpFloat = np.array([case[-1] for case in HO_CASES.values()])
+    target: dict[str, Any] = {
+        "gas": {
+            "species": {
+                "partial_pressure": {
+                    name: expected[:, i] for i, name in enumerate(("H2O_g", "H2_g", "O2_g"))
+                }
+            }
+        }
+    }
+
+    assert output.compare(target, rtol=RTOL, atol=ATOL)
+
 
 # Each case is (temperature, fO2 shift relative to IW, H kg, C kg, O kg, references). A NaN fO2
 # shift or O mass is unconstrained. References are FactSage, unless labelled FastChem.
-CASES: dict[str, tuple[float, float, float, float, float, list[dict[str, Any]]]] = {
+CHO_CASES: dict[str, tuple[float, float, float, float, float, list[dict[str, Any]]]] = {
     # Similar to BHS22, Table E, row 1
     "IW-2": (
         1400, -2, 3 * OCEAN, 3 * OCEAN, np.nan,
@@ -118,7 +291,7 @@ def CHO_output() -> dict[str, Any]:
     condensates: tuple[PurePhase, ...] = (PurePhase.from_species("C", state="s"),)
 
     def column(index: int) -> ArrayLike:
-        return np.array([case[index] for case in CASES.values()], dtype=float)
+        return np.array([case[index] for case in CHO_CASES.values()], dtype=float)
 
     planet: BaseThermodynamicState = Planet.from_species(
         gas_species, temperature=column(0), condensates=condensates
@@ -139,13 +312,13 @@ def CHO_output() -> dict[str, Any]:
     ).to_dict(expand_to_batch=True, ravel=True, to_numpy=True)
 
 
-@pytest.mark.parametrize("case", CASES)
+@pytest.mark.parametrize("case", CHO_CASES)
 def test_CHO(CHO_output: dict[str, Any], case: str) -> None:
     """Partial pressures and graphite match FactSage and FastChem"""
-    row: int = list(CASES).index(case)
+    row: int = list(CHO_CASES).index(case)
     graphite: dict[str, Any] = CHO_output["C_s"]["species"]
 
-    for reference in CASES[case][-1]:
+    for reference in CHO_CASES[case][-1]:
         computed: dict[str, float] = {
             name: CHO_output["gas"]["species"]["partial_pressure"][name][row]
             for name in reference["partial_pressure"]
