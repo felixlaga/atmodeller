@@ -24,12 +24,14 @@ Typical usage:
     output = model.solve_with_default()
 """
 
+import logging
 from collections.abc import Callable, Mapping
 from typing import Literal, Self, cast
 
 import equinox as eqx
 import jax
 import jax.numpy as jnp
+import numpy as np
 from jaxtyping import Array, ArrayLike, Float, PRNGKeyArray
 
 from atmodeller.containers import SolverParameters
@@ -39,6 +41,8 @@ from atmodeller.output import Output
 from atmodeller.parameters import Parameters
 from atmodeller.solvers import make_solver_with_jit
 from atmodeller.state import BaseThermodynamicState
+
+logger: logging.Logger = logging.getLogger(__name__)
 
 SolverCallable = Callable[
     [Parameters, PRNGKeyArray, Float[Array, "#n_batch twice_species"]], Output
@@ -126,7 +130,30 @@ class EquilibriumModel(eqx.Module):
         Returns:
             An :class:`~atmodeller.output.Output` instance
         """
+        self._log_initial_guess(base_solution_array)
+
         return self.solver(self.parameters, self.key, base_solution_array)
+
+    def _log_initial_guess(self, base_solution_array: ArrayLike) -> None:
+        """Logs how many models start from the initializer's cold guess and how many from the
+        given initial guess. Nothing is logged if the initial guess is traced (inside JIT).
+
+        Args:
+            base_solution_array: Initial guess for the solver
+        """
+        try:
+            guess: np.ndarray = np.atleast_2d(np.asarray(base_solution_array))
+        except jax.errors.TracerArrayConversionError:
+            return
+
+        batch_size: int = self.parameters.batch_size
+        cold: np.ndarray = np.broadcast_to(np.any(np.isnan(guess), axis=-1), (batch_size,))
+        logger.info(
+            "Initial guess: %d model(s) from %s, %d model(s) from the given initial guess",
+            np.count_nonzero(cold),
+            type(self.initializer).__name__,
+            batch_size - np.count_nonzero(cold),
+        )
 
     def solve_with_default(self) -> Output:
         """Runs the solver with a default initial guess.
@@ -146,7 +173,7 @@ class EquilibriumModel(eqx.Module):
             jnp.nan,
         )
 
-        return self.solver(self.parameters, self.key, base_solution_array)
+        return self.solve(base_solution_array)
 
     def rebuild_solver(self) -> Self:
         """Rebuilds the compiled solver from the model's current parameters.
