@@ -9,12 +9,11 @@ Provides :class:`HeuristicInitializer`, which allocates element budgets to speci
 limiting-reagent principle and predicts the stable condensates from the reaction affinities. See
 its docstring for the method.
 
-The methods accept a single system, as under :func:`jax.vmap` in the solver, or explicitly batched
-parameters with leading batch dimensions, as in the output routines, and return arrays with the
-same leading dimensions.
+The initializer acts on a single system and is vmapped over the batch by the solver.
 """
 
 import equinox as eqx
+import jax
 import jax.numpy as jnp
 from jax import lax
 from jax.scipy.special import logsumexp
@@ -127,10 +126,12 @@ class HeuristicInitializer(eqx.Module):
 
     .. rubric:: JAX
 
-    The methods accept a single system or explicitly batched parameters. The stability iteration
-    is a ``lax.while_loop``; with batched parameters it runs until the set has stopped growing for
-    every system. Whether O\ :sub:`2` is a species is known from the species formulae outside JIT,
-    so the O\ :sub:`2` steps are plain Python branches.
+    The guess is computed per system and vmapped over the batch by the solver. The stability
+    iteration is a ``lax.while_loop``, which under vmap runs until the set has stopped growing for
+    every system in the batch. Whether O\ :sub:`2` is a species is known from the species formulae
+    outside JIT, so the O\ :sub:`2` steps are plain Python branches. Gradients are stopped through
+    the guess, since the equilibrium solve is differentiated implicitly (and ``while_loop`` is not
+    reverse-differentiable).
 
     Args:
         condensate_allocation_fraction: Fraction :math:`\phi` of the element budget to allocate to
@@ -145,18 +146,23 @@ class HeuristicInitializer(eqx.Module):
     low initial abundances.
     """
 
-    def start(self, parameters: Parameters) -> Float[Array, "... twice_species"]:
+    def start(self, parameters: Parameters) -> Float[Array, " twice_species"]:
         """Cold initial guess from the heuristic.
 
-        See the class docstring for the method. Unlike the protocol, this also accepts explicitly
-        batched parameters, as used by the output routines.
+        See the class docstring for the method.
 
         Args:
-            parameters: Parameters, for a single system or batched
+            parameters: Parameters of a single system
 
         Returns:
             Concatenated array of [log_number_moles, log_stability]
         """
+        # The guess needs no gradients (the solve is differentiated implicitly), and reverse-mode
+        # differentiation cannot pass through the while loop
+        parameters = jax.tree_util.tree_map(
+            lambda x: lax.stop_gradient(x) if eqx.is_inexact_array(x) else x, parameters
+        )
+
         # -----------------------------------------------------------------------------------
         # STEP 1. Setup: element budgets, species masks, imposed fugacities.
         #
@@ -164,7 +170,7 @@ class HeuristicInitializer(eqx.Module):
         # -----------------------------------------------------------------------------------
         temperature: FloatArray = parameters.state.temperature
 
-        element_abundance: Float[Array, "... n_elements"] = parameters.mass_constraints.abundance()
+        element_abundance: Float[Array, " n_elements"] = parameters.mass_constraints.abundance()
         # jax.debug.print("element_abundance = {out}", out=element_abundance)
 
         gas_mask: Bool[Array, " n_species"] = jnp.asarray(
@@ -173,12 +179,12 @@ class HeuristicInitializer(eqx.Module):
         condensate_mask: Bool[Array, " n_species"] = jnp.asarray(
             parameters.reaction_system.phase_system.condensates_species_mask
         )
-        active_activity_constraints: Bool[Array, "... n_species"] = (
+        active_activity_constraints: Bool[Array, " n_species"] = (
             parameters.activity_constraints.active()
         )
         # jax.debug.print("active_activity_constraints = {out}", out=active_activity_constraints)
 
-        gas_no_imposed_fugacity: Bool[Array, "... n_species"] = (
+        gas_no_imposed_fugacity: Bool[Array, " n_species"] = (
             gas_mask & ~active_activity_constraints
         )
         # jax.debug.print("gas_no_imposed_fugacity = {out}", out=gas_no_imposed_fugacity)
@@ -191,8 +197,8 @@ class HeuristicInitializer(eqx.Module):
         # positive stability signal. See the class docstring.
         # -----------------------------------------------------------------------------------
         def _one_stability_pass(
-            condensate_stable_known: Bool[Array, "... n_species"],
-        ) -> Bool[Array, "... n_species"]:
+            condensate_stable_known: Bool[Array, " n_species"],
+        ) -> Bool[Array, " n_species"]:
             """One stability-prediction pass
 
             Given the condensates predicted stable so far, allocates the element budget (to them
@@ -209,12 +215,12 @@ class HeuristicInitializer(eqx.Module):
                 parameters, element_abundance, condensate_stable_known
             )
             # jax.debug.print("n_other in stability pass = {out}", out=n_other)
-            stability_signal: Float[Array, "... n_reactions n_species"] = (
-                self._get_stability_signal(parameters, n_other)
+            stability_signal: Float[Array, "n_reactions n_species"] = self._get_stability_signal(
+                parameters, n_other
             )
             # jax.debug.print("stability_signal in stability pass = {out}", out=stability_signal)
-            new_predictions: Bool[Array, "... n_species"] = (
-                jnp.any(stability_signal > 0, axis=-2) & condensate_mask
+            new_predictions: Bool[Array, " n_species"] = (
+                jnp.any(stability_signal > 0, axis=0) & condensate_mask
             )
             # jax.debug.print("new_predictions in stability pass = {out}", out=new_predictions)
             # jax.debug.print("new_predictions = {out}", out=new_predictions)
@@ -229,13 +235,8 @@ class HeuristicInitializer(eqx.Module):
         # _one_stability_pass guarantees termination.
         init_stable: Bool[Array, " n_species"] = jnp.zeros_like(condensate_mask)
         # jax.debug.print("init_stable = {out}", out=init_stable)
-        first_stable: Bool[Array, "... n_species"] = _one_stability_pass(init_stable)
+        first_stable: Bool[Array, " n_species"] = _one_stability_pass(init_stable)
         # jax.debug.print("first_stable = {out}", out=first_stable)
-
-        init_stable_broadcasted: Bool[Array, "... n_species"] = jnp.broadcast_to(
-            init_stable, first_stable.shape
-        )
-        # jax.debug.print("init_stable_broadcasted = {out}", out=init_stable_broadcasted)
 
         def _cond_fn(carry: tuple) -> Bool[Array, ""]:
             prev, curr = carry
@@ -246,7 +247,7 @@ class HeuristicInitializer(eqx.Module):
             return curr, _one_stability_pass(curr)
 
         _, condensate_stable_predicted = lax.while_loop(
-            _cond_fn, _body_fn, (init_stable_broadcasted, first_stable)
+            _cond_fn, _body_fn, (init_stable, first_stable)
         )
 
         # -----------------------------------------------------------------------------------
@@ -258,12 +259,10 @@ class HeuristicInitializer(eqx.Module):
 
         # Condensates take their allocation (trace if not predicted stable) and the other species
         # the allocation of the remaining budget
-        n_estimate: Float[Array, "... n_species"] = jnp.where(
-            condensate_mask, n_condensate, n_other
-        )
+        n_estimate: Float[Array, " n_species"] = jnp.where(condensate_mask, n_condensate, n_other)
         # jax.debug.print("n_estimate after merge = {out}", out=n_estimate)
 
-        log_number_moles: Float[Array, "... n_species"] = jnp.log(n_estimate)
+        log_number_moles: Float[Array, " n_species"] = jnp.log(n_estimate)
         # jax.debug.print("log_number_moles = {out}", out=log_number_moles)
 
         # -----------------------------------------------------------------------------------
@@ -271,24 +270,20 @@ class HeuristicInitializer(eqx.Module):
         # pressure relative to the total moles of the other gas species, at the pressure of the
         # allocation.
         # -----------------------------------------------------------------------------------
-        log_n_gas_known_total: Float[Array, "..."] = logsumexp(
-            jnp.where(gas_no_imposed_fugacity, log_number_moles, -jnp.inf), axis=-1, keepdims=True
+        log_n_gas_known_total: Float[Array, ""] = logsumexp(
+            jnp.where(gas_no_imposed_fugacity, log_number_moles, -jnp.inf)
         )
         # jax.debug.print("log_n_gas_known_total = {out}", out=log_n_gas_known_total)
 
-        pressure: Float[Array, "..."] = parameters.state.get_pressure(log_number_moles)
+        pressure: Float[Array, ""] = parameters.state.get_pressure(log_number_moles)
         # jax.debug.print("pressure = {out}", out=pressure)
 
-        # Pressure has the batch shape here
-        log_fug: Float[Array, "... n_species"] = parameters.activity_constraints.log_activity(
+        log_fug: Float[Array, " n_species"] = parameters.activity_constraints.log_activity(
             temperature, pressure
         )
         # jax.debug.print("log_fug = {out}", out=log_fug)
 
-        # Pressure as a column vector to broadcast over species
-        log_n_fug: Float[Array, "... n_species"] = (
-            log_fug + log_n_gas_known_total - jnp.log(pressure)[..., None]
-        )
+        log_n_fug: Float[Array, " n_species"] = log_fug + log_n_gas_known_total - jnp.log(pressure)
         # jax.debug.print("log_n_fug = {out}", out=log_n_fug)
 
         log_number_moles = jnp.where(
@@ -303,7 +298,7 @@ class HeuristicInitializer(eqx.Module):
         log_stability = compute_implied_log_stability(parameters, log_number_moles)
         # jax.debug.print("log_stability = {out}", out=log_stability)
 
-        result: Float[Array, "... twice_species"] = jnp.concatenate(
+        result: Float[Array, " twice_species"] = jnp.concatenate(
             (log_number_moles, log_stability), axis=-1
         )
         # jax.debug.print("Initial guess (log_number_moles, log_stability) = {out}", out=result)
@@ -319,9 +314,9 @@ class HeuristicInitializer(eqx.Module):
     def _allocate_element_budget(
         self,
         parameters: Parameters,
-        element_abundance: Float[Array, "... n_elements"],
-        condensate_stable_mask: Bool[Array, "... n_species"],
-    ) -> tuple[Float[Array, "... n_species"], Float[Array, "... n_species"]]:
+        element_abundance: Float[Array, " n_elements"],
+        condensate_stable_mask: Bool[Array, " n_species"],
+    ) -> tuple[Float[Array, " n_species"], Float[Array, " n_species"]]:
         """Allocates the element budget between predicted-stable condensates and other species.
 
         Steps 1 to 4 of the allocation in the class docstring (ALLOCATION 1 to 4 in the code): a
@@ -351,7 +346,7 @@ class HeuristicInitializer(eqx.Module):
         # ALLOCATION 1. Condensates: a fraction of the limiting-element estimate for the
         # predicted-stable condensates, trace for the others.
         # -----------------------------------------------------------------------------------
-        n_condensate: Float[Array, "... n_species"] = max_moles_by_limiting_element(
+        n_condensate: Float[Array, " n_species"] = max_moles_by_limiting_element(
             formula_matrix, element_abundance, condensate_stable_mask
         )
         # jax.debug.print("n_condensate = {out}", out=n_condensate)
@@ -361,7 +356,7 @@ class HeuristicInitializer(eqx.Module):
         # Species outside the predicted-stable set (NaN) get the trace value exp(LOG_TRACE_VALUE).
         # They do not consume element budget, because only predicted-stable condensates enter
         # element_used below, and the entries of non-condensate species are not used.
-        n_condensate_fallback: Float[Array, "... n_species"] = jnp.where(
+        n_condensate_fallback: Float[Array, " n_species"] = jnp.where(
             jnp.isnan(n_condensate), jnp.exp(LOG_TRACE_VALUE), n_condensate
         )
         # jax.debug.print("n_condensate_fallback = {out}", out=n_condensate_fallback)
@@ -369,14 +364,14 @@ class HeuristicInitializer(eqx.Module):
         # Total moles of each element consumed by the allocated condensate budget. Note here that
         # the mask ensures that only predicted-stable condensates contribute to the element
         # consumption.
-        element_used: Float[Array, "... n_elements"] = jnp.einsum(
-            "es,...s->...e", formula_matrix, condensate_stable_mask * n_condensate_fallback
+        element_used: Float[Array, " n_elements"] = formula_matrix @ (
+            condensate_stable_mask * n_condensate_fallback
         )
         # jax.debug.print("element_used = {out}", out=element_used)
 
         # Remaining element budget after stable-condensate allocation, which must be positive or
         # zero.
-        remaining_b: Float[Array, "... n_elements"] = jnp.maximum(
+        remaining_b: Float[Array, " n_elements"] = jnp.maximum(
             element_abundance - element_used, 0.0
         )
         # jax.debug.print("remaining_b = {out}", out=remaining_b)
@@ -398,7 +393,7 @@ class HeuristicInitializer(eqx.Module):
             non_condensate_no_O2_mask = non_condensate_no_O2_mask.at[O2_index].set(False)
 
         # Allocate remaining budget to non-condensate species excluding O2
-        n_other: Float[Array, "... n_species"] = max_moles_by_limiting_element(
+        n_other: Float[Array, " n_species"] = max_moles_by_limiting_element(
             formula_matrix, remaining_b, non_condensate_no_O2_mask
         )
         # NaN for condensates, O2 (if present) and species without a mass-constrained element, all
@@ -407,9 +402,7 @@ class HeuristicInitializer(eqx.Module):
         # jax.debug.print("n_other = {out}", out=n_other)
 
         # Recalculate element_used after n_other allocation
-        element_used_no_O2: Float[Array, "... n_elements"] = jnp.einsum(
-            "es,...s->...e", formula_matrix, n_other
-        )
+        element_used_no_O2: Float[Array, " n_elements"] = formula_matrix @ n_other
         # jax.debug.print("element_abundance = {out}", out=element_abundance)
         # jax.debug.print("element_used_no_O2 = {out}", out=element_used_no_O2)
 
@@ -423,10 +416,8 @@ class HeuristicInitializer(eqx.Module):
         # -----------------------------------------------------------------------------------
         if O2_index is not None:
             O_index: int = parameters.element_names.index("O")
-            n_O2: Float[Array, "..."] = (
-                remaining_b[..., O_index] / formula_matrix[O_index, O2_index]
-            )
-            n_other = n_other.at[..., O2_index].set(n_O2)
+            n_O2: Float[Array, ""] = remaining_b[O_index] / formula_matrix[O_index, O2_index]
+            n_other = n_other.at[O2_index].set(n_O2)
         # jax.debug.print("n_other after O2 allocation = {out}", out=n_other)
 
         # -----------------------------------------------------------------------------------
@@ -437,16 +428,16 @@ class HeuristicInitializer(eqx.Module):
         # which at this point arises only for O2 when O is not mass constrained, becomes the
         # geometric mean of the valid estimates, which keeps it at a magnitude comparable to the
         # other species.
-        unconstrained: Bool[Array, "... n_species"] = jnp.isnan(n_other)
+        unconstrained: Bool[Array, " n_species"] = jnp.isnan(n_other)
         # jax.debug.print("unconstrained = {out}", out=unconstrained)
-        exhausted: Bool[Array, "... n_species"] = n_other == 0
+        exhausted: Bool[Array, " n_species"] = n_other == 0
         # jax.debug.print("exhausted = {out}", out=exhausted)
-        valid: Bool[Array, "... n_species"] = n_other > 0
+        valid: Bool[Array, " n_species"] = n_other > 0
         # jax.debug.print("valid = {out}", out=valid)
 
-        log_geometric_mean: FloatArray = jnp.sum(
-            jnp.where(valid, jnp.log(n_other), 0.0), axis=-1, keepdims=True
-        ) / jnp.sum(valid, axis=-1, keepdims=True).astype(float)
+        log_geometric_mean: Float[Array, ""] = jnp.sum(
+            jnp.where(valid, jnp.log(n_other), 0.0)
+        ) / jnp.sum(valid).astype(float)
         # jax.debug.print("log_geometric_mean = {out}", out=log_geometric_mean)
 
         n_other_fallback = jnp.where(unconstrained, jnp.exp(log_geometric_mean), n_other)
@@ -460,9 +451,9 @@ class HeuristicInitializer(eqx.Module):
     def _get_log_activity_estimate(
         self,
         parameters: Parameters,
-        species_abundance: Float[Array, "... n_species"],
+        species_abundance: Float[Array, " n_species"],
         pressure: FloatArray,
-    ) -> Float[Array, "... n_species"]:
+    ) -> Float[Array, " n_species"]:
         r"""Estimates log activity for gas species based on ideal-gas assumptions.
 
         For gas species, the log activity is the log partial pressure,
@@ -485,15 +476,11 @@ class HeuristicInitializer(eqx.Module):
             parameters.reaction_system.phase_system.gas_species_mask
         )
 
-        # Column vector to broadcast over species
-        pressure = jnp.asarray(pressure)[..., None]
-        n_gas_total: Float[Array, "... 1"] = jnp.nansum(
-            jnp.where(gas_mask, species_abundance, 0.0), axis=-1, keepdims=True
-        )
-        safe_n_gas_total: Float[Array, "... 1"] = jnp.where(n_gas_total > 0, n_gas_total, 1.0)
+        n_gas_total: Float[Array, ""] = jnp.nansum(jnp.where(gas_mask, species_abundance, 0.0))
+        safe_n_gas_total: Float[Array, ""] = jnp.where(n_gas_total > 0, n_gas_total, 1.0)
 
         # TODO: Here, activity of dissolved species is also computed as unity. To improve.
-        log_activity: Float[Array, "... n_species"] = jnp.where(
+        log_activity: Float[Array, " n_species"] = jnp.where(
             gas_mask,
             jnp.log(jnp.where(gas_mask, species_abundance, 1.0))
             - jnp.log(safe_n_gas_total)
@@ -502,14 +489,14 @@ class HeuristicInitializer(eqx.Module):
         )
         # jax.debug.print("log_activity = {out}", out=log_activity)
 
-        # activity: Float[Array, "... n_species"] = jnp.exp(log_activity)
+        # activity: Float[Array, " n_species"] = jnp.exp(log_activity)
         # jax.debug.print("activity = {out}", out=activity)
 
         return log_activity
 
     def _get_stability_signal(
-        self, parameters: Parameters, species_abundance: Float[Array, "... n_species"]
-    ) -> Float[Array, "... n_reactions n_species"]:
+        self, parameters: Parameters, species_abundance: Float[Array, " n_species"]
+    ) -> Float[Array, "n_reactions n_species"]:
         r"""Computes the stability signal for each reaction and condensate species.
 
         The stability signal is :math:`\nu^\zeta_{rc} (\ln K_r - \ln Q_r)`, where
@@ -536,21 +523,19 @@ class HeuristicInitializer(eqx.Module):
 
         temperature: FloatArray = parameters.state.temperature
         pressure: FloatArray = parameters.state.get_pressure(jnp.log(species_abundance))
-        log_Kp: Float[Array, "... n_reactions"] = parameters.reaction_system.reaction.get_log_Kp(
+        log_Kp: Float[Array, " n_reactions"] = parameters.reaction_system.reaction.get_log_Kp(
             temperature, pressure
         )
         # jax.debug.print("log_Kp = {out}", out=log_Kp)
 
-        log_activity: Float[Array, "... n_species"] = self._get_log_activity_estimate(
+        log_activity: Float[Array, " n_species"] = self._get_log_activity_estimate(
             parameters, species_abundance, pressure
         )
 
         # Condensate c is supersaturated when sm[r,c] * (log_Kp[r] - log_Q[r]) > 0.
-        log_Q: Float[Array, "... n_reactions"] = jnp.einsum(
-            "rs,...s->...r", reaction_matrix, log_activity
-        )
-        stability_signal: Float[Array, "... n_reactions n_species"] = (
-            stability_matrix * jnp.expand_dims(log_Kp - log_Q, axis=-1)
+        log_Q: Float[Array, " n_reactions"] = reaction_matrix @ log_activity
+        stability_signal: Float[Array, "n_reactions n_species"] = (
+            stability_matrix * (log_Kp - log_Q)[:, None]
         )
         # jax.debug.print("stability_signal = {out}", out=stability_signal)
 
