@@ -23,13 +23,13 @@ class MurnaghanEOS(eqx.Module):
     :math:`\alpha_T = a^\circ(1 - 10/\sqrt{T})` and its pressure dependence from the Murnaghan
     equation of state, with a bulk modulus that decreases linearly with temperature.
 
-    The reference temperature is :const:`~atmodeller.constants.TEMPERATURE_REFERENCE` (298.15 K),
+    The reference temperature is :data:`~atmodeller.constants.TEMPERATURE_REFERENCE` (298.15 K),
     whereas :cite:t:`HP98` write their expressions with 298 K. The difference is negligible.
 
     Args:
         V0: Volume at the reference temperature and 1 bar in :math:`\mathrm{J}\ \mathrm{bar}^{-1}`
         alpha0: Thermal expansion parameter :math:`a^\circ` in :math:`\mathrm{K}^{-1}`
-        K0: Bulk modulus at the reference temperature in bar
+        K0: Bulk modulus at the reference temperature (bar)
         dKdP: Pressure derivative of the bulk modulus. Defaults to 4.
     """
 
@@ -40,14 +40,14 @@ class MurnaghanEOS(eqx.Module):
 
     @property
     def dKdT(self) -> float:
-        """Temperature derivative of the bulk modulus in bar/K"""
+        """Temperature derivative of the bulk modulus (bar/K)"""
         return -1.0 * self.K0 * 1.5e-4
 
     def thermal_expansion(self, temperature: ArrayLike) -> Array:
         r"""Gets the thermal expansion.
 
         Args:
-            temperature: Temperature in K
+            temperature: Temperature (K)
 
         Returns:
             Thermal expansion in :math:`\mathrm{K}^{-1}`
@@ -58,10 +58,10 @@ class MurnaghanEOS(eqx.Module):
         """Gets the bulk modulus.
 
         Args:
-            temperature: Temperature in K
+            temperature: Temperature (K)
 
         Returns:
-            Bulk modulus in bar
+            Bulk modulus (bar)
         """
         return self.K0 + self.dKdT * (temperature - TEMPERATURE_REFERENCE)
 
@@ -72,7 +72,7 @@ class MurnaghanEOS(eqx.Module):
         linearised form used by :cite:t:`HP98`.
 
         Args:
-            temperature: Temperature in K
+            temperature: Temperature (K)
 
         Returns:
             Volume at 1 bar in :math:`\mathrm{J}\ \mathrm{bar}^{-1}`
@@ -91,13 +91,13 @@ class MurnaghanEOS(eqx.Module):
 
             V_{1,T} = V_{1,T_r}\left[1 + a^\circ(T - T_r) - 20a^\circ(\sqrt{T} - \sqrt{T_r})\right]
 
-        where :math:`T_r` is :const:`~atmodeller.constants.TEMPERATURE_REFERENCE`.
+        where :math:`T_r` is :data:`~atmodeller.constants.TEMPERATURE_REFERENCE`.
         This is the exact expression used by :cite:t:`HP98` to derive their data set. It is the
         first-order expansion of :meth:`volume_1bar`, which integrates the thermal expansion
         exactly; the two differ by about 0.3% for diamond at 6000 K.
 
         Args:
-            temperature: Temperature in K
+            temperature: Temperature (K)
 
         Returns:
             Volume at 1 bar in :math:`\mathrm{J}\ \mathrm{bar}^{-1}`
@@ -124,8 +124,8 @@ class MurnaghanEOS(eqx.Module):
                 \left[\left(1 + \frac{K'(P - 1)}{K_T}\right)^{1 - 1/K'} - 1\right]
 
         Args:
-            temperature: Temperature in K
-            pressure: Pressure in bar
+            temperature: Temperature (K)
+            pressure: Pressure (bar)
 
         Returns:
             Integral of volume with respect to pressure in :math:`\mathrm{J}\ \mathrm{mol}^{-1}`
@@ -155,9 +155,9 @@ class TaitEOS(eqx.Module):
     Args:
         V0: Volume at the reference temperature and 1 bar in :math:`\mathrm{J}\ \mathrm{bar}^{-1}`
         alpha0: Thermal expansion at the reference temperature in :math:`\mathrm{K}^{-1}`
-        K0: Bulk modulus at the reference temperature in bar
+        K0: Bulk modulus at the reference temperature (bar)
         dKdP: Pressure derivative of the bulk modulus
-        einstein_temperature: Einstein temperature in K, which :cite:t:`HP11` estimate as
+        einstein_temperature: Einstein temperature (K), which :cite:t:`HP11` estimate as
             :math:`10636 / (S/n + 6.44)` from the entropy :math:`S` and number of atoms :math:`n`
         d2KdP2: Second pressure derivative of the bulk modulus in :math:`\mathrm{bar}^{-1}`.
             Defaults to ``None``, which uses :math:`-K'/K_0` :cite:p:`HP11`.
@@ -189,10 +189,10 @@ class TaitEOS(eqx.Module):
         """Gets the thermal pressure.
 
         Args:
-            temperature: Temperature in K
+            temperature: Temperature (K)
 
         Returns:
-            Thermal pressure in bar :cite:p:`HP11`
+            Thermal pressure (bar) :cite:p:`HP11`
         """
         u: Array = self.einstein_temperature / as_j64(temperature)
         u0: float = self.einstein_temperature / TEMPERATURE_REFERENCE
@@ -214,8 +214,8 @@ class TaitEOS(eqx.Module):
         relative volume of :math:`1/K_0` (bar).
 
         Args:
-            temperature: Temperature in K
-            pressure: Pressure in bar
+            temperature: Temperature (K)
+            pressure: Pressure (bar)
 
         Returns:
             Volume in :math:`\mathrm{J}\ \mathrm{bar}^{-1}` :cite:p:`HP11{Eq. 12}`
@@ -244,8 +244,8 @@ class TaitEOS(eqx.Module):
         :math:`P_{th}` alone is the lower limit of the integral, which makes it zero at 1 bar.
 
         Args:
-            temperature: Temperature in K
-            pressure: Pressure in bar
+            temperature: Temperature (K)
+            pressure: Pressure (bar)
 
         Returns:
             Integral of volume with respect to pressure in :math:`\mathrm{J}\ \mathrm{mol}^{-1}`
@@ -269,11 +269,11 @@ def einstein_temperature(entropy: float, number_atoms: int) -> float:
     """Gets the Einstein temperature estimated from the entropy :cite:p:`HP11`.
 
     Args:
-        entropy: Entropy at 298.15 K and 1 bar in J/K/mol
+        entropy: Entropy at 298.15 K and 1 bar (J/K/mol)
         number_atoms: Number of atoms in the formula unit
 
     Returns:
-        Einstein temperature in K
+        Einstein temperature (K)
     """
     return 10636 / (entropy / number_atoms + 6.44)
 

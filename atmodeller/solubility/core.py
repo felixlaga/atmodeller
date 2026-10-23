@@ -33,10 +33,10 @@ class Solubility(eqx.Module):
         """Concentration in ppmw
 
         Args:
-            fugacity: Fugacity in bar
-            temperature: Temperature in K. Defaults to ``None`` for not used.
-            pressure: Pressure in bar. Defaults to ``None`` for not used.
-            fO2: Oxygen fugacity in bar. Defaults to ``None`` for not used.
+            fugacity: Fugacity (bar)
+            temperature: Temperature (K). Defaults to ``None`` for not used.
+            pressure: Pressure (bar). Defaults to ``None`` for not used.
+            fO2: Oxygen fugacity (bar). Defaults to ``None`` for not used.
 
         Returns:
             Concentration in ppmw
@@ -51,10 +51,10 @@ class Solubility(eqx.Module):
         by position.
 
         Args:
-            fugacity: Fugacity in bar
-            temperature: Temperature in K
-            pressure: Pressure in bar
-            fO2: Oxygen fugacity in bar
+            fugacity: Fugacity (bar)
+            temperature: Temperature (K)
+            pressure: Pressure (bar)
+            fO2: Oxygen fugacity (bar)
 
         Returns:
             Concentration in ppmw
@@ -151,9 +151,9 @@ def fO2_temperature_correction(
     maintain the same :math:`\log_{10} f\rm{O}_2` shift at arbitrary temperature.
 
     Args:
-        fO2: Absolute oxygen fugacity at ``temperature`` in bar
-        temperature: Temperature in K
-        pressure: Absolute pressure in bar
+        fO2: Absolute oxygen fugacity at ``temperature`` (bar)
+        temperature: Temperature (K)
+        pressure: Absolute pressure (bar)
         reference_temperature: Reference temperature, which is usually the temperature at which the
             experiment was performed.
 

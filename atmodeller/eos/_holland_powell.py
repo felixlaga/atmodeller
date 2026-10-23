@@ -188,7 +188,7 @@ class FullUnitConverter:
         .. math::
             \Delta V = \mathrm{parameter(coefficients)} (P-P_0)^\gamma
 
-        where :math:`\gamma` is `pressure_exponent` and :math:`P_0` is the pressure at which the
+        where :math:`\gamma` is ``pressure_exponent`` and :math:`P_0` is the pressure at which the
         MRK equation begins to overestimate the molar volume significantly.
 
         Args:
@@ -252,14 +252,14 @@ class MRKCorrespondingStatesHP91(RedlichKwongABC):
 
     @override
     def a(self, temperature: ArrayLike, pressure: ArrayLike) -> ArrayLike:
-        r"""MRK `a` parameter :cite:p:`HP91{Equation 9}`
+        r"""MRK :math:`a` parameter :cite:p:`HP91{Equation 9}`
 
         Args:
             temperature: Temperature (K)
             pressure: Pressure (bar)
 
         Returns:
-            MRK `a` parameter
+            MRK :math:`a` parameter
             (:math:`(\mathrm{m}^3\ \mathrm{mol}^{-1})^2\ \mathrm{K}^{1/2}\ \mathrm{bar}`)
         """
         del pressure
@@ -279,10 +279,10 @@ class MRKCorrespondingStatesHP91(RedlichKwongABC):
 
     @override
     def b(self) -> ArrayLike:
-        r"""MRK `b` parameter computed from :attr:`b0` :cite:p:`HP91{Equation 9}`.
+        r"""MRK :math:`b` parameter computed from :attr:`b0` :cite:p:`HP91{Equation 9}`.
 
         Returns:
-            MRK `b` parameter (:math:`\mathrm{m}^3\ \mathrm{mol}^{-1}`)
+            MRK :math:`b` parameter (:math:`\mathrm{m}^3\ \mathrm{mol}^{-1}`)
         """
         b: ArrayLike = self._b * self.critical_temperature / self.critical_pressure
 
@@ -295,9 +295,9 @@ class MRKImplicitHP91ABCMixin(eqx.Module):
     Universal constants from :cite:t:`HP91{Table 1}`.
 
     Args:
-        a_coefficients: `a` coefficients
-        b: `b` coefficient
-        Ta: Temperature at which the `a` parameter is equal for the dense fluid and gas in K
+        a_coefficients: :math:`a` coefficients
+        b: :math:`b` coefficient
+        Ta: Temperature (K) at which the :math:`a` parameter is equal for the dense fluid and gas
         Tc: Critical temperature (K)
     """
 
@@ -308,7 +308,7 @@ class MRKImplicitHP91ABCMixin(eqx.Module):
 
     @abstractmethod
     def delta_temperature_for_a(self, temperature: ArrayLike) -> ArrayLike:
-        """Temperature difference for the calculation of the `a` parameter
+        """Temperature difference for the calculation of the :math:`a` parameter
 
         Args:
             temperature: Temperature (K)
@@ -319,14 +319,14 @@ class MRKImplicitHP91ABCMixin(eqx.Module):
         ...
 
     def a(self, temperature: ArrayLike, pressure: ArrayLike) -> ArrayLike:
-        r"""MRK `a` parameter :cite:p:`HP91{Equation 6}`
+        r"""MRK :math:`a` parameter :cite:p:`HP91{Equation 6}`
 
         Args:
             temperature: Temperature (K)
             pressure: Pressure (bar)
 
         Returns:
-            MRK `a` parameter
+            MRK :math:`a` parameter
         """
         del pressure
 
@@ -353,7 +353,7 @@ class MRKImplicitGasHP91(MRKImplicitHP91ABCMixin, RedlichKwongImplicitGasABC):
 
 
 Tc_H2O: Scalar = 695
-"""Critical temperature of H2O in K for the MRK/CORK model :cite:p:`HP91`"""
+"""Critical temperature of H2O (K) for the MRK/CORK model :cite:p:`HP91`"""
 Ta_H2O: Scalar = 673  # K
 r"""Temperature at which :math:`a_{\mathrm gas} = a` for H2O by fitting :cite:p:`HP91`"""
 b0_H2O: float = FullUnitConverter.convert_b_coefficient(1.465)
@@ -369,7 +369,7 @@ H2OMrkGasHolland91: MRKImplicitGasHP91 = MRKImplicitGasHP91(
 
 
 class MRKImplicitLiquidHP91(MRKImplicitHP91ABCMixin, RedlichKwongImplicitDenseFluidABC):
-    """MRK for liquid phase :cite:p`HP91{Equation 6}`"""
+    """MRK for liquid phase :cite:p:`HP91{Equation 6}`"""
 
     @override
     def delta_temperature_for_a(self, temperature: ArrayLike) -> ArrayLike:
@@ -382,7 +382,7 @@ H2OMrkLiquidHolland91: MRKImplicitLiquidHP91 = MRKImplicitLiquidHP91(
     Ta_H2O,
     Tc_H2O,
 )
-"""H2O MRK for liquid phase :cite:p`HP91`"""
+"""H2O MRK for liquid phase :cite:p:`HP91`"""
 
 
 class MRKImplicitFluidHP91(MRKImplicitHP91ABCMixin, RedlichKwongImplicitDenseFluidABC):
@@ -428,7 +428,7 @@ H2OMrkFluidHolland91: MRKImplicitFluidHP91 = MRKImplicitFluidHP91(
     Ta_H2O,
     Tc_H2O,
 )
-"""H2O MRK for fluid phase :cite:p`HP91`"""
+"""H2O MRK for fluid phase :cite:p:`HP91`"""
 
 CO2_critical_data: CriticalData = critical_data_dictionary["CO2"]
 """Alternative values from :cite:t:`HP91` are 304.2 K and 73.8 bar"""
@@ -446,12 +446,12 @@ formulation for H2O, the CO2 critical temperature is set.
 
 
 class H2OMrkGasFluid91(RealGas):
-    """A MRK model for H2O for the gas and supercritical fluid
+    r"""A MRK model for H2O for the gas and supercritical fluid
 
     Args:
         mrk_fluid: The MRK for the supercritical fluid
         mrk_gas: The MRK for the subcritical gas
-        Ta: Temperature at which a_gas = a in the MRK formulation in K
+        Ta: Temperature (K) at which :math:`a_\mathrm{gas} = a` in the MRK formulation
         Tc: Critical temperature (K)
     """
 
@@ -460,7 +460,7 @@ class H2OMrkGasFluid91(RealGas):
     mrk_gas: MRKImplicitGasHP91 = H2OMrkGasHolland91
     """The MRK for the subcritical gas"""
     Ta: float = eqx.field(converter=float, default=Ta_H2O)
-    """Temperature at which a_gas = a in the MRK formulation in K"""
+    r"""Temperature (K) at which :math:`a_\mathrm{gas} = a` in the MRK formulation"""
     Tc: float = eqx.field(converter=float, default=Tc_H2O)
     """Critical temperature (K)"""
 
@@ -585,13 +585,13 @@ class H2OMrkGasFluid91(RealGas):
 
 
 class H2OMrkHP91(RealGas):
-    """A MRK model for H2O that accommodates critical behaviour
+    r"""A MRK model for H2O that accommodates critical behaviour
 
     Args:
         mrk_fluid: The MRK for the supercritical fluid
         mrk_gas: The MRK for the subcritical gas
         mrk_liquid: The MRK for the subcritical liquid
-        Ta: Temperature at which a_gas = a in the MRK formulation in K
+        Ta: Temperature (K) at which :math:`a_\mathrm{gas} = a` in the MRK formulation
         Tc: Critical temperature (K)
     """
 
@@ -602,7 +602,7 @@ class H2OMrkHP91(RealGas):
     mrk_liquid: MRKImplicitLiquidHP91 = H2OMrkLiquidHolland91
     """The MRK for the subcritical liquid"""
     Ta: float = eqx.field(converter=float, default=Ta_H2O)
-    """Temperature at which a_gas = a in the MRK formulation in K"""
+    r"""Temperature (K) at which :math:`a_\mathrm{gas} = a` in the MRK formulation"""
     Tc: float = eqx.field(converter=float, default=Tc_H2O)
     """Critical temperature (K)"""
 
@@ -806,9 +806,9 @@ virial_compensation_corresponding_states: VirialCompensation = VirialCompensatio
 )
 """Virial compensation for corresponding states :cite:p:`HP91{Table 2}`
 
-In this case it appears `P0` is always zero, even though for the full CORK equations it determines
-whether or not the virial contribution is added. The unit conversions to SI and pressure in bar 
-mean that every virial coefficient has been multiplied by 1e-2 compared to the values in 
+In this case it appears :math:`P_0` is always zero, even though for the full CORK equations it
+determines whether or not the virial contribution is added. The unit conversions to SI and pressure
+in bar mean that every virial coefficient has been multiplied by 1e-2 compared to the values in
 :cite:t:`HP91{Table 2}`.
 """
 

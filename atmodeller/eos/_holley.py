@@ -44,12 +44,16 @@ class BeattieBridgeman(RealGas):
         PV^2 = RT\left(1-\frac{c}{VT^3}\right)\left(V+B_0-\frac{bB_0}{V}\right)
         - A_0\left(1-\frac{a}{V}\right)
 
+    where :math:`P` is the pressure, :math:`V` the molar volume, :math:`T` the temperature,
+    :math:`R` the gas constant, and :math:`A_0`, :math:`a`, :math:`B_0`, :math:`b` and :math:`c`
+    are empirical constants.
+
     Args:
-        A0: A0 empirical constant
-        a: a empirical constant
-        B0: B0 empirical constant
-        b: b empirical constant
-        c: c empirical constant
+        A0: :math:`A_0` empirical constant
+        a: :math:`a` empirical constant
+        B0: :math:`B_0` empirical constant
+        b: :math:`b` empirical constant
+        c: :math:`c` empirical constant
     """
 
     A0: float = eqx.field(converter=float)

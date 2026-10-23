@@ -126,7 +126,7 @@ class DataBase(ABC):
         Args:
             formula: Formula
             state: State of aggregation as defined by JANAF. Defaults to
-                :const:`~atmodeller.constants.SOLID_STATE`.
+                :data:`~atmodeller.constants.SOLID_STATE`.
             **kwargs: Keyword arguments for
                 :meth:`~atmodeller.containers.ChemicalSpecies.create_condensed`
 
@@ -145,7 +145,7 @@ class DataBase(ABC):
         Args:
             formula: Formula
             state: State of aggregation as defined by JANAF. Defaults to
-                :const:`~atmodeller.constants.GAS_STATE`.
+                :data:`~atmodeller.constants.GAS_STATE`.
             **kwargs: Keyword arguments for
                 :meth:`~atmodeller.containers.ChemicalSpecies.create_gas`
 

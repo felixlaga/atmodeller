@@ -456,22 +456,22 @@ class BaseOutputDict(eqx.Module):
 
     @property
     def _temperature(self) -> FloatArray:
-        """Temperature in K"""
+        """Temperature (K)"""
         return self.parameters.state.temperature
 
     @property
     def temperature(self) -> Float[Array, "#n_batch 1"]:
-        """Temperature in K"""
+        """Temperature (K)"""
         return jnp.atleast_1d(self._temperature)[:, None]
 
     @property
     def _pressure(self) -> FloatArray:
-        """Pressure in bar"""
+        """Pressure (bar)"""
         return self.parameters.state.get_pressure(self.log_number_moles)
 
     @property
     def pressure(self) -> Float[Array, "#n_batch 1"]:
-        """Pressure in bar"""
+        """Pressure (bar)"""
         return jnp.atleast_1d(self._pressure)[:, None]
 
     def phase_to_dict(self, phase_output: PhaseOutput[BasePhase]) -> dict[str, Any]:

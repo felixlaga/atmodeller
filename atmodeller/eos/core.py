@@ -338,16 +338,16 @@ class VirialCompensation(eqx.Module):
     """Pressure at which the MRK equation begins to overestimate the molar volume significantly"""
 
     def _a(self, temperature: ArrayLike, critical_data: CriticalData) -> FloatArray:
-        r"""`a` parameter :cite:p:`HP98`
+        r""":math:`a` parameter :cite:p:`HP98`
 
-        This is also the `d` parameter in :cite:t:`HP91`.
+        This is also the :math:`d` parameter in :cite:t:`HP91`.
 
         Args:
             temperature: Temperature (K)
             critical_data: Critical data
 
         Returns:
-            `a` parameter in :math:`\mathrm{m}^3\ \mathrm{mol}^{-1}\ \mathrm{bar}^{-1}`
+            :math:`a` parameter in :math:`\mathrm{m}^3\ \mathrm{mol}^{-1}\ \mathrm{bar}^{-1}`
         """
         a: FloatArray = (
             self.a_coefficients[1] * as_j64(temperature)
@@ -358,16 +358,16 @@ class VirialCompensation(eqx.Module):
         return a
 
     def _b(self, temperature: ArrayLike, critical_data: CriticalData) -> FloatArray:
-        r"""`b` parameter :cite:p:`HP98`
+        r""":math:`b` parameter :cite:p:`HP98`
 
-        This is also the `c` parameter in :cite:t:`HP91`.
+        This is also the :math:`c` parameter in :cite:t:`HP91`.
 
         Args:
             temperature: Temperature (K)
             critical_data: Critical data
 
         Returns:
-            `b` parameter (:math:`\mathrm{m}^3\ \mathrm{mol}^{-1}\ \mathrm{bar}^{-1/2}`)
+            :math:`b` parameter (:math:`\mathrm{m}^3\ \mathrm{mol}^{-1}\ \mathrm{bar}^{-1/2}`)
         """
         b: FloatArray = (
             self.b_coefficients[1] * as_j64(temperature)
@@ -378,14 +378,14 @@ class VirialCompensation(eqx.Module):
         return b
 
     def _c(self, temperature: ArrayLike, critical_data: CriticalData) -> FloatArray:
-        r"""`c` parameter :cite:p:`HP98`
+        r""":math:`c` parameter :cite:p:`HP98`
 
         Args:
             temperature: Temperature (K)
             critical_data: Critical data
 
         Returns:
-            `c` parameter (:math:`\mathrm{m}^3\ \mathrm{mol}^{-1}\ \mathrm{bar}^{-1/4}`)
+            :math:`c` parameter (:math:`\mathrm{m}^3\ \mathrm{mol}^{-1}\ \mathrm{bar}^{-1/4}`)
         """
         c: FloatArray = (
             self.c_coefficients[1] * as_j64(temperature)

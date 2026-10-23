@@ -42,23 +42,23 @@ class RedlichKwongABC(RealGas):
 
     @abstractmethod
     def a(self, temperature: ArrayLike, pressure: ArrayLike) -> ArrayLike:
-        r"""Gets the `a` parameter
+        r"""Gets the :math:`a` parameter
 
         Args:
             temperature: Temperature (K)
             pressure: Pressure (bar)
 
         Returns:
-            `a` parameter
+            :math:`a` parameter
             (:math:`(\mathrm{m}^3\ \mathrm{mol}^{-1})^2\ \mathrm{K}^{1/2}\ \mathrm{bar}`)
         """
 
     @abstractmethod
     def b(self) -> ArrayLike:
-        r"""Gets the `b` parameter
+        r"""Gets the :math:`b` parameter
 
         Returns:
-            `b` parameter (:math:`\mathrm{m}^3\ \mathrm{mol}^{-1}`)
+            :math:`b` parameter (:math:`\mathrm{m}^3\ \mathrm{mol}^{-1}`)
         """
 
     @override
@@ -165,14 +165,14 @@ class RedlichKwongImplicitABC(RedlichKwongABC):
         ...
 
     def A_factor(self, temperature: ArrayLike, pressure: ArrayLike) -> ArrayLike:
-        """`A` factor :cite:p:`HP91{Appendix A}`
+        """:math:`A` factor :cite:p:`HP91{Appendix A}`
 
         Args:
             temperature: Temperature (K)
             pressure: Pressure (bar)
 
         Returns:
-            `A` factor, which is dimensionless
+            :math:`A` factor, which is dimensionless
         """
         A_factor: ArrayLike = self.a(temperature, pressure) / (
             self.b() * GAS_CONSTANT_BAR * jnp.power(temperature, 1.5)
@@ -181,14 +181,14 @@ class RedlichKwongImplicitABC(RedlichKwongABC):
         return A_factor
 
     def B_factor(self, temperature: ArrayLike, pressure: ArrayLike) -> ArrayLike:
-        """`B` factor :cite:p:`HP91{Appendix A}`
+        """:math:`B` factor :cite:p:`HP91{Appendix A}`
 
         Args:
             temperature: Temperature (K)
             pressure: Pressure (bar)
 
         Returns:
-            `B` factor, which is dimensionless
+            :math:`B` factor, which is dimensionless
         """
         B_factor: ArrayLike = self.b() * pressure / (GAS_CONSTANT_BAR * temperature)
 
@@ -304,7 +304,7 @@ class RedlichKwongImplicitABC(RedlichKwongABC):
 
 
 class RedlichKwongImplicitDenseFluidABC(RedlichKwongImplicitABC):
-    """MRK for the high density fluid phase :cite:p`HP91{Equation 6}`"""
+    """MRK for the high density fluid phase :cite:p:`HP91{Equation 6}`"""
 
     @override
     def initial_volume(self, temperature: ArrayLike, pressure: ArrayLike) -> ArrayLike:
@@ -390,14 +390,14 @@ class RedlichKwong49(RedlichKwongABC):
 
     @override
     def a(self, temperature: ArrayLike, pressure: ArrayLike) -> ArrayLike:
-        r"""RK49 `a` parameter :cite:p:`RK49{Equation 4}`.
+        r"""RK49 :math:`a` parameter :cite:p:`RK49{Equation 4}`.
 
         Args:
             temperature: Temperature (K)
             pressure: Pressure (bar)
 
         Returns:
-            RK49 `a` parameter
+            RK49 :math:`a` parameter
             (:math:`(\mathrm{m}^3\ \mathrm{mol}^{-1})^2\ \mathrm{K}^{1/2}\ \mathrm{bar}`)
         """
         del temperature
@@ -413,10 +413,10 @@ class RedlichKwong49(RedlichKwongABC):
 
     @override
     def b(self) -> ArrayLike:
-        r"""RK49 `b` parameter :cite:p:`RK49{Equation 5}`.
+        r"""RK49 :math:`b` parameter :cite:p:`RK49{Equation 5}`.
 
         Returns:
-            RK49 `b` parameter (:math:`\mathrm{m}^3\ \mathrm{mol}^{-1}`).
+            RK49 :math:`b` parameter (:math:`\mathrm{m}^3\ \mathrm{mol}^{-1}`).
         """
         b: ArrayLike = (
             (jnp.power(2, (1.0 / 3)) - 1)

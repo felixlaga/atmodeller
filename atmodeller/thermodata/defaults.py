@@ -29,4 +29,7 @@ default_properties: dict[str, ThermodynamicProperties] = {
     "C_s": glenn_properties["C_s"].with_volume(GRAPHITE_VOLUME_GUSTAFSON),
     "C_diamond": diamond_gustafson,
 }
-"""Default thermodynamic properties of each species, keyed by name"""
+"""Default thermodynamic properties of each species, keyed by name
+
+:meta hide-value:
+"""

@@ -128,7 +128,7 @@ class ChemicalSpecies(eqx.Module):
         Args:
             formula: Formula
             state: State of aggregation as defined by JANAF. Defaults to
-                :const:`~atmodeller.constants.SOLID_STATE`.
+                :data:`~atmodeller.constants.SOLID_STATE`.
             activity: Activity. Defaults to unity activity.
             solve_for_stability: Solve for stability. Defaults to ``True``.
             include_in_phase_mass: Whether the species is included in phase-level mass, mole, and
@@ -170,7 +170,7 @@ class ChemicalSpecies(eqx.Module):
         Args:
             formula: Formula
             state: State of aggregation as defined by JANAF. Defaults to
-                :const:`~atmodeller.constants.GAS_STATE`.
+                :data:`~atmodeller.constants.GAS_STATE`.
             activity: Activity. Defaults to an ideal gas.
             solve_for_stability: Solve for stability. Defaults to ``False``.
             include_in_phase_mass: Whether the species is included in phase-level mass, mole, and
@@ -441,7 +441,7 @@ class SolverParameters(RootFindParameters):  # pragma: no cover
         jac: Whether to use forward- or reverse-mode autodifferentiation to compute the Jacobian.
             Can be either ``fwd`` or ``bwd``. Defaults to ``fwd``.
         max_starts: Maximum number of starts. Defaults to ``10``.
-        tau: Tau factor for species stability. Defaults to :const:`~atmodeller.constants.TAU`.
+        tau: Tau factor for species stability. Defaults to :data:`~atmodeller.constants.TAU`.
     """
 
     max_starts: int = 10

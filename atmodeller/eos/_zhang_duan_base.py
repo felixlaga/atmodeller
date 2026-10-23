@@ -271,8 +271,9 @@ class ZhangDuanBase(RealGas):
         r"""Objective function to solve for the volume :cite:p:`ZD09{Equation 8}`.
 
         Note that the left-hand side of :cite:t:`ZD09{Equation 8}` is the compressibility factor,
-        which can be expressed in terms of `P`, `V`, `R`, and `T`. If the scaled equivalents are
-        used instead, care should be taken to ensure that the 1000 scaling factor is accounted for.
+        which can be expressed in terms of :math:`P`, :math:`V`, :math:`R`, and :math:`T`. If the
+        scaled equivalents are used instead, care should be taken to ensure that the 1000 scaling
+        factor is accounted for.
 
         Args:
             volume: Volume (:math:`\mathrm{m}^3\ \mathrm{mol}^{-1}`)
@@ -520,17 +521,17 @@ class ZhangDuanBase(RealGas):
 
 
 class ZhangDuanPureFluid(ZhangDuanBase):
-    """Real gas EOS for a pure fluid :cite:p:`ZD09`
+    r"""Real gas EOS for a pure fluid :cite:p:`ZD09`
 
     Args:
-        epsilon: Lenard-Jones parameter (epsilon/kB) in K
-        sigma: Lenard-Jones parameter (:math:`10^{-10}` m)
+        epsilon: Lennard-Jones parameter :math:`\epsilon/k_\mathrm{B}` (K)
+        sigma: Lennard-Jones parameter :math:`\sigma` (:math:`10^{-10}` m)
     """
 
     epsilon: float = eqx.field(converter=float)
-    """Lenard-Jones parameter (epsilon/kB) in K"""
+    r"""Lennard-Jones parameter :math:`\epsilon/k_\mathrm{B}` (K)"""
     sigma: float = eqx.field(converter=float)
-    """Lenard-Jones parameter (:math:`10^{-10}` m)"""
+    r"""Lennard-Jones parameter :math:`\sigma` (:math:`10^{-10}` m)"""
 
     @override
     def get_epsilon(self, mole_fractions: ArrayLike | None = None) -> ArrayLike:
@@ -576,16 +577,16 @@ class ZhangDuanMixture(ZhangDuanBase):
         k1: dict[str, float] = K1_ZHANG_DUAN,
         k2: dict[str, float] = K2_ZHANG_DUAN,
     ):
-        """Initializes the mixture model.
+        r"""Initializes the mixture model.
 
         Args:
             species: Tuple of species names
             species_to_output: Name of the species for which to output species-specific quantities,
                 such as partial fugacity
-            k1: Binary interaction parameter matrix for epsilon (n_species, n_species). Defaults to
-                :attr:`K1_ZHANG_DUAN` to use the Zhang and Duan (2009) coefficients.
-            k2: Binary interaction parameter matrix for sigma (n_species, n_species). Defaults to
-                :attr:`K2_ZHANG_DUAN` to use the Zhang and Duan (2009) coefficients.
+            k1: Binary interaction parameter matrix for :math:`\epsilon` (n_species, n_species).
+                Defaults to :attr:`K1_ZHANG_DUAN` to use the Zhang and Duan (2009) coefficients.
+            k2: Binary interaction parameter matrix for :math:`\sigma` (n_species, n_species).
+                Defaults to :attr:`K2_ZHANG_DUAN` to use the Zhang and Duan (2009) coefficients.
         """
         self.species = species
         self.k1 = self.build_mixing_matrix(species, k1)
@@ -720,10 +721,13 @@ class ZhangDuanMixture(ZhangDuanBase):
         r"""Log partial fugacity coefficient obtained using autodiff
 
         .. math::
-            \ln \phi_i = \left(\frac{\partial(n \ln \phi)}{\partial n_i}\right)_{T,P,n_{j \neq i}}.
+            \ln \phi_i = \left(\frac{\partial(n \ln \phi)}{\partial n_i}\right)_{T,P,n_{j \neq i}},
 
-        However, it is desirable to express this in terms of the mole fractions rather than the
-        number of moles, since the mole fractions are the natural variables for the mixing rules.
+        where :math:`\phi_i` is the partial fugacity coefficient of species :math:`i`, :math:`\phi`
+        the fugacity coefficient of the mixture, :math:`n` the total number of moles, and
+        :math:`n_i` the number of moles of species :math:`i`. However, it is desirable to express
+        this in terms of the mole fractions rather than the number of moles, since the mole
+        fractions are the natural variables for the mixing rules.
 
         Differentiating, applying the quotient rule, and simplifying gives:
 

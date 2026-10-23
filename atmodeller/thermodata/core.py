@@ -46,8 +46,8 @@ class ActivityCoefficient(eqx.Module):
         """Active activity constraint
 
         Condensate activity is imposed in the reaction network and therefore is never part of an
-        active constraint in the residual. Not part of :class:`~atmodeller.interfaces.
-        ActivityProtocol` and not currently called anywhere.
+        active constraint in the residual. Not part of
+        :class:`~atmodeller.interfaces.ActivityProtocol` and not currently called anywhere.
 
         Returns:
             Always ``False`` because it does not require solution.
@@ -86,7 +86,7 @@ class ThermodynamicProperties(eqx.Module):
 
     Subclasses provide the heat capacity, enthalpy and entropy of a data source, from which this
     class gets the Gibbs energy. The standard state is 1 bar and the reference temperature is
-    :const:`~atmodeller.constants.TEMPERATURE_REFERENCE`. An optional volume model adds the
+    :data:`~atmodeller.constants.TEMPERATURE_REFERENCE`. An optional volume model adds the
     pressure dependence of a condensed phase to the Gibbs energy. Gases do not need one, since
     their pressure dependence enters through the fugacity.
     """
@@ -101,7 +101,7 @@ class ThermodynamicProperties(eqx.Module):
         This is :math:`C_p^\circ` in the JANAF tables.
 
         Args:
-            temperature: Temperature in K
+            temperature: Temperature (K)
 
         Returns:
             Heat capacity in :math:`\mathrm{J}\ \mathrm{K}^{-1} \mathrm{mol}^{-1}`
@@ -113,7 +113,7 @@ class ThermodynamicProperties(eqx.Module):
         """Gets the temperature range over which the thermodynamic data are valid.
 
         Returns:
-            Minimum and maximum temperature in K
+            Minimum and maximum temperature (K)
         """
         raise NotImplementedError
 
@@ -124,7 +124,7 @@ class ThermodynamicProperties(eqx.Module):
         This is :math:`H` in the JANAF tables.
 
         Args:
-            temperature: Temperature in K
+            temperature: Temperature (K)
 
         Returns:
             Enthalpy in :math:`\mathrm{J}\ \mathrm{mol}^{-1}`
@@ -138,7 +138,7 @@ class ThermodynamicProperties(eqx.Module):
         This is :math:`S^\circ` in the JANAF tables.
 
         Args:
-            temperature: Temperature in K
+            temperature: Temperature (K)
 
         Returns:
             Entropy in :math:`\mathrm{J}\ \mathrm{K}^{-1} \mathrm{mol}^{-1}`
@@ -149,7 +149,7 @@ class ThermodynamicProperties(eqx.Module):
         r"""Gets the Gibbs energy at 1 bar.
 
         Args:
-            temperature: Temperature in K
+            temperature: Temperature (K)
 
         Returns:
             Gibbs energy in :math:`\mathrm{J}\ \mathrm{mol}^{-1}`
@@ -172,17 +172,17 @@ class ThermodynamicProperties(eqx.Module):
     def get_gibbs_over_RT(
         self, temperature: ArrayLike, pressure: ArrayLike = STANDARD_PRESSURE
     ) -> FloatArray:
-        r"""Gets Gibbs energy to :const:`~atmodeller.constants.GAS_CONSTANT`
+        r"""Gets Gibbs energy to :data:`~atmodeller.sci_utils.GAS_CONSTANT`
         :math:`\times T`
 
         Without a volume model this is the standard-state Gibbs energy at 1 bar for any pressure.
 
         Args:
-            temperature: Temperature in K
-            pressure: Pressure in bar. Defaults to 1 bar.
+            temperature: Temperature (K)
+            pressure: Pressure (bar). Defaults to 1 bar.
 
         Returns:
-            Gibbs energy relative to :const:`~atmodeller.constants.GAS_CONSTANT`
+            Gibbs energy relative to :data:`~atmodeller.sci_utils.GAS_CONSTANT`
             :math:`\times T`
         """
         temperature = as_j64(temperature)
@@ -215,7 +215,7 @@ class ThermodynamicProperties(eqx.Module):
         This is :math:`H-H^{\circ}(T_r)` in the JANAF tables.
 
         Args:
-            temperature: Temperature in K
+            temperature: Temperature (K)
 
         Returns:
             Enthalpy increment in :math:`\mathrm{J}\ \mathrm{mol}^{-1}`
@@ -228,7 +228,7 @@ class ThermodynamicProperties(eqx.Module):
         This is :math:`-[G^\circ-H^{\circ}(T_r)]/T` in the JANAF tables.
 
         Args:
-            temperature: Temperature in K
+            temperature: Temperature (K)
 
         Returns:
             Gibbs energy function in :math:`\mathrm{J}\ \mathrm{K}^{-1} \mathrm{mol}^{-1}`
@@ -247,7 +247,7 @@ class IntegratedThermodynamicProperties(ThermodynamicProperties):
         H(T) = H^\circ(T_r) + \int_{T_r}^T C_p\, dT, \qquad
         S(T) = S^\circ(T_r) + \int_{T_r}^T \frac{C_p}{T}\, dT
 
-    where :math:`T_r` is :const:`~atmodeller.constants.TEMPERATURE_REFERENCE`. The integrals use
+    where :math:`T_r` is :data:`~atmodeller.constants.TEMPERATURE_REFERENCE`. The integrals use
     Gauss-Legendre quadrature.
 
     Args:
@@ -262,9 +262,9 @@ class IntegratedThermodynamicProperties(ThermodynamicProperties):
     heat_capacity_model: HeatCapacityProtocol
     """Heat capacity model"""
     enthalpy_reference: float = eqx.field(converter=float)
-    """Enthalpy in J/mol at the reference temperature"""
+    """Enthalpy (J/mol) at the reference temperature"""
     entropy_reference: float = eqx.field(converter=float)
-    """Entropy in J/K/mol at the reference temperature"""
+    """Entropy (J/K/mol) at the reference temperature"""
 
     # Gauss-Legendre quadrature for integrating heat capacities from the reference temperature.
     # Over 200-6000 K, 64 nodes integrate the NASA Glenn heat capacity of graphite to within
@@ -287,10 +287,10 @@ class IntegratedThermodynamicProperties(ThermodynamicProperties):
 
         Args:
             integrand: Function of temperature to integrate
-            temperature: Temperature in K, which can be less than the reference temperature
+            temperature: Temperature (K), which can be less than the reference temperature
 
         Returns:
-            Integral from :const:`~atmodeller.constants.TEMPERATURE_REFERENCE` to ``temperature``
+            Integral from :data:`~atmodeller.constants.TEMPERATURE_REFERENCE` to ``temperature``
         """
         temperature = as_j64(temperature)
         # Append a node axis: (..., 1) against (N,) gives quadrature temperatures of shape (..., N)
@@ -308,7 +308,7 @@ class IntegratedThermodynamicProperties(ThermodynamicProperties):
         r"""Gets heat capacity.
 
         Args:
-            temperature: Temperature in K
+            temperature: Temperature (K)
 
         Returns:
             Heat capacity in :math:`\mathrm{J}\ \mathrm{K}^{-1} \mathrm{mol}^{-1}`
@@ -320,7 +320,7 @@ class IntegratedThermodynamicProperties(ThermodynamicProperties):
         """Gets the temperature range over which the thermodynamic data are valid.
 
         Returns:
-            Minimum and maximum temperature in K
+            Minimum and maximum temperature (K)
         """
         return self.heat_capacity_model.temperature_range()
 
@@ -329,7 +329,7 @@ class IntegratedThermodynamicProperties(ThermodynamicProperties):
         r"""Gets enthalpy.
 
         Args:
-            temperature: Temperature in K
+            temperature: Temperature (K)
 
         Returns:
             Enthalpy in :math:`\mathrm{J}\ \mathrm{mol}^{-1}`
@@ -343,7 +343,7 @@ class IntegratedThermodynamicProperties(ThermodynamicProperties):
         r"""Gets entropy.
 
         Args:
-            temperature: Temperature in K
+            temperature: Temperature (K)
 
         Returns:
             Entropy in :math:`\mathrm{J}\ \mathrm{K}^{-1} \mathrm{mol}^{-1}`
@@ -363,6 +363,9 @@ class GibbsThermodynamicProperties(ThermodynamicProperties):
 
         S = -\frac{\partial G}{\partial T}, \qquad H = G + TS, \qquad
         C_p = -T\frac{\partial^2 G}{\partial T^2}
+
+    where :math:`T` is the temperature, :math:`S` the entropy, :math:`H` the enthalpy, and
+    :math:`C_p` the heat capacity at constant pressure.
     """
 
     @override
@@ -371,7 +374,7 @@ class GibbsThermodynamicProperties(ThermodynamicProperties):
         r"""Gets the Gibbs energy at 1 bar.
 
         Args:
-            temperature: Temperature in K
+            temperature: Temperature (K)
 
         Returns:
             Gibbs energy in :math:`\mathrm{J}\ \mathrm{mol}^{-1}`
@@ -383,7 +386,7 @@ class GibbsThermodynamicProperties(ThermodynamicProperties):
         r"""Gets entropy.
 
         Args:
-            temperature: Temperature in K
+            temperature: Temperature (K)
 
         Returns:
             Entropy in :math:`\mathrm{J}\ \mathrm{K}^{-1} \mathrm{mol}^{-1}`
@@ -395,7 +398,7 @@ class GibbsThermodynamicProperties(ThermodynamicProperties):
         r"""Gets enthalpy.
 
         Args:
-            temperature: Temperature in K
+            temperature: Temperature (K)
 
         Returns:
             Enthalpy in :math:`\mathrm{J}\ \mathrm{mol}^{-1}`
@@ -409,7 +412,7 @@ class GibbsThermodynamicProperties(ThermodynamicProperties):
         r"""Gets heat capacity.
 
         Args:
-            temperature: Temperature in K
+            temperature: Temperature (K)
 
         Returns:
             Heat capacity in :math:`\mathrm{J}\ \mathrm{K}^{-1} \mathrm{mol}^{-1}`
@@ -452,7 +455,7 @@ class RelativeThermodynamicProperties(GibbsThermodynamicProperties):
         r"""Gets the Gibbs energy at 1 bar.
 
         Args:
-            temperature: Temperature in K
+            temperature: Temperature (K)
 
         Returns:
             Gibbs energy in :math:`\mathrm{J}\ \mathrm{mol}^{-1}`
@@ -466,7 +469,7 @@ class RelativeThermodynamicProperties(GibbsThermodynamicProperties):
         This is the range over which both the base phase and the difference are valid.
 
         Returns:
-            Minimum and maximum temperature in K
+            Minimum and maximum temperature (K)
         """
         base_min, base_max = self.base.temperature_range()
         difference_min, difference_max = self.difference.temperature_range()
@@ -478,14 +481,14 @@ class CriticalData(eqx.Module):
     """Critical temperature and pressure of a gas species
 
     Args:
-        temperature: Critical temperature in K
-        pressure: Critical pressure in bar
+        temperature: Critical temperature (K)
+        pressure: Critical pressure (bar)
     """
 
     temperature: float = eqx.field(converter=float, default=1)
-    """Critical temperature in K"""
+    """Critical temperature (K)"""
     pressure: float = eqx.field(converter=float, default=1)
-    """Critical pressure in bar"""
+    """Critical pressure (bar)"""
 
 
 @dataclass
@@ -509,7 +512,7 @@ class CriticalDataSource:
 
     @property
     def critical_temperature_column(self) -> str:
-        """Name of the column that refers to the critical temperature in K"""
+        """Name of the column that refers to the critical temperature (K)"""
         return "Tc"
 
     @property

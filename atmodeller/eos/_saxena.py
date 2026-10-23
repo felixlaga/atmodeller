@@ -30,21 +30,21 @@ class SaxenaABC(RealGas):
     This form of the EOS can also be used for the models in :cite:t:`SF87a,SF87,SF88`.
 
     Args:
-        a_coefficients: `a` coefficients
-        b_coefficients: `b` coefficients
-        c_coefficients: `c` coefficients
-        d_coefficients: `d` coefficients
+        a_coefficients: :math:`a` coefficients
+        b_coefficients: :math:`b` coefficients
+        c_coefficients: :math:`c` coefficients
+        d_coefficients: :math:`d` coefficients
         critical_data: Critical data. Defaults to empty.
     """
 
     a_coefficients: tuple[float, ...] = eqx.field(converter=to_native_floats)
-    """`a` coefficients"""
+    """:math:`a` coefficients"""
     b_coefficients: tuple[float, ...] = eqx.field(converter=to_native_floats)
-    """`b` coefficients"""
+    """:math:`b` coefficients"""
     c_coefficients: tuple[float, ...] = eqx.field(converter=to_native_floats)
-    """`c` coefficients"""
+    """:math:`c` coefficients"""
     d_coefficients: tuple[float, ...] = eqx.field(converter=to_native_floats)
-    """`d` coefficients"""
+    """:math:`d` coefficients"""
     critical_data: CriticalData = CriticalData()
     """Critical data"""
 
@@ -57,7 +57,7 @@ class SaxenaABC(RealGas):
 
         Args:
             scaled_temperature: Scaled temperature (dimensionless)
-            coefficients: Tuple of the coefficients `a`, `b`, `c`, or `d`.
+            coefficients: Tuple of the coefficients :math:`a`, :math:`b`, :math:`c`, or :math:`d`.
 
         Returns
             The relevant coefficient
@@ -74,7 +74,7 @@ class SaxenaABC(RealGas):
         return self.critical_data.temperature
 
     def a(self, scaled_temperature: ArrayLike) -> FloatArray:
-        """`a` parameter
+        """:math:`a` parameter
 
         Args:
             scaled_temperature: Scaled temperature (dimensionless)
@@ -85,7 +85,7 @@ class SaxenaABC(RealGas):
         return self._get_compressibility_coefficient(scaled_temperature, self.a_coefficients)
 
     def b(self, scaled_temperature: ArrayLike) -> FloatArray:
-        """`b` parameter
+        """:math:`b` parameter
 
         Args:
             scaled_temperature: Scaled temperature (dimensionless)
@@ -96,7 +96,7 @@ class SaxenaABC(RealGas):
         return self._get_compressibility_coefficient(scaled_temperature, self.b_coefficients)
 
     def c(self, scaled_temperature: ArrayLike) -> FloatArray:
-        """`c` parameter
+        """:math:`c` parameter
 
         Args:
             scaled_temperature: Scaled temperature (dimensionless)
@@ -107,7 +107,7 @@ class SaxenaABC(RealGas):
         return self._get_compressibility_coefficient(scaled_temperature, self.c_coefficients)
 
     def d(self, scaled_temperature: ArrayLike) -> FloatArray:
-        """`d` parameter
+        """:math:`d` parameter
 
         Args:
             scaled_temperature: Scaled temperature (dimensionless)
@@ -256,7 +256,7 @@ class SaxenaFiveCoefficients(SaxenaABC):
 
         Args:
             temperature: Scaled temperature (dimensionless)
-            coefficients: Tuple of the coefficients `a`, `b`, `c`, or `d`.
+            coefficients: Tuple of the coefficients :math:`a`, :math:`b`, :math:`c`, or :math:`d`.
 
         Returns
             The relevant coefficient
@@ -284,7 +284,7 @@ class SaxenaEightCoefficients(SaxenaABC):
 
         Args:
             temperature: Scaled temperature (dimensionless)
-            coefficients: Tuple of the coefficients `a`, `b`, `c`, or `d`.
+            coefficients: Tuple of the coefficients :math:`a`, :math:`b`, :math:`c`, or :math:`d`.
 
         Returns
             The relevant coefficient
@@ -316,8 +316,8 @@ _H2_low_pressure_SS92: RealGas = SaxenaFiveCoefficients(
 The coefficients are the same as for the corresponding states model in :cite:t:`SS92{Table 1a}`
 because they originate from :cite:t:`SF87a{Equation 23}`.
 
-In :cite:t:`SF87a{Equation 23}` the final `c` coefficient is 0.1472e-1, not 0.1427e-1 as given in
-:cite:t:`SS92{Table 1b}`. The earlier work is assumed to be correct.
+In :cite:t:`SF87a{Equation 23}` the final :math:`c` coefficient is 0.1472e-1, not 0.1427e-1 as
+given in :cite:t:`SS92{Table 1b}`. The earlier work is assumed to be correct.
 """
 _H2_high_pressure_SS92: RealGas = SaxenaEightCoefficients(
     a_coefficients=(2.2615, 0, -6.8712e1, 0, -1.0573e4, 0, 0, -1.6936e-1),
@@ -331,7 +331,7 @@ These coefficients are those of :cite:t:`SF88`, rewritten from reduced to absolu
 and pressure (bar) using the critical values of :cite:t:`SF88` (:math:`T_c=33.1` K,
 :math:`P_c=13` bar), so no critical data are given (they default to 1). Converting the
 :cite:t:`SF88` coefficients reproduces this table to four significant figures, provided the final
-`c` coefficient of :cite:t:`SF88` is taken as 5.0897e-8; the printed 5.0897e-5 is a misprint.
+:math:`c` coefficient of :cite:t:`SF88` is taken as 5.0897e-8; the printed 5.0897e-5 is a misprint.
 """
 
 _H2_high_pressure_SS92_refit: RealGas = SaxenaEightCoefficients(
@@ -470,12 +470,12 @@ def get_corresponding_states_SS92(species: str) -> RealGas:
     :cite:t:`SF87a{Equation 23 and 21}`, respectively, and for the high pressure regime from
     :cite:t:`SF87{Equation 11}`. Two printed values conflict between sources:
 
-    - Low pressure, final `c` coefficient: 0.1472e-1 in :cite:t:`SF87a{Equation 23}` (abstract
-      and body) versus 0.1427e-1 in :cite:t:`SS92{Table 1a}`. The original source is adopted;
-      the SS92 value is likely a transposition when transcribing from :cite:t:`SF87a`. For
-      T >= 400 K the two values differ by up to about 0.03 in Z below 1 kbar, within the stated
-      fit error of 0.076.
-    - Medium pressure, `c` coefficient of :math:`T_r^{-2}`: -1.4164e-4 in the body of
+    - Low pressure, final :math:`c` coefficient: 0.1472e-1 in :cite:t:`SF87a{Equation 23}`
+      (abstract and body) versus 0.1427e-1 in :cite:t:`SS92{Table 1a}`. The original source is
+      adopted; the SS92 value is likely a transposition when transcribing from :cite:t:`SF87a`. For
+      T >= 400 K the two values differ by up to about 0.03 in Z below 1 kbar, within the stated fit
+      error of 0.076.
+    - Medium pressure, :math:`c` coefficient of :math:`T_r^{-2}`: -1.4164e-4 in the body of
       :cite:t:`SF87a{Equation 21}` and in :cite:t:`SS92{Table 1a}`, but +1.4164e-4 in the
       abstract of :cite:t:`SF87a`, which is a misprint. The negative value agrees to within a
       few percent with the observed CO2 compressibility factors in :cite:t:`SF87a{Table 1}`

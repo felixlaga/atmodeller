@@ -52,9 +52,9 @@ LOG_NUMBER_MOLES_LOWER: float = -200.0
 LOG_NUMBER_MOLES_UPPER: float = 80.0
 """Upper log number of moles for a species"""
 LOG_STABILITY_LOWER: float = -700.0
-"""Lower stability for a species
+r"""Lower stability for a species
 
-Derived to ensure that the exponential function exp(x) does not underflow to zero
+Derived to ensure that the exponential function :math:`\exp(x)` does not underflow to zero
 """
 LOG_STABILITY_UPPER: float = 35.0
 """Upper stability for a species
@@ -71,9 +71,9 @@ defines the number of moles of an unstable pure condensate with an activity of `
 corresponds to a log stability of zero.
 """
 TAU_NUM: int = 2
-"""Number of tau values solved between :const:`TAU_MAX` and :const:`TAU` (inclusive).
+"""Number of tau values solved between :data:`TAU_MAX` and :data:`TAU` (inclusive).
 
 Used by the tau-cascade solver. Empirically, once a solution has been found for
-:const:`TAU_MAX`, the solver can typically proceed directly to :const:`TAU` and converge within a
+:data:`TAU_MAX`, the solver can typically proceed directly to :data:`TAU` and converge within a
 few steps on the first attempt.
 """

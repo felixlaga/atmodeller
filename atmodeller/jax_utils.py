@@ -163,20 +163,20 @@ def safe_pow10(x: ArrayLike) -> Float[Array, "..."]:
 
 
 def safe_divide(numerator: ArrayLike, denominator: ArrayLike, fallback: ArrayLike = 0.0) -> Array:
-    """Elementwise `numerator / denominator`, substituting `fallback` wherever `denominator` is
-    exactly zero.
+    """Elementwise ``numerator / denominator``, substituting ``fallback`` wherever
+    ``denominator`` is exactly zero.
 
     The denominator is guarded (replaced with 1.0) before dividing, so the branch discarded by the
-    final `jnp.where` never computes an actual 0/0 - which would otherwise corrupt `jax.grad`
-    through the `jnp.where` even though that branch is never selected.
+    final ``jnp.where`` never computes an actual 0/0 - which would otherwise corrupt ``jax.grad``
+    through the ``jnp.where`` even though that branch is never selected.
 
     Args:
         numerator: Dividend
         denominator: Divisor; may be zero.
-        fallback: Value to substitute wherever `denominator == 0`. Defaults to 0.0.
+        fallback: Value to substitute wherever ``denominator == 0``. Defaults to 0.0.
 
     Returns:
-        `numerator / denominator` elementwise, or `fallback` wherever `denominator == 0`.
+        ``numerator / denominator`` elementwise, or ``fallback`` wherever ``denominator == 0``.
     """
     safe_denominator: Array = jnp.where(denominator == 0, 1.0, denominator)
 
@@ -607,7 +607,7 @@ class MultiAttemptSolution(eqx.Module):  # pragma: no cover
             Not compatible with JAX-compiled workflows (e.g., inside a :func:`jax.jit` context)
 
         Args:
-            logger_: Logger to log the statistics to. Defaults to :obj:`logger`.
+            logger_: Logger to log the statistics to. Defaults to the module logger.
         """
         total_models: int = int(self.converged.size)
         num_successful_models: int = jnp.count_nonzero(self.converged).item()

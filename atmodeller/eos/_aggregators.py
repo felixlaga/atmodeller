@@ -118,7 +118,7 @@ class CombinedRealGas(RealGas):
 
         Args:
             real_gases: Real gases to combine
-            calibrations: Experimental calibrations that correspond to `real_gases`
+            calibrations: Experimental calibrations that correspond to ``real_gases``
         """
         assert calibrations[-1].pressure_max is not None
         pressure_min: float = calibrations[-1].pressure_max
@@ -157,7 +157,7 @@ class CombinedRealGas(RealGas):
         """Gets the index of the appropriate EOS model based on ``pressure``.
 
         Args:
-            pressure: Pressure in bar
+            pressure: Pressure (bar)
 
         Returns:
             Index of the relevant EOS model
@@ -324,14 +324,14 @@ class UpperBoundRealGas(RealGas):
 
     Args:
         real_gas: Real gas to evaluate the compressibility factor at ``p_eval``.
-        p_eval: Evaluation pressure in bar. This is usually the maximum calibration pressure
+        p_eval: Evaluation pressure (bar). This is usually the maximum calibration pressure
             of ``real_gas``. Defaults to ``1`` bar.
     """
 
     real_gas: RealGas
     """Real gas to evaluate the compressibility factor at ``p_eval``"""
     p_eval: float = eqx.field(converter=float, default=1.0)
-    """Evaluation pressure in bar. Defaults to ``1`` bar."""
+    """Evaluation pressure (bar). Defaults to ``1`` bar."""
 
     # @eqx.debug.assert_max_traces(max_traces=1)
     def _z0(self, temperature: ArrayLike) -> ArrayLike:
@@ -341,7 +341,7 @@ class UpperBoundRealGas(RealGas):
         pass :attr:`p_eval` as an array.
 
         Args:
-            temperature: Temperature in K
+            temperature: Temperature (K)
         """
         return self.real_gas.compressibility_factor(temperature, as_j64(self.p_eval))
 
@@ -353,7 +353,7 @@ class UpperBoundRealGas(RealGas):
         pass :attr:`p_eval` as an array.
 
         Args:
-            temperature: Temperature in K
+            temperature: Temperature (K)
         """
         del temperature
 
@@ -371,8 +371,8 @@ class UpperBoundRealGas(RealGas):
     ) -> Array:
         """Log fugacity cannot be computed.
 
-        This method should not be used because the volume integral is only defined above `p_eval`,
-        meaning that the log fugacity cannot be calculated.
+        This method should not be used because the volume integral is only defined above
+        ``p_eval``, meaning that the log fugacity cannot be calculated.
         """
         del temperature
         del pressure
@@ -503,7 +503,7 @@ class CombinedRealGasFugacity(RealGasBase):
         """Gets the index of the appropriate EOS model based on ``pressure``.
 
         Args:
-            pressure: Pressure in bar
+            pressure: Pressure (bar)
 
         Returns:
             Index of the relevant EOS model

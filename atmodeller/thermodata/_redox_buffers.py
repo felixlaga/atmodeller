@@ -240,7 +240,7 @@ class IronWustiteBufferHirschmann21(RedoxBuffer):
         """Evaluates an m parameter
 
         Args:
-            pressure: Pressure in GPa
+            pressure: Pressure (GPa)
             coefficients: Coefficients
 
         Return:
@@ -266,7 +266,7 @@ class IronWustiteBufferHirschmann21(RedoxBuffer):
 
         Args:
             temperature: Temperature (K)
-            pressure: Pressure in GPa
+            pressure: Pressure (GPa)
             coefficients: Coefficients
 
         Returns:
@@ -286,7 +286,7 @@ class IronWustiteBufferHirschmann21(RedoxBuffer):
 
         Args:
             temperature: Temperature (K)
-            pressure: Pressure in GPa
+            pressure: Pressure (GPa)
 
         Return:
             log10fO2 for fcc and bcc iron
@@ -302,7 +302,7 @@ class IronWustiteBufferHirschmann21(RedoxBuffer):
 
         Args:
             temperature: Temperature (K)
-            pressure: Pressure in GPa
+            pressure: Pressure (GPa)
 
         Return:
             log10fO2 for hcp iron
@@ -318,7 +318,7 @@ class IronWustiteBufferHirschmann21(RedoxBuffer):
 
         Args:
             temperature: Temperature (K)
-            pressure: Pressure in GPa
+            pressure: Pressure (GPa)
 
         Returns:
             True/False whether to use the hcp iron formulation

@@ -49,6 +49,7 @@ extensions = [
 
 intersphinx_mapping = {
     "jax": ("https://docs.jax.dev/en/latest/", None),
+    "numpy": ("https://numpy.org/doc/stable/", None),
     "equinox": ("https://docs.kidger.site/equinox/", None),
     "optimistix": ("https://docs.kidger.site/optimistix/", None),
 }

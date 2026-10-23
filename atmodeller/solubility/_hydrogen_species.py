@@ -216,7 +216,7 @@ class _H2_chachan18(Solubility):
         f_calibration: Calibration fugacity
         T_calibration: Calibration temperature
         X_calibration: Mass fraction at calibration conditions
-        T0: Arrhenius temperature factor in K, which expresses the repulsive interaction of the
+        T0: Arrhenius temperature factor (K), which expresses the repulsive interaction of the
             molecule with magma. Defaults to 4000 K, which is the middle of the range the authors
             explore (from 3000 K to 5000 K).
     """
@@ -228,7 +228,7 @@ class _H2_chachan18(Solubility):
     X_calibration: float = eqx.field(converter=float)
     """Mass fraction at calibration conditions"""
     T0: float = eqx.field(converter=float)
-    """Arrhenius temperature factor in K"""
+    """Arrhenius temperature factor (K)"""
     A: float = eqx.field(converter=float)
     """Constant factor"""
 

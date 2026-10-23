@@ -61,7 +61,7 @@ class FixedActivityConstraint(eqx.Module):
 
     Args:
         activity: Activity (dimensionless) or fugacity referenced to 1 bar for gaseous species.
-            Defaults to :data:`jax.numpy.nan` to indicate no constraint.
+            Defaults to ``NaN`` to indicate no constraint.
     """
 
     activity: Array = eqx.field(converter=as_j64, default=jnp.nan)
@@ -91,7 +91,7 @@ class FixedActivityConstraint(eqx.Module):
         Returns:
             - Log activity (dimensionless) for condensed species, or
             - Log fugacity referenced to 1 bar for gaseous species, or
-            - :data:`jax.numpy.nan` if the constraint is not active
+            - ``NaN`` if the constraint is not active
         """
         broadcast_shape: tuple[int, ...] = jnp.broadcast_shapes(
             jnp.shape(self.activity), jnp.shape(temperature), jnp.shape(pressure)

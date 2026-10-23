@@ -124,11 +124,12 @@ rhyolite in the abstract.
 
 
 class _CO2_basalt_dixon95(Solubility):
-    """CO2 in MORB liquids :cite:p:`DSH95`
+    r"""CO2 in MORB liquids :cite:p:`DSH95`
 
-    :cite:t:`DSH95{Equation 6}` for mole fraction of dissolved carbonate (CO3^2-) and then
-    converting to ppmw for CO2 experiments conducted at 1200 C, 210-980 bars with mixed H2O-CO2
-    vapor phase (CO2 vapor mole fraction varied from 0.42-0.97).
+    :cite:t:`DSH95{Equation 6}` for mole fraction of dissolved carbonate
+    (:math:`\mathrm{CO_3^{2-}}`) and then converting to ppmw for CO2 experiments conducted at
+    1200 C, 210-980 bars with mixed H2O-CO2 vapor phase (CO2 vapor mole fraction varied from
+    0.42-0.97).
     """
 
     @override
@@ -143,9 +144,9 @@ class _CO2_basalt_dixon95(Solubility):
 
 
 CO2_basalt_dixon95: Solubility = _CO2_basalt_dixon95()
-"""CO2 in MORB liquids :cite:p:`DSH95`
+r"""CO2 in MORB liquids :cite:p:`DSH95`
 
-:cite:t:`DSH95{Equation 6}` for mole fraction of dissolved carbonate (CO3^2-) and then
-converting to ppmw for CO2 experiments conducted at 1200 C, 210-980 bars with mixed H2O-CO2
-vapor phase (CO2 vapor mole fraction varied from 0.42-0.97).
+:cite:t:`DSH95{Equation 6}` for mole fraction of dissolved carbonate (:math:`\mathrm{CO_3^{2-}}`)
+and then converting to ppmw for CO2 experiments conducted at 1200 C, 210-980 bars with mixed
+H2O-CO2 vapor phase (CO2 vapor mole fraction varied from 0.42-0.97).
 """

@@ -36,7 +36,8 @@ class SGTEThermodynamicProperties(GibbsThermodynamicProperties):
 
         G = a + bT + cT\ln T + dT^2 + e/T + f/T^2 + g/T^3
 
-    from which the entropy, enthalpy and heat capacity follow by differentiation
+    where :math:`T` is the temperature and :math:`a` to :math:`g` are the coefficients, from which
+    the entropy, enthalpy and heat capacity follow by differentiation
     (:class:`~atmodeller.thermodata.core.GibbsThermodynamicProperties`). Analytically
     :cite:p:`Dinsdale1991`,
 
@@ -53,7 +54,7 @@ class SGTEThermodynamicProperties(GibbsThermodynamicProperties):
     0.34 J/mol for diamond, and is negligible at low pressures :cite:p:`Dinsdale1991`.
 
     Args:
-        coefficients: Coefficients :math:`(a, b, c, d, e, f, g)` of the Gibbs energy in J/mol,
+        coefficients: Coefficients :math:`(a, b, c, d, e, f, g)` of the Gibbs energy (J/mol),
             with :math:`T` in K
         volume_model: Volume model. Defaults to ``None``, which ignores the pressure dependence.
     """
@@ -72,7 +73,7 @@ class SGTEThermodynamicProperties(GibbsThermodynamicProperties):
         r"""Gets the Gibbs energy at 1 bar.
 
         Args:
-            temperature: Temperature in K
+            temperature: Temperature (K)
 
         Returns:
             Gibbs energy in :math:`\mathrm{J}\ \mathrm{mol}^{-1}`
@@ -95,7 +96,7 @@ class SGTEThermodynamicProperties(GibbsThermodynamicProperties):
         """Gets the temperature range over which the thermodynamic data are valid.
 
         Returns:
-            Minimum and maximum temperature in K
+            Minimum and maximum temperature (K)
         """
         return (TEMPERATURE_REFERENCE, 6000.0)
 
@@ -134,7 +135,7 @@ class SGTEMurnaghanEOS(eqx.Module):
         r"""Gets the volume at zero pressure.
 
         Args:
-            temperature: Temperature in K
+            temperature: Temperature (K)
 
         Returns:
             Volume at zero pressure in :math:`\mathrm{J}\ \mathrm{bar}^{-1}`
@@ -152,8 +153,8 @@ class SGTEMurnaghanEOS(eqx.Module):
                 \left[(1 + nKP)^{1 - 1/n} - (1 + nK)^{1 - 1/n}\right]
 
         Args:
-            temperature: Temperature in K
-            pressure: Pressure in bar
+            temperature: Temperature (K)
+            pressure: Pressure (bar)
 
         Returns:
             Integral of volume with respect to pressure in :math:`\mathrm{J}\ \mathrm{mol}^{-1}`

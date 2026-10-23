@@ -19,11 +19,12 @@ from atmodeller.solubility.core import Solubility
 
 
 class _S2_sulfate_andesite_boulliung23(Solubility):
-    """Sulfur as sulfate SO4^2-/S^6+ in andesite :cite:p:`BW22,BW23corr`
+    r"""Sulfur as sulfate :math:`\mathrm{SO_4^{2-}}/\mathrm{S^{6+}}` in andesite
+    :cite:p:`BW22,BW23corr`
 
     Using the first equation in the abstract of :cite:t:`BW22` and the corrected expression for
-    sulfate capacity (C_S6+) in :cite:t:`BW23corr`. Composition for andesite from
-    :cite:t:`BW22{Table 1}`. Experiments conducted at 1 atm, 1473-1773 K for silicate melts
+    sulfate capacity (:math:`C_{\mathrm{S^{6+}}}`) in :cite:t:`BW23corr`. Composition for andesite
+    from :cite:t:`BW22{Table 1}`. Experiments conducted at 1 atm, 1473-1773 K for silicate melts
     equilibrated with Air/SO2 mixtures.
     """
 
@@ -47,21 +48,23 @@ class _S2_sulfate_andesite_boulliung23(Solubility):
 
 
 S2_sulfate_andesite_boulliung23: Solubility = _S2_sulfate_andesite_boulliung23()
-"""Sulfur as sulfate SO4^2-/S^6+ in andesite :cite:p:`BW22,BW23corr`
+r"""Sulfur as sulfate :math:`\mathrm{SO_4^{2-}}/\mathrm{S^{6+}}` in andesite
+:cite:p:`BW22,BW23corr`
 
 Using the first equation in the abstract of :cite:t:`BW22` and the corrected expression for
-sulfate capacity (C_S6+) in :cite:t:`BW23corr`. Composition for andesite from
+sulfate capacity (:math:`C_{\mathrm{S^{6+}}}`) in :cite:t:`BW23corr`. Composition for andesite from
 :cite:t:`BW22{Table 1}`. Experiments conducted at 1 atm, 1473-1773 K for silicate melts
 equilibrated with Air/SO2 mixtures.
 """
 
 
 class _S2_sulfide_andesite_boulliung23(Solubility):
-    """Sulfur as sulfide (S^2-) in andesite :cite:p:`BW23`
+    r"""Sulfur as sulfide (:math:`\mathrm{S^{2-}}`) in andesite :cite:p:`BW23`
 
-    Using expressions in the abstract for S wt.% and sulfide capacity (C_S2-). Composition
-    for andesite from :cite:t:`BW22{Table 1}`. Experiments conducted at 1 atm, 1473-1773 K in a
-    controlled CO-CO2-SO2 atmosphere fO2 conditions were greater than 1 log unit below FMQ.
+    Using expressions in the abstract for S wt.% and sulfide capacity
+    (:math:`C_{\mathrm{S^{2-}}}`). Composition for andesite from :cite:t:`BW22{Table 1}`.
+    Experiments conducted at 1 atm, 1473-1773 K in a controlled CO-CO2-SO2 atmosphere fO2
+    conditions were greater than 1 log unit below FMQ.
     """
 
     @override
@@ -83,11 +86,11 @@ class _S2_sulfide_andesite_boulliung23(Solubility):
 
 
 S2_sulfide_andesite_boulliung23: Solubility = _S2_sulfide_andesite_boulliung23()
-"""Sulfur as sulfide (S^2-) in andesite :cite:p:`BW23`
+r"""Sulfur as sulfide (:math:`\mathrm{S^{2-}}`) in andesite :cite:p:`BW23`
 
-Using expressions in the abstract for S wt.% and sulfide capacity (C_S2-). Composition
-for andesite from :cite:t:`BW22{Table 1}`. Experiments conducted at 1 atm, 1473-1773 K in a
-controlled CO-CO2-SO2 atmosphere fO2 conditions were greater than 1 log unit below FMQ.
+Using expressions in the abstract for S wt.% and sulfide capacity (:math:`C_{\mathrm{S^{2-}}}`).
+Composition for andesite from :cite:t:`BW22{Table 1}`. Experiments conducted at 1 atm, 1473-1773 K
+in a controlled CO-CO2-SO2 atmosphere fO2 conditions were greater than 1 log unit below FMQ.
 """
 
 
@@ -125,12 +128,13 @@ S2_andesite_boulliung23: Solubility = _S2_andesite_boulliung23()
 
 
 class _S2_sulfate_basalt_boulliung23(Solubility):
-    """Sulfur in basalt as sulfate, SO4^2-/S^6+ :cite:p:`BW22,BW23corr`
+    r"""Sulfur in basalt as sulfate, :math:`\mathrm{SO_4^{2-}}/\mathrm{S^{6+}}`
+    :cite:p:`BW22,BW23corr`
 
     Using the first equation in the abstract and the corrected expression for sulfate capacity
-    (C_S6+) in :cite:t:`BW23corr`. Composition for Basalt from :cite:t:`BW22{Table 1}`. Experiments
-    conducted at 1 atm pressure, temperatures from 1473-1773 K for silicate melts equilibrated with
-    Air/SO2 mixtures.
+    (:math:`C_{\mathrm{S^{6+}}}`) in :cite:t:`BW23corr`. Composition for Basalt from
+    :cite:t:`BW22{Table 1}`. Experiments conducted at 1 atm pressure, temperatures from 1473-1773 K
+    for silicate melts equilibrated with Air/SO2 mixtures.
     """
 
     @override
@@ -153,22 +157,22 @@ class _S2_sulfate_basalt_boulliung23(Solubility):
 
 
 S2_sulfate_basalt_boulliung23: Solubility = _S2_sulfate_basalt_boulliung23()
-"""Sulfur in basalt as sulfate, SO4^2-/S^6+ :cite:p:`BW22,BW23corr`
+r"""Sulfur in basalt as sulfate, :math:`\mathrm{SO_4^{2-}}/\mathrm{S^{6+}}` :cite:p:`BW22,BW23corr`
 
 Using the first equation in the abstract and the corrected expression for sulfate capacity
-(C_S6+) in :cite:t:`BW23corr`. Composition for Basalt from :cite:t:`BW22{Table 1}`. Experiments
-conducted at 1 atm pressure, temperatures from 1473-1773 K for silicate melts equilibrated with
-Air/SO2 mixtures.
+(:math:`C_{\mathrm{S^{6+}}}`) in :cite:t:`BW23corr`. Composition for Basalt from
+:cite:t:`BW22{Table 1}`. Experiments conducted at 1 atm pressure, temperatures from 1473-1773 K for
+silicate melts equilibrated with Air/SO2 mixtures.
 """
 
 
 class _S2_sulfide_basalt_boulliung23(Solubility):
-    """Sulfur in basalt as sulfide (S^2-) :cite:p:`BW23`
+    r"""Sulfur in basalt as sulfide (:math:`\mathrm{S^{2-}}`) :cite:p:`BW23`
 
-    Using expressions in the abstract for S wt% and sulfide capacity (C_S2-). Composition for
-    basalt from :cite:t:`BW22{Table 1}`. Experiments conducted at 1 atm pressure and temperatures
-    from 1473-1773 K in a controlled CO-CO2-SO2 atmosphere fO2 conditions were greater than 1 log
-    unit below FMQ.
+    Using expressions in the abstract for S wt% and sulfide capacity (:math:`C_{\mathrm{S^{2-}}}`).
+    Composition for basalt from :cite:t:`BW22{Table 1}`. Experiments conducted at 1 atm pressure
+    and temperatures from 1473-1773 K in a controlled CO-CO2-SO2 atmosphere fO2 conditions were
+    greater than 1 log unit below FMQ.
     """
 
     @override
@@ -190,12 +194,12 @@ class _S2_sulfide_basalt_boulliung23(Solubility):
 
 
 S2_sulfide_basalt_boulliung23: Solubility = _S2_sulfide_basalt_boulliung23()
-"""Sulfur in basalt as sulfide (S^2-) :cite:p:`BW23`
+r"""Sulfur in basalt as sulfide (:math:`\mathrm{S^{2-}}`) :cite:p:`BW23`
 
-Using expressions in the abstract for S wt% and sulfide capacity (C_S2-). Composition for
-basalt from :cite:t:`BW22{Table 1}`. Experiments conducted at 1 atm pressure and temperatures
-from 1473-1773 K in a controlled CO-CO2-SO2 atmosphere fO2 conditions were greater than 1 log
-unit below FMQ.
+Using expressions in the abstract for S wt% and sulfide capacity (:math:`C_{\mathrm{S^{2-}}}`).
+Composition for basalt from :cite:t:`BW22{Table 1}`. Experiments conducted at 1 atm pressure and
+temperatures from 1473-1773 K in a controlled CO-CO2-SO2 atmosphere fO2 conditions were greater
+than 1 log unit below FMQ.
 """
 
 
@@ -233,12 +237,13 @@ S2_basalt_boulliung23: Solubility = _S2_basalt_boulliung23()
 
 
 class _S2_sulfate_trachybasalt_boulliung23(Solubility):
-    """Sulfur as sulfate SO4^2-/S^6+ in trachybasalt :cite:p:`BW22,BW23corr`
+    r"""Sulfur as sulfate :math:`\mathrm{SO_4^{2-}}/\mathrm{S^{6+}}` in trachybasalt
+    :cite:p:`BW22,BW23corr`
 
     Using the first equation in the abstract of :cite:t:`BW22` and the corrected expression for
-    sulfate capacity (C_S6+) in :cite:t:`BW23corr`. Composition for trachybasalt from
-    :cite:t:`BW22{Table 1}`. Experiments conducted at 1 atm, 1473-1773 K for silicate melts
-    equilibrated with Air/SO2 mixtures.
+    sulfate capacity (:math:`C_{\mathrm{S^{6+}}}`) in :cite:t:`BW23corr`. Composition for
+    trachybasalt from :cite:t:`BW22{Table 1}`. Experiments conducted at 1 atm, 1473-1773 K for
+    silicate melts equilibrated with Air/SO2 mixtures.
     """
 
     @override
@@ -261,21 +266,23 @@ class _S2_sulfate_trachybasalt_boulliung23(Solubility):
 
 
 S2_sulfate_trachybasalt_boulliung23: Solubility = _S2_sulfate_trachybasalt_boulliung23()
-"""Sulfur as sulfate SO4^2-/S^6+ in trachybasalt :cite:p:`BW22,BW23corr`
+r"""Sulfur as sulfate :math:`\mathrm{SO_4^{2-}}/\mathrm{S^{6+}}` in trachybasalt
+:cite:p:`BW22,BW23corr`
 
-Using the first equation in the abstract of :cite:t:`BW22` and the corrected expression for
-sulfate capacity (C_S6+) in :cite:t:`BW23corr`. Composition for trachybasalt from
+Using the first equation in the abstract of :cite:t:`BW22` and the corrected expression for sulfate
+capacity (:math:`C_{\mathrm{S^{6+}}}`) in :cite:t:`BW23corr`. Composition for trachybasalt from
 :cite:t:`BW22{Table 1}`. Experiments conducted at 1 atm, 1473-1773 K for silicate melts
 equilibrated with Air/SO2 mixtures.
 """
 
 
 class _S2_sulfide_trachybasalt_boulliung23(Solubility):
-    """Sulfur as sulfide (S^2-) in trachybasalt :cite:p:`BW23`
+    r"""Sulfur as sulfide (:math:`\mathrm{S^{2-}}`) in trachybasalt :cite:p:`BW23`
 
-    Using expressions in the abstract for S wt.% and sulfide capacity (C_S2-). Composition
-    for trachybasalt from :cite:t:`BW22{Table 1}`. Experiments conducted at 1 atm, 1473-1773 K in a
-    controlled CO-CO2-SO2 atmosphere fO2 conditions were greater than 1 log unit below FMQ.
+    Using expressions in the abstract for S wt.% and sulfide capacity
+    (:math:`C_{\mathrm{S^{2-}}}`). Composition for trachybasalt from :cite:t:`BW22{Table 1}`.
+    Experiments conducted at 1 atm, 1473-1773 K in a controlled CO-CO2-SO2 atmosphere fO2
+    conditions were greater than 1 log unit below FMQ.
     """
 
     @override
@@ -297,11 +304,12 @@ class _S2_sulfide_trachybasalt_boulliung23(Solubility):
 
 
 S2_sulfide_trachybasalt_boulliung23: Solubility = _S2_sulfide_trachybasalt_boulliung23()
-"""Sulfur as sulfide (S^2-) in trachybasalt :cite:p:`BW23`
+r"""Sulfur as sulfide (:math:`\mathrm{S^{2-}}`) in trachybasalt :cite:p:`BW23`
 
-Using expressions in the abstract for S wt.% and sulfide capacity (C_S2-). Composition
-for trachybasalt from :cite:t:`BW22{Table 1}`. Experiments conducted at 1 atm, 1473-1773 K in a
-controlled CO-CO2-SO2 atmosphere fO2 conditions were greater than 1 log unit below FMQ.
+Using expressions in the abstract for S wt.% and sulfide capacity (:math:`C_{\mathrm{S^{2-}}}`).
+Composition for trachybasalt from :cite:t:`BW22{Table 1}`. Experiments conducted at 1 atm,
+1473-1773 K in a controlled CO-CO2-SO2 atmosphere fO2 conditions were greater than 1 log unit below
+FMQ.
 """
 
 

@@ -76,7 +76,7 @@ else:
     from equinox import AbstractClassVar
 
 DEFAULT_BACKGROUND_MASS: float = 0.0
-"""Default background mass in kg (i.e., no background mass)
+"""Default background mass (kg), i.e. no background mass
 
 See :attr:`BasePhase.background_mass` for what "background" mass means (the portion of a phase's
 mass that is not modeled by explicit chemical species)."""

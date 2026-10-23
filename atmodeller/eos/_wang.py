@@ -25,17 +25,17 @@ class VirialQuadratic(RealGas):
     """A real gas EOS that implements the virial formulation
 
     Args:
-        a_coefficients: `a` coefficients
-        b_coefficients: `b` coefficients
-        c_coefficients: `c` coefficients
+        a_coefficients: :math:`a` coefficients
+        b_coefficients: :math:`b` coefficients
+        c_coefficients: :math:`c` coefficients
     """
 
     a_coefficients: tuple[float, ...] = eqx.field(converter=to_native_floats)
-    """`a` coefficients"""
+    """:math:`a` coefficients"""
     b_coefficients: tuple[float, ...] = eqx.field(converter=to_native_floats)
-    """`b` coefficients"""
+    """:math:`b` coefficients"""
     c_coefficients: tuple[float, ...] = eqx.field(converter=to_native_floats)
-    """`c` coefficients"""
+    """:math:`c` coefficients"""
 
     @override
     def _get_compressibility_coefficient(
@@ -45,7 +45,7 @@ class VirialQuadratic(RealGas):
 
         Args:
             temperature: Temperature (K)
-            coefficients: Tuple of the coefficients `a`, `b`, `c`
+            coefficients: Tuple of the coefficients :math:`a`, :math:`b`, :math:`c`
 
         Returns
             The relevant coefficient
@@ -59,7 +59,7 @@ class VirialQuadratic(RealGas):
         return coefficient
 
     def a(self, temperature: ArrayLike) -> FloatArray:
-        """`a` parameter
+        """:math:`a` parameter
 
         Args:
             temperature: Temperature (K)
@@ -70,7 +70,7 @@ class VirialQuadratic(RealGas):
         return self._get_compressibility_coefficient(temperature, self.a_coefficients)
 
     def b(self, temperature: ArrayLike) -> FloatArray:
-        """`b` parameter
+        """:math:`b` parameter
 
         Args:
             temperature: Temperature (K)
@@ -81,7 +81,7 @@ class VirialQuadratic(RealGas):
         return self._get_compressibility_coefficient(temperature, self.b_coefficients)
 
     def c(self, temperature: ArrayLike) -> FloatArray:
-        """`c` parameter
+        """:math:`c` parameter
 
         Args:
             temperature: Temperature (K)

@@ -40,8 +40,8 @@ class NasaGlennThermodynamicProperties(ThermodynamicProperties):
         cp_coeffs: Heat capacity coefficients for each temperature range
         b1: Enthalpy constant of integration for each temperature range
         b2: Entropy constant of integration for each temperature range
-        T_min: Minimum temperature in K of each range
-        T_max: Maximum temperature in K of each range
+        T_min: Minimum temperature of each range (K)
+        T_max: Maximum temperature of each range (K)
         volume_model: Volume model. Defaults to ``None``, which ignores the pressure dependence.
     """
 
@@ -52,9 +52,9 @@ class NasaGlennThermodynamicProperties(ThermodynamicProperties):
     b2: tuple[float, ...] = eqx.field(converter=to_native_floats)
     """Entropy constant(s) of integration"""
     T_min: tuple[float, ...] = eqx.field(converter=to_native_floats)
-    """Minimum temperature(s) in K in the range"""
+    """Minimum temperature(s) of the range (K)"""
     T_max: tuple[float, ...] = eqx.field(converter=to_native_floats)
-    """Maximum temperature(s) in K in the range"""
+    """Maximum temperature(s) of the range (K)"""
 
     def get_index(self, temperature: ArrayLike) -> Integer[Array, "..."]:
         """Gets the index of the temperature range for the given temperature
@@ -63,7 +63,7 @@ class NasaGlennThermodynamicProperties(ThermodynamicProperties):
         lowest range below it and from the highest range above it.
 
         Args:
-            temperature: Temperature in K
+            temperature: Temperature (K)
 
         Returns:
             Index of the temperature range
@@ -97,14 +97,14 @@ class NasaGlennThermodynamicProperties(ThermodynamicProperties):
     def _cp_over_R(
         self, cp_coefficients: Float[Array, "... 7"], temperature: ArrayLike
     ) -> FloatArray:
-        """Heat capacity relative to :const:`~atmodeller.constants.GAS_CONSTANT`
+        """Heat capacity relative to :data:`~atmodeller.sci_utils.GAS_CONSTANT`
 
         Args:
             cp_coefficients: Heat capacity coefficients
-            temperature: Temperature in K
+            temperature: Temperature (K)
 
         Returns:
-            Heat capacity relative to :const:`~atmodeller.constants.GAS_CONSTANT`
+            Heat capacity relative to :data:`~atmodeller.sci_utils.GAS_CONSTANT`
         """
         temperature = as_j64(temperature)
         temperature_terms: Float[Array, "... 7"] = jnp.stack(
@@ -125,16 +125,16 @@ class NasaGlennThermodynamicProperties(ThermodynamicProperties):
     def _H_over_RT(
         self, cp_coefficients: Float[Array, "... 7"], b1: ArrayLike, temperature: ArrayLike
     ) -> FloatArray:
-        r"""Enthalpy relative to :const:`~atmodeller.constants.GAS_CONSTANT`
+        r"""Enthalpy relative to :data:`~atmodeller.sci_utils.GAS_CONSTANT`
         :math:`\times T`
 
         Args:
             cp_coefficients: Heat capacity coefficients
             b1: Enthalpy constant of integration
-            temperature: Temperature in K
+            temperature: Temperature (K)
 
         Returns:
-            Enthalpy relative to :const:`~atmodeller.constants.GAS_CONSTANT`
+            Enthalpy relative to :data:`~atmodeller.sci_utils.GAS_CONSTANT`
             :math:`\times T`
         """
         temperature = as_j64(temperature)
@@ -156,15 +156,15 @@ class NasaGlennThermodynamicProperties(ThermodynamicProperties):
     def _S_over_R(
         self, cp_coefficients: Float[Array, "... 7"], b2: ArrayLike, temperature: ArrayLike
     ) -> FloatArray:
-        """Entropy relative to :const:`~atmodeller.constants.GAS_CONSTANT`
+        """Entropy relative to :data:`~atmodeller.sci_utils.GAS_CONSTANT`
 
         Args:
             cp_coefficients: Heat capacity coefficients
             b2: Entropy constant of integration
-            temperature: Temperature in K
+            temperature: Temperature (K)
 
         Returns:
-            Entropy relative to :const:`~atmodeller.constants.GAS_CONSTANT`
+            Entropy relative to :data:`~atmodeller.sci_utils.GAS_CONSTANT`
         """
         temperature = as_j64(temperature)
         temperature_terms: Float[Array, "... 7"] = jnp.stack(
@@ -189,7 +189,7 @@ class NasaGlennThermodynamicProperties(ThermodynamicProperties):
         This is :math:`C_p^\circ` in the JANAF tables.
 
         Args:
-            temperature: Temperature in K
+            temperature: Temperature (K)
 
         Returns:
             Heat capacity in :math:`\mathrm{J}\ \mathrm{K}^{-1} \mathrm{mol}^{-1}`
@@ -205,7 +205,7 @@ class NasaGlennThermodynamicProperties(ThermodynamicProperties):
         This is :math:`H` in the JANAF tables.
 
         Args:
-            temperature: Temperature in K
+            temperature: Temperature (K)
 
         Returns:
             Enthalpy in :math:`\mathrm{J}\ \mathrm{mol}^{-1}`
@@ -227,7 +227,7 @@ class NasaGlennThermodynamicProperties(ThermodynamicProperties):
         This is :math:`S^\circ` in the JANAF tables.
 
         Args:
-            temperature: Temperature in K
+            temperature: Temperature (K)
 
         Returns:
             Entropy in :math:`\mathrm{J}\ \mathrm{K}^{-1} \mathrm{mol}^{-1}`
@@ -242,7 +242,7 @@ class NasaGlennThermodynamicProperties(ThermodynamicProperties):
         """Gets the temperature range over which the thermodynamic data are valid.
 
         Returns:
-            Minimum and maximum temperature in K
+            Minimum and maximum temperature (K)
         """
         return min(self.T_min), max(self.T_max)
 
@@ -260,8 +260,8 @@ def nasa_glenn_thermodynamic_properties(
         b1: Enthalpy constant(s) of integration
         b2: Entropy constant(s) of integration
         cp_coeffs: Heat capacity coefficients
-        T_min: Minimum temperature(s) in K in the range
-        T_max: Maximum temperature(s) in K in the range
+        T_min: Minimum temperature(s) of the range (K)
+        T_max: Maximum temperature(s) of the range (K)
 
     Returns:
         Thermodynamic properties
@@ -276,7 +276,7 @@ def read_glenn_coefficients(
 
     Args:
         path: Path to a file of NASA Glenn coefficients in the same format as the packaged
-            :const:`THERMODYNAMIC_DATA_SOURCE`. Defaults to ``None``, which uses the packaged
+            :data:`THERMODYNAMIC_DATA_SOURCE`. Defaults to ``None``, which uses the packaged
             file.
 
     Returns:
@@ -315,9 +315,9 @@ def read_glenn_coefficients(
 
 
 # Create the default data once, since they are accessed (potentially many times) when creating
-# species. This is set to private to avoid sphinx (autodoc) from printing long strings.
+# species. The value is hidden from sphinx (autodoc), which would otherwise print it in full.
 glenn_properties: dict[str, ThermodynamicProperties] = read_glenn_coefficients()
 """Thermodynamic properties for all species from the packaged NASA Glenn coefficients
 
-:meta private:
+:meta hide-value:
 """

@@ -130,7 +130,7 @@ class ActivityConstraintProtocol(Protocol):
         Returns:
             - Log activity (dimensionless)
             - Log fugacity referenced to 1 bar for gaseous species
-            - :data:`jax.numpy.nan` if the constraint is not active
+            - ``NaN`` if the constraint is not active
         """
         ...
 
@@ -225,7 +225,7 @@ class HeatCapacityProtocol(Protocol):
         r"""Gets heat capacity at constant pressure.
 
         Args:
-            temperature: Temperature in K
+            temperature: Temperature (K)
 
         Returns:
             Heat capacity in :math:`\mathrm{J}\ \mathrm{K}^{-1} \mathrm{mol}^{-1}`
@@ -236,7 +236,7 @@ class HeatCapacityProtocol(Protocol):
         """Gets the temperature range over which the heat capacity model is valid.
 
         Returns:
-            Minimum and maximum temperature in K
+            Minimum and maximum temperature (K)
         """
         ...
 
@@ -249,8 +249,8 @@ class VolumeProtocol(Protocol):
         r"""Gets the integral of volume with respect to pressure from 1 bar.
 
         Args:
-            temperature: Temperature in K
-            pressure: Pressure in bar
+            temperature: Temperature (K)
+            pressure: Pressure (bar)
 
         Returns:
             Integral of volume with respect to pressure in :math:`\mathrm{J}\ \mathrm{mol}^{-1}`

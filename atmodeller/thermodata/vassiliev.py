@@ -15,8 +15,9 @@ from atmodeller.jax_utils import FloatArray
 from atmodeller.sci_utils import GAS_CONSTANT
 
 _DEBYE_Y_SWITCH: float = 2.0
-"""Value of y = Theta/T at which :func:`_debye_integral` switches from the small-y to the large-y
-series. At y = 2 both series converge to double precision with the number of terms below."""
+r"""Value of :math:`y = \Theta/T` at which :func:`_debye_integral` switches from the small-y to the
+large-y series. At :math:`y = 2` both series converge to double precision with the number of terms
+below."""
 
 # Small-y series. The generating function of the Bernoulli numbers B_n (with B_1 = -1/2) is
 #     x / (e^x - 1) = sum_{n>=0} B_n x^n / n!,     |x| < 2*pi
@@ -47,8 +48,8 @@ def _debye_integral(y: ArrayLike) -> Array:
 
     Uses the Bernoulli series for small y and the exponential (polylogarithm) series for large y,
     so no numerical quadrature is required. Both branches are evaluated with their input clamped to
-    their own domain so that the branch discarded by the final `jnp.where` stays finite and does
-    not corrupt `jax.grad`.
+    their own domain so that the branch discarded by the final ``jnp.where`` stays finite and does
+    not corrupt ``jax.grad``.
 
     Args:
         y: Upper limit of the integral, Theta / T
@@ -77,10 +78,11 @@ class VassilievHeatCapacity(eqx.Module):
 
     Args:
         n: Number of experimental (T, Cp) pairs used in the fit (metadata only)
-        T0: Temperature in K in the Cp/Cv factor :cite:p:`Vassiliev2021{Eq. 3}`, controlling the
-            transition from Cp = Cv at low temperature to the Maier-Kelley form at high temperature
+        T0: Temperature (K) in the Cp/Cv factor :cite:p:`Vassiliev2021{Eq. 3}`, controlling the
+            transition from :math:`C_p = C_v` at low temperature to the Maier-Kelley form at high
+            temperature
         A: Weights of the three Debye functions in Cv :cite:p:`Vassiliev2021{Eq. 1}`, summing to 1
-        Theta: Debye temperatures in K of the three Debye functions
+        Theta: Debye temperatures (K) of the three Debye functions
         a: Constant Maier-Kelley coefficient in J/(mol K) :cite:p:`Vassiliev2021{Eq. 4}`
         b: Linear Maier-Kelley coefficient in J/(mol K), multiplying T/1000
         sigma: Standard deviation of the fit in J/(mol K) (metadata only)
@@ -95,13 +97,13 @@ class VassilievHeatCapacity(eqx.Module):
     sigma: float
 
     def _cp_over_R(self, temperature: ArrayLike) -> FloatArray:
-        """Heat capacity relative to :const:`~atmodeller.constants.GAS_CONSTANT`
+        """Heat capacity relative to :data:`~atmodeller.sci_utils.GAS_CONSTANT`
 
         Args:
-            temperature: Temperature in K
+            temperature: Temperature (K)
 
         Returns:
-            Heat capacity relative to :const:`~atmodeller.constants.GAS_CONSTANT`
+            Heat capacity relative to :data:`~atmodeller.sci_utils.GAS_CONSTANT`
         """
         return self.cp(temperature) / GAS_CONSTANT
 
@@ -109,7 +111,7 @@ class VassilievHeatCapacity(eqx.Module):
         r"""Gets heat capacity at constant pressure.
 
         Args:
-            temperature: Temperature in K
+            temperature: Temperature (K)
 
         Returns:
             Heat capacity in :math:`\mathrm{J}\ \mathrm{K}^{-1} \mathrm{mol}^{-1}`
@@ -126,7 +128,7 @@ class VassilievHeatCapacity(eqx.Module):
         r"""Gets heat capacity at constant volume.
 
         Args:
-            temperature: Temperature in K
+            temperature: Temperature (K)
 
         Returns:
             Heat capacity in :math:`\mathrm{J}\ \mathrm{K}^{-1} \mathrm{mol}^{-1}`
@@ -152,8 +154,8 @@ class VassilievHeatCapacity(eqx.Module):
         which tends to 1 at high temperature and to zero as :math:`T^3` at low temperature.
 
         Args:
-            temperature: Temperature in K
-            theta: Characteristic (Debye) temperature in K
+            temperature: Temperature (K)
+            theta: Characteristic (Debye) temperature (K)
 
         Returns:
             Debye's function, Cv / 3R for a single Debye term

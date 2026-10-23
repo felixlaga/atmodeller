@@ -165,7 +165,7 @@ class EarthParameters(PlanetParameters):
             number_of_earth_oceans: Number of Earth oceans. Defaults to ``1``.
 
         Returns:
-            Hydrogen mass in kg corresponding to the given number of Earth oceans
+            Hydrogen mass (kg) corresponding to the given number of Earth oceans
         """
         return number_of_earth_oceans * self.ocean_mass_H2
 
@@ -342,7 +342,7 @@ class ExperimentalCalibration(eqx.Module):
 
 
 def bulk_silicate_earth_abundances() -> dict[str, dict[str, float]]:
-    """Bulk silicate Earth element masses in kg
+    """Bulk silicate Earth element masses (kg)
 
     Hydrogen, carbon, and nitrogen from :cite:t:`SKG21`, sulfur from :cite:t:`H16`, and chlorine
     from :cite:t:`KHK17`.
