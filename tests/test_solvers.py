@@ -21,7 +21,6 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 import optimistix as optx
-import pytest
 from jaxtyping import Array, ArrayLike, PRNGKeyArray
 
 from atmodeller import debug_logger
@@ -105,19 +104,15 @@ def _assert_valid_output(output: Output, parameters: Parameters) -> None:
     assert jnp.all(jnp.isfinite(solution))
 
 
-@pytest.mark.parametrize("with_condensate", [False, True])
-def test_make_solver_dispatch_branches(with_condensate: bool) -> None:
-    """Exercises both `lax.cond` branches inside `dispatch_solver` via `make_solver`.
+def test_make_solver() -> None:
+    """Exercises `make_solver` without JIT, executing the batch-retry branch of `dispatch_solver`.
 
-    With no active-stability species the generic batch-retry path is used; with a graphite
-    condensate present (`solve_for_stability=True` by default) the tau-sweep path is used.
+    With no active-stability species the generic batch-retry path is used. The tau-sweep branch is
+    executed under JIT by `test_make_solver_with_jit_dual_path`. `lax.cond` traces both branches
+    in either case.
     """
-    parameters: Parameters = _build_parameters(with_condensate=with_condensate)
-
-    has_active_stability: bool = bool(
-        jnp.any(parameters.reaction_system.species.active_stability).item()
-    )
-    assert has_active_stability is with_condensate
+    parameters: Parameters = _build_parameters(with_condensate=False)
+    assert not bool(jnp.any(parameters.reaction_system.species.active_stability).item())
 
     dispatch_solver: Callable = make_solver(parameters)
     key: PRNGKeyArray = jax.random.PRNGKey(0)
@@ -132,13 +127,12 @@ def test_make_solver_dispatch_branches(with_condensate: bool) -> None:
 def test_make_solver_with_jit_dual_path() -> None:
     """Exercises `make_solver_with_jit_dual_path`, which JIT-compiles both dispatch branches.
 
-    `make_solver_with_jit_dual_path` is just `eqx.filter_jit(make_solver(parameters))`, so its
-    `dispatch_solver` source is identical to what `test_make_solver_dispatch_branches` already
-    exercises for both the stability and no-stability paths (`lax.cond` traces both branches
-    regardless of which is taken at runtime). This test only needs to confirm the `filter_jit`
-    wrapping itself works; the no-condensate case is the cheaper of the two to construct.
+    `make_solver_with_jit_dual_path` is `eqx.filter_jit(make_solver(parameters))`. With a graphite
+    condensate present (`solve_for_stability=True` by default) the tau-sweep branch is executed,
+    complementing `test_make_solver`, which executes the batch-retry branch without JIT.
     """
-    parameters: Parameters = _build_parameters(with_condensate=False)
+    parameters: Parameters = _build_parameters(with_condensate=True)
+    assert bool(jnp.any(parameters.reaction_system.species.active_stability).item())
 
     solver: Callable = make_solver_with_jit_dual_path(parameters)
     key: PRNGKeyArray = jax.random.PRNGKey(0)
