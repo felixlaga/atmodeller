@@ -24,6 +24,7 @@ from atmodeller import (
 )
 from atmodeller.interfaces import ActivityConstraintProtocol, SolubilityProtocol
 from atmodeller.jax_utils import NpFloat
+from atmodeller.output import Output
 from atmodeller.phases import PurePhase
 from atmodeller.sci_utils import bulk_silicate_earth_abundances
 from atmodeller.sci_utils import trappist1e as trappist1e_parameters
@@ -220,12 +221,12 @@ def trappist1e_with_solubility(request) -> EquilibriumModel:
 
 
 def time_jax_compile_and_run(
-    f: Callable, n_exec: int = 5, *args, **kwargs
-) -> tuple[float, float, object, object]:
-    """Times JAX compilation and averages execution time over n_exec runs for any callable.
+    f: Callable[..., Output], n_exec: int = 5, *args, **kwargs
+) -> tuple[float, float, Output, list[Output]]:
+    """Times JAX compilation and averages execution time over n_exec runs of a solve.
 
     Args:
-        f: The function to call and time
+        f: The solve to call and time, which returns an output
         n_exec: Number of execution runs to average. Defaults to ``5``.
         *args: Positional arguments to pass to the function
         **kwargs: Keyword arguments to pass to the function
