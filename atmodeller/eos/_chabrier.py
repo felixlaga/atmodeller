@@ -267,7 +267,10 @@ class ChabrierFunction(RealGasBase):
     r"""Chabrier EOS from :cite:t:`CD21` using a function fit.
 
     This provides a faster alternative to the full Chabrier EOS, which integrates the tabulated
-    volume.
+    volume. The fits at 3000 K and 4000 K are fitted to the log fugacity coefficient of
+    :data:`H2_chabrier21` from 1 bar to :math:`10^6` bar (100 GPa), and reproduce it to within
+    about 0.15 over that range. This is well within the range of typical atmospheres considered
+    for planetary applications. Above :math:`10^6` bar the fits diverge from the table.
 
     Args:
         coeffs: Coefficients for the log fugacity coefficient function
@@ -317,7 +320,7 @@ class ChabrierFunction(RealGasBase):
 
 
 _H2_3000K_chabrier21: RealGasBase = ChabrierFunction(
-    coeffs=((0.000791384922536, 0.538439447246127, 0.102092848927715, -0.015980196398366))
+    coeffs=((0.000796975857387194, 0.537830199470527, 0.102923173815428, -0.0162512662920581))
 )
 """Function-fit version at 3000 K for H2 Chabrier EOS between 1 bar and 1e6 bar :cite:p:`CD21`"""
 
@@ -327,16 +330,20 @@ H2_3000K_chabrier21: RealGasBase = CombinedRealGasFugacity(
     (
         ExperimentalCalibration(pressure_max=1),
         ExperimentalCalibration(
-            temperature_min=3000, temperature_max=3000, pressure_min=1, pressure_max=1e6
+            temperature_min=3000, temperature_max=3000, pressure_min=1, pressure_max=8e5
         ),
     ),
     min_log_fugacity_coefficient=MIN_LOG_FUGACITY_COEFFICIENT,
     max_log_fugacity_coefficient=MAX_LOG_FUGACITY_COEFFICIENT,
 )
-"""H2 Chabrier EOS at 3000 K between 1 bar and 1e6 bar :cite:p:`CD21`"""
+"""H2 Chabrier EOS at 3000 K between 1 bar and 8e5 bar (80 GPa) :cite:p:`CD21`
+
+The fit is accurate to 1e6 bar, but its log fugacity coefficient reaches the maximum of
+:data:`MAX_LOG_FUGACITY_COEFFICIENT` at about 8.3e5 bar, above which it is capped.
+"""
 
 _H2_4000K_chabrier21: RealGasBase = ChabrierFunction(
-    coeffs=((0.001804443584257, 0.46694548641623, 0.49686883364686, -0.048233745656908))
+    coeffs=((0.00179360295945961, 0.467251813716831, 0.49726658673974, -0.0484259966686226))
 )
 """Function-fit version at 4000 K for H2 Chabrier EOS between 1 bar and 1e6 bar :cite:p:`CD21`"""
 
@@ -351,7 +358,7 @@ H2_4000K_chabrier21: RealGasBase = CombinedRealGasFugacity(
     min_log_fugacity_coefficient=MIN_LOG_FUGACITY_COEFFICIENT,
     max_log_fugacity_coefficient=MAX_LOG_FUGACITY_COEFFICIENT,
 )
-"""H2 Chabrier EOS at 4000 K between 1 bar and 1e6 bar :cite:p:`CD21`"""
+"""H2 Chabrier EOS at 4000 K between 1 bar and 1e6 bar (100 GPa) :cite:p:`CD21`"""
 
 calibration_chabrier21: ExperimentalCalibration = ExperimentalCalibration(
     temperature_min=100, temperature_max=1.0e8, pressure_max=1.0e17

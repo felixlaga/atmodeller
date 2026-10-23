@@ -90,9 +90,9 @@ def test_H2_3000K_ideal_branch(check_values) -> None:
 def test_H2_3000K_fit_branch(check_values) -> None:
     """Tests the Chabrier function-fit branch above 1 bar for the 3000 K function fit"""
     model: RealGasBase = H2_3000K_chabrier21
-    expected: float = 1.1909553080149688
+    expected: float = 1.188884415391348
     check_values.fugacity_coefficient(3000, 100, model, expected)
-    expected_log_fugacity: float = 4.77992595090065
+    expected_log_fugacity: float = 4.778185587357713
     check_values._check_property("log_fugacity", 3000, 100, model, expected_log_fugacity)
 
 
@@ -106,9 +106,9 @@ def test_H2_4000K_ideal_branch(check_values) -> None:
 def test_H2_4000K_fit_branch(check_values) -> None:
     """Tests the Chabrier function-fit branch above 1 bar for the 4000 K function fit"""
     model: RealGasBase = H2_4000K_chabrier21
-    expected: float = 4.239207102263808
+    expected: float = 4.206900056983392
     check_values.fugacity_coefficient(4000, 1000, model, expected)
-    expected_log_fugacity: float = 8.352131526555477
+    expected_log_fugacity: float = 8.344481326945935
     check_values._check_property("log_fugacity", 4000, 1000, model, expected_log_fugacity)
 
 
@@ -120,5 +120,5 @@ def test_ChabrierFunction_raw_log_fugacity(check_values) -> None:
     :meth:`~atmodeller.eos._chabrier.ChabrierFunction.log_fugacity` is otherwise never exercised.
     """
     model: RealGasBase = _H2_3000K_chabrier21
-    expected: float = 4.77992595090065
+    expected: float = 4.778185587357713
     check_values._check_property("log_fugacity", 3000, 100, model, expected)
