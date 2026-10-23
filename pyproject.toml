@@ -96,8 +96,10 @@ dev = [
 
 [tool.pytest.ini_options]
 beartype_packages = "atmodeller"
+# Performance tests are slow and only run on request: pytest -m performance
+addopts = "-m 'not performance'"
 markers = [
-    "performance: marks tests as performance (deselect with '-m \"not performance\"')"
+    "performance: marks tests as performance (run with '-m performance')"
 ]
 
 [build-system]

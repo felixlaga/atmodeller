@@ -56,6 +56,10 @@ Tests
 You can confirm that all tests pass by navigating to the root directory of *Atmodeller* and running::
     
     pytest
+
+The performance tests, which time the solver for batches of models, are slow and are skipped by default. To run them::
+
+    pytest -m performance
     
 Similarly, to test coverage::
 

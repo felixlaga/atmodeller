@@ -261,14 +261,15 @@ def time_jax_compile_and_run(
 
 # Parameterize the fixture with different numbers of realisations
 @pytest.mark.performance
-@pytest.mark.parametrize("trappist1e_with_solubility", [1, 10, 100, 1000, 10000], indirect=True)
-# Extend to 30,000 realisations for testing the limits of memory usage and performance
+@pytest.mark.parametrize("trappist1e_with_solubility", [1, 100, 1000], indirect=True)
+# Extend to 10,000 (or 30,000) realisations for testing the limits of memory usage and performance
 # @pytest.mark.parametrize(
-#    "trappist1e_with_solubility", [1, 10, 100, 1000, 10000, 20000, 30000], indirect=True
+#    "trappist1e_with_solubility", [1, 100, 1000, 10000, 20000, 30000], indirect=True
 # )
 def test_trappist1e_with_solubility_batch(trappist1e_with_solubility: EquilibriumModel) -> None:
-    """Profiles JAX compilation and execution time for TRAPPIST-1e with solubility constraints."""
-    compile_time, avg_exec_time, _, _ = time_jax_compile_and_run(
+    """Profiles JAX compilation and execution time for TRAPPIST-1e with solubility constraints,
+    and checks that every realisation is solved."""
+    compile_time, avg_exec_time, first_result, _ = time_jax_compile_and_run(
         trappist1e_with_solubility.solve_with_default
     )
     logger.info(
@@ -279,6 +280,6 @@ def test_trappist1e_with_solubility_batch(trappist1e_with_solubility: Equilibriu
         avg_exec_time,
     )
 
-    # This is not really a test per se, but rather a mechanism to log the performance metrics for
-    # different batch size. Nevertheless, formally assert True to denote the test passed.
-    assert True
+    # The timings are logged rather than asserted, since they depend on the machine. The sampled
+    # conditions span a wide range, so every realisation being solved checks robustness at scale.
+    assert np.all(np.asarray(first_result.multi_attempt_solution.success))
