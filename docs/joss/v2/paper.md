@@ -99,7 +99,7 @@ therefore built on JAX. Just-in-time compilation makes it fast enough to embed
 within other frameworks, and vectorisation solves a batch of conditions in a
 single call, avoiding the outer Python loops that often bottleneck even a fast
 solver. Automatic differentiation provides derivatives of the equilibrium
-solution.
+solution with respect to its inputs.
 
 # State of the field
 % Authors must describe how their software compares to other commonly-used
@@ -192,8 +192,9 @@ tables.
    initial guess to solution, can be JIT-compiled, with the root finding
    performed by Optimistix [@optimistix2024]. Batches of conditions are solved
    in a single vectorised call, and an automatic retry strategy improves
-   robustness across wide parameter ranges. Derivatives of the equilibrium
-   solution can be computed, including with respect to model parameters.
+   robustness across wide parameter ranges. The equilibrium solution is
+   differentiable with respect to the model inputs, such as temperature, element
+   budgets, and imposed fugacities.
 8. **Initial guess.** A new initialiser solves an ideal-gas equilibrium for the
    element potentials [@Gordon1994], including stable condensates and
    dissolution in the melt, with each element first solved separately as in
