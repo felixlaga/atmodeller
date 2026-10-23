@@ -41,11 +41,11 @@ Windows::
 
     .\make html
 
-To generate PDF documentation, noting that ``latexpdf`` must be available on your system::
+To generate PDF documentation, noting that a LaTeX distribution must be available on your system::
 
     make latexpdf
 
-Documentation is built the appropriately named subdirectory in ``_build``.
+Documentation is built in the appropriately named subdirectory in ``_build``.
 
 Tests
 -----

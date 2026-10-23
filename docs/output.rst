@@ -50,7 +50,7 @@ Each phase that contains at least one species has its own output. The phase keys
 - ``silicate_melt``: species dissolved in the silicate melt
 - ``silicate_solid``: species in the silicate solid
 - ``metal``: species in the metal phase
-- condensates: each condensed (pure) phase, keyed by its species name (e.g. ``C_cr``, ``H2O_l``)
+- condensates: each condensed (pure) phase, keyed by its species name (e.g. ``C_s``, ``H2O_l``)
 
 Phase-level outputs
 ~~~~~~~~~~~~~~~~~~~
@@ -370,11 +370,13 @@ The ``solution`` key contains the raw solution from the solver for each species:
 logarithm of the number of moles (``<species>``) and the natural logarithm of the stability
 (``<species>_stability``).
 
-The ``auto_initial_guess`` key compares the solution with the automatically generated initial
-guess, which is useful for diagnosing and improving the initial guess:
+The ``initial_guess`` key compares the solution with the initial guess the solver started from,
+which is useful for diagnosing and improving the initial guess. This is the guess of the model's
+initializer for models solved from a cold start, and the given initial guess otherwise (e.g. a
+warm start from a previous solution):
 
 - ``<species>_solution`` and ``<species>_stability_solution``: the solution, as in ``solution``
-- ``<species>_guess`` and ``<species>_stability_guess``: the automatic initial guess
+- ``<species>_guess`` and ``<species>_stability_guess``: the initial guess
 - ``<species>_log_error`` and ``<species>_stability_log_error``: absolute difference between the
   guess and the solution (``NaN`` for inactive stabilities)
 - ``log_error_mae`` and ``log_error_rmse``: mean absolute error and root-mean-square error of the

@@ -6,7 +6,7 @@ About
 Citation
 --------
 
-If you use *Atmodeller*, or data from *Atmodeller*, please cite :cite:t:`BTH25`. In addition, please consult the *Atmodeller* source code for citations related to specific model components, such as solubility laws and real gas equations of state. Thermodynamic data are sourced from :cite:t:`MZG02`.
+If you use *Atmodeller*, or data from *Atmodeller*, please cite :cite:t:`BTH25`. In addition, please consult the *Atmodeller* source code for citations related to specific model components, such as solubility laws and real gas equations of state. Thermodynamic data are sourced from :cite:t:`MZG02`, with the volumes of graphite and diamond, and the Gibbs energy of diamond relative to graphite, from :cite:t:`Gustafson1986`.
 
 Authors
 -------

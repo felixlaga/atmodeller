@@ -97,9 +97,9 @@ For all operating systems you can deactivate (exit) the virtual environment by r
 
 Optional extras:
 
-- To install documentation dependencies only::
+- To install the documentation dependencies without the development tools::
 
-      uv sync --extra docs
+      uv sync --extra docs --no-dev
 
 - To install everything (core + dev + docs)::
 
@@ -136,9 +136,9 @@ You may use the ``-e`` option for an `editable install <https://setuptools.pypa.
 
 To install additional dependencies:
 
-- For development tools::
+- For development tools, which are a dependency group (requires pip 25.1 or later)::
 
-      pip install -e .[dev]
+      pip install -e . --group dev
 
 - For documentation tools::
 
@@ -146,15 +146,15 @@ To install additional dependencies:
 
 - For both::
 
-      pip install -e .[dev,docs]
+      pip install -e .[docs] --group dev
 
 .. note::
 
     Zsh treats square brackets (`[ ]`) as globbing characters. You must quote or escape them when using `pip`. Use either of the following::
 
-        pip install -e '.[dev]'
+        pip install -e '.[docs]'
         # or
-        pip install -e .\[dev\]
+        pip install -e .\[docs\]
 
 .. _DependencyNotes:
 
@@ -163,7 +163,7 @@ To install additional dependencies:
 The dependencies in *Atmodeller* are defined in the ``pyproject.toml`` file, with special handling for JAX:
 
 - **Apple Intel (x86_64)**: JAX is pinned to version ``0.4.38``, the last release that supports this architecture.
-- **All other platforms**: JAX is pinned to the most recent tested version. The pinned version is incremented whenever *Atmodeller* is validated against a new JAX release.
+- **All other platforms**: JAX is not pinned; any release after ``0.4.38`` can be used, except versions known to be incompatible (currently ``0.7.0`` and ``0.7.1``).
 
 This approach balances stability and reliability on older systems with the latest features and performance improvements from JAX and related libraries on supported platforms.
 
