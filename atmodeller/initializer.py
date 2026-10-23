@@ -701,23 +701,23 @@ class ElementPotentialInitializer(eqx.Module):
             to ``1e-6``.
     """
 
-    newton_iterations: int = eqx.field(static=True, default=100)
+    newton_iterations: int = 100
     """Maximum number of damped Newton iterations per solve"""
-    residual_tolerance: float = eqx.field(static=True, default=1e-10)
+    residual_tolerance: float = 1e-10
     """Residual norm at which a Newton solve stops"""
-    max_log_step: float = eqx.field(static=True, default=2.0)
+    max_log_step: float = 2.0
     r"""Maximum change in the log moles of any carried species (or in any :math:`\lambda_e`) per
     Newton iteration"""
-    sweeps: int = eqx.field(static=True, default=3)
+    sweeps: int = 3
     """Maximum number of Gauss-Seidel element sweeps at the start of every Newton solve"""
-    sweep_iterations: int = eqx.field(static=True, default=30)
+    sweep_iterations: int = 30
     """Maximum number of 1-D Newton iterations per element in a sweep (each step is at most the
     log residual)"""
-    sweep_step_tolerance: float = eqx.field(static=True, default=1e-10)
+    sweep_step_tolerance: float = 1e-10
     """Step size at which a 1-D Newton iteration in a sweep stops"""
-    sweep_tolerance: float = eqx.field(static=True, default=1e-8)
+    sweep_tolerance: float = 1e-8
     r"""Largest change in any :math:`\lambda_e` over a sweep below which the sweeps stop"""
-    damping: float = eqx.field(static=True, default=1e-6)
+    damping: float = 1e-6
     r"""Damping :math:`\mu` of the normal equations for the Newton direction, which keeps
     :math:`J^\mathsf{T} J + \mu^2 I` positive definite in degenerate steps"""
 

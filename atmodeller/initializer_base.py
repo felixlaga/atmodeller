@@ -28,8 +28,9 @@ from atmodeller.parameters import Parameters
 class InitializerProtocol(Protocol):
     """Protocol for an initializer that provides the cold initial guess for the solver
 
-    Implementations should be stateless :class:`equinox.Module` instances without array fields so
-    that they are static under JIT and reusing an initializer never triggers retracing.
+    Implementations should be stateless :class:`equinox.Module` instances whose settings are plain
+    Python numbers, which are constant under JIT, so reusing an initializer never triggers
+    retracing.
     """
 
     def start(self, parameters: Parameters) -> Float[Array, " twice_species"]:
