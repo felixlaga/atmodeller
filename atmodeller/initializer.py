@@ -765,7 +765,6 @@ class ElementPotentialInitializer(eqx.Module):
         condensate: Bool[Array, " n_species"] = (
             jnp.asarray(reaction_system.phase_system.condensates_species_mask) & in_reaction
         )
-        n_core: int = reaction_system.reaction.number_reactions
         has_dissolution: bool = reaction_system.dissolution.number_reactions > 0
         dissolved: Bool[Array, " n_species"] = jnp.asarray(~in_reaction & has_dissolution)
         temperature: Array = jnp.asarray(parameters.state.temperature)
@@ -845,15 +844,14 @@ class ElementPotentialInitializer(eqx.Module):
             closure: Array = jnp.atleast_1d(log_p_sum - jnp.log(pressure))
             rows: list[Array] = [mass, fugacity, condensed, closure]
             if has_dissolution:
-                # The solver's dissolution rows, which follow its core reaction rows
+                # The solver's dissolution rows
                 rows.append(
-                    reaction_system.get_residual(
+                    reaction_system.get_dissolution_residual(
                         log_n,
                         reaction_system.get_log_activity(log_n, temperature, pressure),
-                        compute_implied_log_stability(parameters, log_n),
                         temperature,
                         pressure,
-                    )[n_core:]
+                    )
                 )
             return jnp.concatenate(rows)
 

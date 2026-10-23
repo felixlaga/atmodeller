@@ -605,7 +605,39 @@ class ReactionSystem(BaseReactionBlock):
             temperature, pressure
         )
         # jax.debug.print("log_Kp_reaction = {out}", out=log_Kp_reaction)
+        log_Kp_dissolution: Float[Array, "... n_dissolution_reactions"] = (
+            self._get_log_Kp_dissolution(log_number_moles, log_activity, temperature, pressure)
+        )
+        # jax.debug.print("log_Kp_dissolution = {out}", out=log_Kp_dissolution)
 
+        # Broadcast log_Kp_reaction to match batch shape of log_Kp_dissolution.
+        # e.g. scalar T: log_Kp_reaction (3,), log_Kp_dissolution (2, 1) -> broadcast to (2, 3)
+        # e.g. batched T: log_Kp_reaction (2, 3), log_Kp_dissolution (2, 1) -> already compatible
+        batch_shape: tuple[int, ...] = log_Kp_dissolution.shape[:-1]
+        log_Kp_reaction = jnp.broadcast_to(
+            log_Kp_reaction, batch_shape + (log_Kp_reaction.shape[-1],)
+        )
+
+        return jnp.concatenate([log_Kp_reaction, log_Kp_dissolution], axis=-1)
+
+    def _get_log_Kp_dissolution(
+        self,
+        log_number_moles: Float[Array, "... n_species"],
+        log_activity: Float[Array, "... n_species"],
+        temperature: FloatArray,
+        pressure: FloatArray,
+    ) -> Float[Array, "... n_dissolution_reactions"]:
+        """Gets log of the equilibrium constant of each dissolution reaction.
+
+        Args:
+            log_number_moles: Log number of moles of each species
+            log_activity: Log activity of each species
+            temperature: Temperature (K)
+            pressure: Pressure (bar)
+
+        Returns:
+            Log of the equilibrium constant of each dissolution reaction
+        """
         # Log activity of chemical species regulating dissolution
         log_activity_dissolution: Float[Array, "... n_dissolution_species"] = jnp.take(
             log_activity,
@@ -615,7 +647,6 @@ class ReactionSystem(BaseReactionBlock):
             axis=-1,
         )
         # jax.debug.print("log_activity_dissolution = {out}", out=log_activity_dissolution)
-
         activity_dissolution: Float[Array, "... n_dissolution_species"] = jnp.exp(
             log_activity_dissolution
         )
@@ -630,28 +661,14 @@ class ReactionSystem(BaseReactionBlock):
         # self.phase_system(?)
         melt_slice: slice = self.phase_system.phase_slice(SILICATE_MELT_PHASE_INDEX)
         melt_phase: BasePhase = self.phase_system.phases[SILICATE_MELT_PHASE_INDEX]
-
         log_solvent_molar_mass: FloatArray = melt_phase.get_log_phase_molar_mass(
             log_number_moles[..., melt_slice]
         )
         # jax.debug.print("log_solvent_molar_mass = {out}", out=log_solvent_molar_mass)
 
-        log_Kp_dissolution: Float[Array, "... n_dissolution_reactions"] = (
-            self.dissolution.get_log_Kp(
-                temperature, activity_dissolution, pressure, fO2, log_solvent_molar_mass
-            )
+        return self.dissolution.get_log_Kp(
+            temperature, activity_dissolution, pressure, fO2, log_solvent_molar_mass
         )
-        # jax.debug.print("log_Kp_dissolution = {out}", out=log_Kp_dissolution)
-
-        # Broadcast log_Kp_reaction to match batch shape of log_Kp_dissolution.
-        # e.g. scalar T: log_Kp_reaction (3,), log_Kp_dissolution (2, 1) -> broadcast to (2, 3)
-        # e.g. batched T: log_Kp_reaction (2, 3), log_Kp_dissolution (2, 1) -> already compatible
-        batch_shape: tuple[int, ...] = log_Kp_dissolution.shape[:-1]
-        log_Kp_reaction = jnp.broadcast_to(
-            log_Kp_reaction, batch_shape + (log_Kp_reaction.shape[-1],)
-        )
-
-        return jnp.concatenate([log_Kp_reaction, log_Kp_dissolution], axis=-1)
 
     def get_matrix(self) -> NpFloat:
         return self.matrix
@@ -727,3 +744,34 @@ class ReactionSystem(BaseReactionBlock):
         # jax.debug.print("reaction residual after stability = {out}", out=residual)
 
         return residual
+
+    def get_dissolution_residual(
+        self,
+        log_number_moles: Float[Array, "... n_species"],
+        log_activity: Float[Array, "... n_species"],
+        temperature: FloatArray,
+        pressure: FloatArray,
+    ) -> Float[Array, "... n_dissolution_reactions"]:
+        """Gets the residual of the dissolution reactions only.
+
+        Equal to the dissolution rows of :meth:`get_residual`, without computing the core
+        reactions. The stability term is omitted, since dissolution reactions do not involve
+        stability (their rows of the stability matrix are zero).
+
+        Args:
+            log_number_moles: Log number of moles of each species
+            log_activity: Log activity of each species
+            temperature: Temperature (K)
+            pressure: Pressure (bar)
+
+        Returns:
+            Residual of the dissolution reactions
+        """
+        log_Kp_dissolution: Float[Array, "... n_dissolution_reactions"] = (
+            self._get_log_Kp_dissolution(log_number_moles, log_activity, temperature, pressure)
+        )
+
+        return (
+            jnp.einsum("rs,...s->...r", self.dissolution.get_matrix(), log_activity)
+            - log_Kp_dissolution
+        )
