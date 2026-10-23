@@ -13,3 +13,4 @@ Open-access links are provided where available.
 2. :cite:t:`Cherubim2025`
 3. :cite:t:`Hakim2026`
 4. :cite:t:`Seidler26`
+5. :cite:t:`Bower2026`
