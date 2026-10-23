@@ -246,12 +246,24 @@ CO2_beattie_holley58: RealGas = BeattieBridgeman(
     b=volume_conversion(0.07235),
     c=volume_conversion(66e4),
 )
-"""CO2 Beattie-Bridgeman :cite:p:`HWZ58`"""
+"""CO2 Beattie-Bridgeman :cite:p:`HWZ58`
+
+Note:
+    Between about 675 and 840 K the equation has no gas root above about 940 bar, which is within
+    the calibration (to 1000 atm), so the volume there is not physical. At higher temperatures the
+    gas root is lost just above the calibration, at about 1000 to 1200 bar.
+"""
 CO2_beattie_holley58_bounded: RealGas = CombinedRealGas.create(
     [CO2_beattie_holley58],
     [ExperimentalCalibration(200, 1000, pressure_min, atm2bar(1000))],
 )
-"""CO2 Beattie-Bridgeman bounded :cite:p:`HWZ58`"""
+"""CO2 Beattie-Bridgeman bounded :cite:p:`HWZ58`
+
+Note:
+    Above the calibrated pressure the volume is that at the bound, which is not physical between
+    about 675 and 840 K, where the equation has no gas root at the bound (see
+    :data:`CO2_beattie_holley58`).
+"""
 
 NH3_beattie_holley58: RealGas = BeattieBridgeman(
     A0=A0_conversion(2.3930),
