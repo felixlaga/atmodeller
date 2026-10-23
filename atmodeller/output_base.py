@@ -27,7 +27,6 @@ from jax.tree_util import tree_map
 from jaxtyping import Array, ArrayLike, Bool, Float, PyTree
 
 from atmodeller import override
-from atmodeller.initializer import HeuristicInitializer
 from atmodeller.jax_utils import (
     FloatArray,
     MultiAttemptSolution,
@@ -199,10 +198,13 @@ class BaseOutputDict(eqx.Module):
     Args:
         parameters: Parameters
         multi_attempt_solution: Multiple attempt solution object
+        initial_guess: Initial guess the solver started from, i.e. log number of moles and log
+            stability
     """
 
     parameters: Parameters
     multi_attempt_solution: MultiAttemptSolution
+    initial_guess: Float[Array, "#n_batch twice_species"]
 
     @abstractmethod
     def _phase_output_to_dict(self, phase_output: PhaseOutput[BasePhase]) -> dict[str, Any]:
@@ -283,8 +285,11 @@ class BaseOutputDict(eqx.Module):
 
         return out
 
-    def auto_initial_guess_to_dict(self) -> dict[str, ArrayLike]:
-        """Gets the automatic initial guess for the solver.
+    def initial_guess_to_dict(self) -> dict[str, ArrayLike]:
+        """Gets the initial guess the solver started from.
+
+        This is the guess from the model's initializer for batch elements solved from a cold
+        start, and the guess passed to the solver otherwise (e.g. a warm start).
 
         Returns:
             Dictionary mapping species names and their stability keys to arrays of values,
@@ -292,9 +297,7 @@ class BaseOutputDict(eqx.Module):
         """
         out: dict[str, ArrayLike] = self._solution_array_to_dict(self.solution, suffix="_solution")
 
-        guess: Float[Array, "#n_batch twice_species"] = jnp.atleast_2d(
-            HeuristicInitializer().start(self.parameters)
-        )
+        guess: Float[Array, "#n_batch twice_species"] = jnp.atleast_2d(self.initial_guess)
         out.update(self._solution_array_to_dict(guess, suffix="_guess"))
 
         # Compute error metrics for active solution quantities
@@ -514,6 +517,8 @@ class OutputNaturalDict(BaseOutputDict):
     Args:
         parameters: Parameters
         multi_attempt_solution: Multiple attempt solution object
+        initial_guess: Initial guess the solver started from, i.e. log number of moles and log
+            stability
     """
 
     @override
@@ -582,7 +587,7 @@ class OutputNaturalDict(BaseOutputDict):
         }
 
         out["solution"] = self.solution_to_dict()
-        out["auto_initial_guess"] = self.auto_initial_guess_to_dict()
+        out["initial_guess"] = self.initial_guess_to_dict()
         out["solver"] = self.solver_to_dict()
         out["state"] = self.state_to_dict()
 
@@ -777,7 +782,7 @@ class OutputNamedArraysDict(BaseOutputDict):
         )
 
         out["solution"] = self.solution_to_dict()
-        out["auto_initial_guess"] = self.auto_initial_guess_to_dict()
+        out["initial_guess"] = self.initial_guess_to_dict()
         out["solver"] = self.solver_to_dict()
         out["state"] = self.state_to_dict()
 

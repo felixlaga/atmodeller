@@ -66,10 +66,13 @@ class Output(eqx.Module):
     Args:
         parameters: Parameters
         multi_attempt_solution: Multiple attempt solution object
+        initial_guess: Initial guess the solver started from, i.e. log number of moles and log
+            stability
     """
 
     parameters: Parameters
     multi_attempt_solution: MultiAttemptSolution
+    initial_guess: Float[Array, "#n_batch twice_species"]
 
     @property
     def solution(self) -> Float[Array, "#n_batch twice_species"]:
@@ -102,17 +105,17 @@ class Output(eqx.Module):
             Dictionary of the solution with JAX or NumPy arrays in the specified format
         """
         if output_format == "natural":
-            return OutputNaturalDict(self.parameters, self.multi_attempt_solution).to_dict(
-                to_numpy=to_numpy, **kwargs
-            )
+            return OutputNaturalDict(
+                self.parameters, self.multi_attempt_solution, self.initial_guess
+            ).to_dict(to_numpy=to_numpy, **kwargs)
         elif output_format == "named_arrays":
-            return OutputNamedArraysDict(self.parameters, self.multi_attempt_solution).to_dict(
-                to_numpy=to_numpy, **kwargs
-            )
+            return OutputNamedArraysDict(
+                self.parameters, self.multi_attempt_solution, self.initial_guess
+            ).to_dict(to_numpy=to_numpy, **kwargs)
         elif output_format == "elements_species":
-            return OutputElementsSpeciesDict(self.parameters, self.multi_attempt_solution).to_dict(
-                to_numpy=to_numpy, **kwargs
-            )
+            return OutputElementsSpeciesDict(
+                self.parameters, self.multi_attempt_solution, self.initial_guess
+            ).to_dict(to_numpy=to_numpy, **kwargs)
         else:
             raise ValueError(f"Invalid output format: {output_format}")
 
@@ -131,9 +134,9 @@ class Output(eqx.Module):
         Returns:
             ``True`` if all values match within the specified tolerances, else ``False``
         """
-        return OutputNamedArraysDict(self.parameters, self.multi_attempt_solution).compare(
-            d1, rtol, atol, log
-        )
+        return OutputNamedArraysDict(
+            self.parameters, self.multi_attempt_solution, self.initial_guess
+        ).compare(d1, rtol, atol, log)
 
     def quick_look(
         self,

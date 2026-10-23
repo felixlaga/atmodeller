@@ -556,7 +556,7 @@ def make_solver(
             )
 
         multi_sol = lax.cond(condition, solve_with_stability, solve_without_stability, operand=key)
-        output: Output = Output(parameters, multi_sol)
+        output: Output = Output(parameters, multi_sol, base_solution_array)
 
         return output
 
@@ -635,7 +635,7 @@ def make_solver_with_jit_single_path(
         _, subkey = jax.random.split(key)
         base_solution_array = initial_guess_function(parameters, base_solution_array)
         multi_sol = tau_sweep_solver(base_solution_array, parameters, subkey)
-        return Output(parameters, multi_sol)
+        return Output(parameters, multi_sol, base_solution_array)
 
     @eqx.filter_jit
     def solver_without_stability(
@@ -653,7 +653,7 @@ def make_solver_with_jit_single_path(
             parameters.solver_parameters.max_starts - 1,
             parameters.solver_parameters.atol,
         )
-        return Output(parameters, multi_sol)
+        return Output(parameters, multi_sol, base_solution_array)
 
     # Return the appropriate pre-compiled solver based on the construction-time check.
     return solver_with_stability if has_active_stability else solver_without_stability
@@ -695,7 +695,7 @@ def make_solver_with_jit_batch_only(
         del key
         base_solution_array = initial_guess_function(parameters, base_solution_array)
         multi_sol = batch_solver(base_solution_array, parameters)
-        return Output(parameters, multi_sol)
+        return Output(parameters, multi_sol, base_solution_array)
 
     return batch_only_solver
 
