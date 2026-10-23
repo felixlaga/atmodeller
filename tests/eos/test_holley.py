@@ -69,3 +69,12 @@ def test_broadcasting(check_values) -> None:
     """Tests methods with broadcasting"""
     model: RealGas = cast(RealGas, check_values.get_eos_model("H2", MODEL_SUFFIX))
     check_values.check_broadcasting(model)
+
+
+def test_H2_gas_root(check_values) -> None:
+    """Tests that the solver finds the gas root rather than a spurious small-volume root
+
+    Starting from the ideal-gas volume converged to Z of about 0.0002 at these conditions.
+    """
+    model: RealGas = cast(RealGas, check_values.get_eos_model("H2", MODEL_SUFFIX))
+    check_values.compressibility_factor(400, 800, model, 1.4772782724572469)
