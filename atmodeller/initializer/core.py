@@ -64,13 +64,11 @@ def max_moles_by_limiting_element(
     constrained_element: Bool[Array, "... n_elements"] = ~jnp.isnan(element_abundance)
 
     # Broadcast all masks to (..., n_elements, n_species)
-    fm_mask: Bool[Array, "1 n_elements n_species"] = (formula_matrix > 0)[None, ...]
+    fm_mask: Bool[Array, "n_elements n_species"] = formula_matrix > 0
     mask_b: Bool[Array, "... 1 n_species"] = mask[..., None, :]
     constrained_element_b: Bool[Array, "... n_elements 1"] = constrained_element[..., :, None]
 
-    stoich_total: Float[Array, "... n_elements"] = jnp.sum(
-        formula_matrix[None, ...] * mask_b, axis=-1
-    )
+    stoich_total: Float[Array, "... n_elements"] = jnp.sum(formula_matrix * mask_b, axis=-1)
     safe_stoich: Float[Array, "... n_elements"] = jnp.where(stoich_total > 0, stoich_total, 1.0)
     share: Float[Array, "... n_elements"] = element_abundance / safe_stoich
 
@@ -86,10 +84,7 @@ def max_moles_by_limiting_element(
     max_moles_by_limiting_element: Float[Array, "... n_species"] = jnp.nanmin(implied, axis=-2)
     # jax.debug.print("max_moles_by_limiting_element = {out}", out=max_moles_by_limiting_element)
 
-    # An extra dimension was introduced to ensure correct broadcasting for both 1-D and 2-D
-    # (batched) cases, but we can now squeeze it back out for the single-case scenario to be
-    # consistent with the shape of the elemental abundance input.
-    return jnp.squeeze(max_moles_by_limiting_element)
+    return max_moles_by_limiting_element
 
 
 @runtime_checkable

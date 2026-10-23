@@ -18,7 +18,7 @@ import equinox as eqx
 import jax.numpy as jnp
 from jax import lax
 from jax.scipy.special import logsumexp
-from jaxtyping import Array, Bool, Float, Integer
+from jaxtyping import Array, Bool, Float
 
 from atmodeller.engine import compute_implied_log_stability
 from atmodeller.initializer.core import LOG_TRACE_VALUE, max_moles_by_limiting_element
@@ -129,7 +129,8 @@ class HeuristicInitializer(eqx.Module):
 
     The methods accept a single system or explicitly batched parameters. The stability iteration
     is a ``lax.while_loop``; with batched parameters it runs until the set has stopped growing for
-    every system. The O\ :sub:`2` steps are ``lax.cond`` on whether O\ :sub:`2` is a species.
+    every system. Whether O\ :sub:`2` is a species is known from the species formulae outside JIT,
+    so the O\ :sub:`2` steps are plain Python branches.
 
     Args:
         condensate_allocation_fraction: Fraction :math:`\phi` of the element budget to allocate to
@@ -156,10 +157,6 @@ class HeuristicInitializer(eqx.Module):
         Returns:
             Concatenated array of [log_number_moles, log_stability]
         """
-        condensate_mask: Bool[Array, " n_species"] = jnp.asarray(
-            parameters.reaction_system.phase_system.condensates_species_mask
-        )
-
         temperature: FloatArray = parameters.state.temperature
 
         element_abundance: Float[Array, "... n_elements"] = parameters.mass_constraints.abundance()
@@ -228,16 +225,16 @@ class HeuristicInitializer(eqx.Module):
         )
         # jax.debug.print("init_stable_broadcasted = {out}", out=init_stable_broadcasted)
 
-        def _cond_fn(carry: tuple) -> Bool[Array, "..."]:
-            prev, curr, i = carry
+        def _cond_fn(carry: tuple) -> Bool[Array, ""]:
+            prev, curr = carry
             return jnp.any(prev != curr)
 
         def _body_fn(carry: tuple) -> tuple:
-            _, curr, i = carry
-            return curr, _one_stability_pass(curr), i + 1
+            _, curr = carry
+            return curr, _one_stability_pass(curr)
 
-        _, condensate_stable_predicted, _ = lax.while_loop(
-            _cond_fn, _body_fn, (init_stable_broadcasted, first_stable, jnp.array(0))
+        _, condensate_stable_predicted = lax.while_loop(
+            _cond_fn, _body_fn, (init_stable_broadcasted, first_stable)
         )
 
         n_condensate, n_other = self._allocate_element_budget(
@@ -361,14 +358,15 @@ class HeuristicInitializer(eqx.Module):
 
         # If present, exclude O2 from the shared allocation, because an equal share of oxygen would
         # give it as much as the major O-bearing species. O2 instead takes the oxygen left over.
-        O2_index: Float[Array, ""] = parameters.reaction_system.phase_system.gas.O2_index
-        non_condensate_no_O2_mask: Bool[Array, "... n_species"] = lax.cond(
-            jnp.isnan(O2_index),
-            lambda: ~condensate_mask,
-            lambda: (
-                (~condensate_mask).at[O2_index.astype(int)].set(False)
-            ),  # Additionally turn off O2
-        )
+        # Found from the gas formulae (as the gas phase's O2_index), which are static under JIT
+        gas_formulae: list[str] = [
+            species.data.hill_formula
+            for species in parameters.reaction_system.phase_system.gas.species
+        ]
+        O2_index: int | None = gas_formulae.index("O2") if "O2" in gas_formulae else None
+        non_condensate_no_O2_mask: Bool[Array, " n_species"] = ~condensate_mask
+        if O2_index is not None:
+            non_condensate_no_O2_mask = non_condensate_no_O2_mask.at[O2_index].set(False)
 
         # Allocate remaining budget to non-condensate species excluding O2
         n_other: Float[Array, "... n_species"] = max_moles_by_limiting_element(
@@ -390,47 +388,25 @@ class HeuristicInitializer(eqx.Module):
         remaining_b = jnp.maximum(element_abundance - element_used - element_used_no_O2, 0.0)
         # jax.debug.print("remaining_b (after n_other) = {out}", out=remaining_b)
 
-        def allocate_to_O2(
-            n_other: Float[Array, "... n_species"],
-            remaining_b: Float[Array, "... n_elements"],
-            formula_matrix: Float[Array, "n_elements n_species"],
-            O2_index_int: Integer[Array, ""],
-        ) -> Float[Array, "... n_species"]:
-            """Allocates the remaining O budget to O2. NaN if O is not mass constrained."""
-            # NOTE: A sentinel value is required since all branches of lax.cond are traced, but
-            # O_index will only ever be meaningful if O2 is present in the system.
-            O_index: int = (
-                parameters.element_names.index("O") if "O" in parameters.element_names else -1
+        # The remaining O budget to O2, which is NaN if O is not mass constrained
+        if O2_index is not None:
+            O_index: int = parameters.element_names.index("O")
+            n_O2: Float[Array, "..."] = (
+                remaining_b[..., O_index] / formula_matrix[O_index, O2_index]
             )
-            # Compute how much O is left
-            O_remaining: Float[Array, "..."] = remaining_b[..., O_index]
-            # Get stoichiometry of O in O2 (should be 2)
-            O2_stoich: Float[Array, ""] = formula_matrix[O_index, O2_index_int]
-            n_O2: Float[Array, "..."] = O_remaining / O2_stoich
-            # Set the O2 entry in n_other
-            n_other = n_other.at[..., O2_index_int].set(n_O2)
-
-            return n_other
-
-        n_other = lax.cond(
-            jnp.isnan(O2_index),
-            lambda n_other: n_other,
-            lambda n_other: allocate_to_O2(
-                n_other, remaining_b, formula_matrix, O2_index.astype(int)
-            ),
-            n_other,
-        )
+            n_other = n_other.at[..., O2_index].set(n_O2)
         # jax.debug.print("n_other after O2 allocation = {out}", out=n_other)
 
-        # Fallbacks for non-condensate species. Zero moles (elements used up, or no mass-constrained
-        # element) become the trace value. NaN, which at this point arises only for O2 when O is not
-        # mass constrained, becomes the geometric mean of the valid estimates, which keeps it at a
-        # magnitude comparable to the other species.
-        unconstrained: Bool[Array, "... n_species"] = jnp.isnan(n_other) & ~condensate_mask
+        # Fallbacks. Zero moles (elements used up, or no mass-constrained element) become the trace
+        # value; this includes the condensate entries, which are not used but must have a finite
+        # log. NaN, which at this point arises only for O2 when O is not mass constrained, becomes
+        # the geometric mean of the valid estimates, which keeps it at a magnitude comparable to
+        # the other species.
+        unconstrained: Bool[Array, "... n_species"] = jnp.isnan(n_other)
         # jax.debug.print("unconstrained = {out}", out=unconstrained)
-        exhausted: Bool[Array, "... n_species"] = n_other == 0 & ~condensate_mask
+        exhausted: Bool[Array, "... n_species"] = n_other == 0
         # jax.debug.print("exhausted = {out}", out=exhausted)
-        valid: Bool[Array, "... n_species"] = ~unconstrained & ~exhausted & ~condensate_mask
+        valid: Bool[Array, "... n_species"] = n_other > 0
         # jax.debug.print("valid = {out}", out=valid)
 
         log_geometric_mean: FloatArray = jnp.sum(
@@ -447,7 +423,10 @@ class HeuristicInitializer(eqx.Module):
         return n_condensate_fallback, n_other_fallback
 
     def _get_log_activity_estimate(
-        self, parameters: Parameters, species_abundance: Float[Array, "... n_species"]
+        self,
+        parameters: Parameters,
+        species_abundance: Float[Array, "... n_species"],
+        pressure: FloatArray,
     ) -> Float[Array, "... n_species"]:
         r"""Estimates log activity for gas species based on ideal-gas assumptions.
 
@@ -462,6 +441,7 @@ class HeuristicInitializer(eqx.Module):
         Args:
             parameters: Parameters containing the reaction system and state information
             species_abundance: Estimated abundance of each species
+            pressure: Pressure (bar) of the estimate
 
         Returns:
             Estimated log activity for each species
@@ -470,10 +450,8 @@ class HeuristicInitializer(eqx.Module):
             parameters.reaction_system.phase_system.gas_species_mask
         )
 
-        # Must be broadcast to a column array
-        pressure: Float[Array, "... 1"] = parameters.state.get_pressure(
-            jnp.log(species_abundance)
-        )[..., None]
+        # Column vector to broadcast over species
+        pressure = jnp.asarray(pressure)[..., None]
         n_gas_total: Float[Array, "... 1"] = jnp.nansum(
             jnp.where(gas_mask, species_abundance, 0.0), axis=-1, keepdims=True
         )
@@ -529,7 +507,7 @@ class HeuristicInitializer(eqx.Module):
         # jax.debug.print("log_Kp = {out}", out=log_Kp)
 
         log_activity: Float[Array, "... n_species"] = self._get_log_activity_estimate(
-            parameters, species_abundance
+            parameters, species_abundance, pressure
         )
 
         # Condensate c is supersaturated when sm[r,c] * (log_Kp[r] - log_Q[r]) > 0.
