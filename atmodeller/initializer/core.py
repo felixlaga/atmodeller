@@ -50,8 +50,8 @@ def max_moles_by_limiting_element(
             \frac{b_e}{\sum_{s' \in M} a_{es'}},
 
     which is the moles at which the masked species that contain element :math:`e`, all with the
-    same moles, together use all of :math:`e`. Returns ``NaN`` for species not in ``mask`` or not constrained by any
-    available element.
+    same moles, together use all of :math:`e`. Returns ``NaN`` for species not in ``mask`` or not
+    constrained by any available element.
 
     Args:
         formula_matrix: Matrix of elemental formulas for each species

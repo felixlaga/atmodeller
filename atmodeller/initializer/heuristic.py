@@ -40,11 +40,11 @@ class HeuristicInitializer(eqx.Module):
     Notation: :math:`b_e` is the budget of element :math:`e` (moles; undefined if :math:`e` is not
     mass constrained), :math:`a_{es}` the formula matrix (moles of element :math:`e` in species
     :math:`s`), :math:`n_s` the moles of species :math:`s`, :math:`\phi` the
-    ``condensate_allocation_fraction``, :math:`\epsilon = \exp(\texttt{LOG\_TRACE\_VALUE})` the trace
-    moles (:data:`~atmodeller.initializer.core.LOG_TRACE_VALUE`), :math:`S` the set of condensates
-    predicted stable, :math:`\nu_{rs}` the stoichiometry of species :math:`s` in reaction
-    :math:`r` of the solver's reaction network, and :math:`K_r` and :math:`Q_r` the equilibrium
-    constant and the reaction quotient of reaction :math:`r`.
+    ``condensate_allocation_fraction``, :math:`\epsilon = \exp(\texttt{LOG\_TRACE\_VALUE})` the
+    trace moles (:data:`~atmodeller.initializer.core.LOG_TRACE_VALUE`), :math:`S` the set of
+    condensates predicted stable, :math:`\nu_{rs}` the stoichiometry of species :math:`s` in
+    reaction :math:`r` of the solver's reaction network, and :math:`K_r` and :math:`Q_r` the
+    equilibrium constant and the reaction quotient of reaction :math:`r`.
 
     .. rubric:: Limiting-element estimate
 
@@ -75,9 +75,9 @@ class HeuristicInitializer(eqx.Module):
        step 2 because an equal share of the oxygen would give it as much as the major O-bearing
        species, which is usually far too much.
     4. *Fallbacks*: a species with zero moles (its elements are used up, or it contains no
-       mass-constrained element) gets :math:`\epsilon`. An undefined estimate, which arises only for
-       O\ :sub:`2` when oxygen is not mass constrained, is replaced by the geometric mean of the
-       moles of the other species of step 2 that have nonzero moles.
+       mass-constrained element) gets :math:`\epsilon`. An undefined estimate, which arises only
+       for O\ :sub:`2` when oxygen is not mass constrained, is replaced by the geometric mean of
+       the moles of the other species of step 2 that have nonzero moles.
 
     .. rubric:: Stability of condensates
 
@@ -157,6 +157,11 @@ class HeuristicInitializer(eqx.Module):
         Returns:
             Concatenated array of [log_number_moles, log_stability]
         """
+        # -----------------------------------------------------------------------------------
+        # STEP 1. Setup: element budgets, species masks, imposed fugacities.
+        #
+        # Unconstrained elements have a NaN budget.
+        # -----------------------------------------------------------------------------------
         temperature: FloatArray = parameters.state.temperature
 
         element_abundance: Float[Array, "... n_elements"] = parameters.mass_constraints.abundance()
@@ -178,6 +183,13 @@ class HeuristicInitializer(eqx.Module):
         )
         # jax.debug.print("gas_no_imposed_fugacity = {out}", out=gas_no_imposed_fugacity)
 
+        # -----------------------------------------------------------------------------------
+        # STEP 2. Stability of condensates: fixed-point iteration on the predicted-stable set.
+        #
+        # Each pass allocates the budget for the set so far (ALLOCATION 1 to 4 in
+        # _allocate_element_budget), estimates ideal activities, and adds the condensates with a
+        # positive stability signal. See the class docstring.
+        # -----------------------------------------------------------------------------------
         def _one_stability_pass(
             condensate_stable_known: Bool[Array, "... n_species"],
         ) -> Bool[Array, "... n_species"]:
@@ -237,6 +249,9 @@ class HeuristicInitializer(eqx.Module):
             _cond_fn, _body_fn, (init_stable_broadcasted, first_stable)
         )
 
+        # -----------------------------------------------------------------------------------
+        # STEP 3. Allocation for the final predicted-stable set.
+        # -----------------------------------------------------------------------------------
         n_condensate, n_other = self._allocate_element_budget(
             parameters, element_abundance, condensate_stable_predicted
         )
@@ -251,8 +266,11 @@ class HeuristicInitializer(eqx.Module):
         log_number_moles: Float[Array, "... n_species"] = jnp.log(n_estimate)
         # jax.debug.print("log_number_moles = {out}", out=log_number_moles)
 
-        # Gas species with an imposed fugacity: moles that give the imposed partial pressure
-        # relative to the total moles of the other gas species
+        # -----------------------------------------------------------------------------------
+        # STEP 4. Gas species with an imposed fugacity: moles that give the imposed partial
+        # pressure relative to the total moles of the other gas species, at the pressure of the
+        # allocation.
+        # -----------------------------------------------------------------------------------
         log_n_gas_known_total: Float[Array, "..."] = logsumexp(
             jnp.where(gas_no_imposed_fugacity, log_number_moles, -jnp.inf), axis=-1, keepdims=True
         )
@@ -278,6 +296,10 @@ class HeuristicInitializer(eqx.Module):
         )
         # jax.debug.print("log_number_moles (fugacity) = {out}", out=log_number_moles)
 
+        # -----------------------------------------------------------------------------------
+        # STEP 5. Output: log stabilities from the implied-stability relation, then
+        # [log moles, log stability]. An error is raised if the guess contains NaN.
+        # -----------------------------------------------------------------------------------
         log_stability = compute_implied_log_stability(parameters, log_number_moles)
         # jax.debug.print("log_stability = {out}", out=log_stability)
 
@@ -302,10 +324,10 @@ class HeuristicInitializer(eqx.Module):
     ) -> tuple[Float[Array, "... n_species"], Float[Array, "... n_species"]]:
         """Allocates the element budget between predicted-stable condensates and other species.
 
-        Steps 1 to 4 of the allocation in the class docstring: a fraction of the budget to the
-        predicted-stable condensates by the limiting-element estimate, the remainder to the other
-        species except O2, the oxygen left to O2, and fallbacks for species with zero or undefined
-        moles.
+        Steps 1 to 4 of the allocation in the class docstring (ALLOCATION 1 to 4 in the code): a
+        fraction of the budget to the predicted-stable condensates by the limiting-element
+        estimate, the remainder to the other species except O2, the oxygen left to O2, and
+        fallbacks for species with zero or undefined moles.
 
         Args:
             parameters: Parameters
@@ -325,7 +347,10 @@ class HeuristicInitializer(eqx.Module):
             parameters.reaction_system.phase_system.condensates_species_mask
         )
 
-        # Allocate element budget to predicted-stable condensates
+        # -----------------------------------------------------------------------------------
+        # ALLOCATION 1. Condensates: a fraction of the limiting-element estimate for the
+        # predicted-stable condensates, trace for the others.
+        # -----------------------------------------------------------------------------------
         n_condensate: Float[Array, "... n_species"] = max_moles_by_limiting_element(
             formula_matrix, element_abundance, condensate_stable_mask
         )
@@ -356,6 +381,10 @@ class HeuristicInitializer(eqx.Module):
         )
         # jax.debug.print("remaining_b = {out}", out=remaining_b)
 
+        # -----------------------------------------------------------------------------------
+        # ALLOCATION 2. Other species except O2: the limiting-element estimate for the
+        # remaining budget.
+        # -----------------------------------------------------------------------------------
         # If present, exclude O2 from the shared allocation, because an equal share of oxygen would
         # give it as much as the major O-bearing species. O2 instead takes the oxygen left over.
         # Found from the gas formulae (as the gas phase's O2_index), which are static under JIT
@@ -388,7 +417,10 @@ class HeuristicInitializer(eqx.Module):
         remaining_b = jnp.maximum(element_abundance - element_used - element_used_no_O2, 0.0)
         # jax.debug.print("remaining_b (after n_other) = {out}", out=remaining_b)
 
-        # The remaining O budget to O2, which is NaN if O is not mass constrained
+        # -----------------------------------------------------------------------------------
+        # ALLOCATION 3. O2 (if a gas species): the oxygen left over, which is NaN if O is not
+        # mass constrained.
+        # -----------------------------------------------------------------------------------
         if O2_index is not None:
             O_index: int = parameters.element_names.index("O")
             n_O2: Float[Array, "..."] = (
@@ -397,11 +429,14 @@ class HeuristicInitializer(eqx.Module):
             n_other = n_other.at[..., O2_index].set(n_O2)
         # jax.debug.print("n_other after O2 allocation = {out}", out=n_other)
 
-        # Fallbacks. Zero moles (elements used up, or no mass-constrained element) become the trace
-        # value; this includes the condensate entries, which are not used but must have a finite
-        # log. NaN, which at this point arises only for O2 when O is not mass constrained, becomes
-        # the geometric mean of the valid estimates, which keeps it at a magnitude comparable to
-        # the other species.
+        # -----------------------------------------------------------------------------------
+        # ALLOCATION 4. Fallbacks for zero and undefined moles.
+        # -----------------------------------------------------------------------------------
+        # Zero moles (elements used up, or no mass-constrained element) become the trace value;
+        # this includes the condensate entries, which are not used but must have a finite log. NaN,
+        # which at this point arises only for O2 when O is not mass constrained, becomes the
+        # geometric mean of the valid estimates, which keeps it at a magnitude comparable to the
+        # other species.
         unconstrained: Bool[Array, "... n_species"] = jnp.isnan(n_other)
         # jax.debug.print("unconstrained = {out}", out=unconstrained)
         exhausted: Bool[Array, "... n_species"] = n_other == 0

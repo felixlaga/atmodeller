@@ -504,6 +504,8 @@ class ElementPotentialInitializer(eqx.Module):
         # 2 * n_condensates + 1 passes let each condensate be switched on and off once; a final
         # solve follows. After each pass's solve, the condensate G/RT is re-evaluated at the
         # pressure reached (gas G/RT is for the 1-bar standard state), before the on/off decision.
+        # The final solve uses the G/RT of the last switching pass, which is not re-evaluated at
+        # the pressure of the final solve.
         # -----------------------------------------------------------------------------------
         design: Array = jnp.where(
             gas[:, None], jnp.concatenate([formula_matrix.T, jnp.ones((n_species, 1))], -1), 0.0
@@ -557,7 +559,7 @@ class ElementPotentialInitializer(eqx.Module):
         # -----------------------------------------------------------------------------------
         # STEP 8. Output: absent condensates in the solver's stability representation
         # (zeta_c = -d_c), then [log moles, log stability], or the even-split start if not
-        # finite.
+        # finite. Species that are neither reaction nor dissolved species are set to trace.
         # -----------------------------------------------------------------------------------
         log_n: Array = log_moles(z, present, gibbs)[0]
         driving_force: Array = formula_matrix.T @ z[:n_elements] - gibbs
