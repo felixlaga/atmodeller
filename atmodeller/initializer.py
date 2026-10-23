@@ -563,7 +563,9 @@ class ElementPotentialInitializer(eqx.Module):
     - Dissolved species (if the system has dissolution reactions): their log moles are
       unknowns, and the dissolution rows of the solver's residual (the solubility laws) are part
       of the residual.
-    - :math:`G_s/RT` is evaluated once, at the pressure of the start, and held fixed.
+    - :math:`G_s/RT` is evaluated at the pressure of the start. The gas values are for the 1-bar
+      standard state and do not change; the condensate values are re-evaluated at the pressure
+      reached after each switching pass (see below), and are held fixed within each solve.
 
     The unknowns are :math:`z = [\lambda, \ln N_\mathrm{gas}, \text{one slot per species}]`,
     where the slots hold :math:`\ln n` of present condensates and dissolved species (the others
@@ -591,11 +593,14 @@ class ElementPotentialInitializer(eqx.Module):
        CEA), with :math:`\lambda` fitted to it by least squares. No knowledge of the answer is
        used.
     2. Phase selection in :math:`2 n_\mathrm{condensates} + 1` passes, then a final solve. Each
-       pass solves, switches on the most supersaturated absent condensate (if
-       :math:`d_c > 10^{-6}`; it starts at half the budget of its limiting element), and
-       switches off present condensates whose log moles fall below :data:`LOG_TRACE_VALUE` + 1.
-       Switching one at a time means that a present polymorph fixes its element's potential and
-       the other becomes undersaturated.
+       pass solves, re-evaluates the condensate :math:`G_c/RT` at the pressure reached, switches
+       on the most supersaturated absent condensate (if :math:`d_c > 10^{-6}`; it starts at half
+       the budget of its limiting element), and switches off present condensates whose log moles
+       fall below :data:`LOG_TRACE_VALUE` + 1. Switching one at a time means that a present
+       polymorph fixes its element's potential and the other becomes undersaturated. The start
+       pressure (from the even split) can differ from the converged pressure by an order of
+       magnitude, enough to put a condensate near saturation on the wrong side of its boundary
+       through the pressure dependence of its Gibbs energy, hence the re-evaluation.
     3. Every solve is an element sweep followed by damped Newton:
 
        - *Sweep* (FastChem): up to ``sweeps`` Gauss-Seidel passes over the elements in order
@@ -669,9 +674,9 @@ class ElementPotentialInitializer(eqx.Module):
     by Cholesky factorisation (``damping`` is :math:`\mu`). Zero rows drop out of
     :math:`J^\mathsf{T} J`, so every constraint row is kept and constraints can differ between
     batch elements. The damping keeps the matrix positive definite in degenerate steps, such as an
-    element that is neither mass constrained nor fixed by a fugacity, where it gives a zero step, as
-    the minimum-norm least-squares solution would. Compared with a singular value decomposition of
-    the full Jacobian, this needs fewer Jacobian columns and a much cheaper factorisation.
+    element that is neither mass constrained nor fixed by a fugacity, where it gives a zero step,
+    as the minimum-norm least-squares solution would. Compared with a singular value decomposition
+    of the full Jacobian, this needs fewer Jacobian columns and a much cheaper factorisation.
 
     .. rubric:: JAX
 
@@ -688,7 +693,7 @@ class ElementPotentialInitializer(eqx.Module):
             ``100``.
         residual_tolerance: Residual norm at which a Newton solve stops. Defaults to ``1e-10``.
         max_log_step: Maximum change in the log moles of any carried species (or in any
-            :math:`\lambda_e`) per Newton iteration. Defaults to ``2.0``.
+            :math:`\lambda_e`) per Newton iteration. Defaults to ``4.0``.
         sweeps: Maximum number of Gauss-Seidel element sweeps at the start of every Newton
             solve. Defaults to ``3``.
         sweep_iterations: Maximum number of 1-D Newton iterations per element in a sweep.
@@ -705,7 +710,7 @@ class ElementPotentialInitializer(eqx.Module):
     """Maximum number of damped Newton iterations per solve"""
     residual_tolerance: float = 1e-10
     """Residual norm at which a Newton solve stops"""
-    max_log_step: float = 2.0
+    max_log_step: float = 4.0
     r"""Maximum change in the log moles of any carried species (or in any :math:`\lambda_e`) per
     Newton iteration"""
     sweeps: int = 3
@@ -783,8 +788,9 @@ class ElementPotentialInitializer(eqx.Module):
         )
 
         # -----------------------------------------------------------------------------------
-        # STEP 2. Even-split start and standard Gibbs energies (at the start pressure, held
-        # fixed).
+        # STEP 2. Even-split start and standard Gibbs energies at the start pressure. The
+        # condensate values are updated after each switching pass (STEP 7), so G/RT is an
+        # argument of the functions below.
         # -----------------------------------------------------------------------------------
         total: Array = jnp.sum(jnp.where(constrained, abundance, 0.0))
         total = jnp.where(total > 0, total, 1.0)
@@ -800,7 +806,7 @@ class ElementPotentialInitializer(eqx.Module):
         # Gas from the element potentials (normalised to N_gas); present condensates and
         # dissolved species from their slots; absent condensates at trace.
         # -----------------------------------------------------------------------------------
-        def log_moles(z: Array, present: Array) -> tuple[Array, Array, Array]:
+        def log_moles(z: Array, present: Array, gibbs: Array) -> tuple[Array, Array, Array]:
             lam, log_n_gas, slots = z[:n_elements], z[n_elements], z[n_elements + 1 :]
             # Not clipped, since a clip would zero the derivatives of the log-space rows (fugacity,
             # pressure closure, dissolution); logsumexp is stable, and moles are formed with
@@ -820,9 +826,9 @@ class ElementPotentialInitializer(eqx.Module):
         # The mass balance is a log ratio, so every element weighs the same whatever its
         # abundance. Fugacity targets may depend on pressure.
         # -----------------------------------------------------------------------------------
-        def residual(z: Array, present: Array) -> Array:
+        def residual(z: Array, present: Array, gibbs: Array) -> Array:
             lam, slots = z[:n_elements], z[n_elements + 1 :]
-            log_n, log_p, log_p_sum = log_moles(z, present)
+            log_n, log_p, log_p_sum = log_moles(z, present, gibbs)
             pressure: Array = parameters.state.get_pressure(log_n)
             carried: Array = gas | (condensate & present) | dissolved
             element_moles: Array = formula_matrix @ jnp.where(carried, safe_exp(log_n), 0.0)
@@ -863,8 +869,8 @@ class ElementPotentialInitializer(eqx.Module):
         # ln a_es; the placeholder 1.0 where a_es = 0 is masked out by the carrier mask
         log_a: Array = jnp.log(jnp.where(formula_matrix > 0, formula_matrix, 1.0))
 
-        def sweep(z: Array, present: Array) -> Array:
-            log_n, _, log_p_sum = log_moles(z, present)
+        def sweep(z: Array, present: Array, gibbs: Array) -> Array:
+            log_n, _, log_p_sum = log_moles(z, present, gibbs)
             sigma: Array = z[n_elements] - log_p_sum
             outside_gas: Array = formula_matrix @ jnp.where(
                 (condensate & present) | dissolved, safe_exp(log_n), 0.0
@@ -932,7 +938,7 @@ class ElementPotentialInitializer(eqx.Module):
         # change by more than max_log_step. Without it, Newton on exponentials overshoots minor
         # species into flat regions where it stalls.
         # -----------------------------------------------------------------------------------
-        def solve(z: Array, present: Array) -> Array:
+        def solve(z: Array, present: Array, gibbs: Array) -> Array:
             carried: Array = gas | (condensate & present) | dissolved
 
             def newton(carry):
@@ -940,7 +946,7 @@ class ElementPotentialInitializer(eqx.Module):
                 # Jacobian over the live unknowns only (the other entries of z are held fixed)
                 jacobian = lx.materialise(
                     lx.JacobianLinearOperator(
-                        lambda z_live, _: residual(z.at[live].set(z_live), present), z[live]
+                        lambda z_live, _: residual(z.at[live].set(z_live), present, gibbs), z[live]
                     )
                 )
                 # Damped normal equations (J^T J + mu^2 I) dz = -J^T r, solved by Cholesky.
@@ -956,14 +962,14 @@ class ElementPotentialInitializer(eqx.Module):
                 # Unused slots get no step
                 dz: Array = jnp.zeros_like(z).at[live].set(dz_live)
                 dz = jnp.where(jnp.isfinite(dz), dz, 0.0)
-                _, dlog_n = jax.jvp(lambda z_: log_moles(z_, present)[0], (z,), (dz,))
+                _, dlog_n = jax.jvp(lambda z_: log_moles(z_, present, gibbs)[0], (z,), (dz,))
                 biggest: Array = jnp.maximum(
                     jnp.max(jnp.where(carried, jnp.abs(dlog_n), 0.0)),
                     jnp.max(jnp.abs(dz[:n_elements])),
                 )
                 scale: Array = jnp.minimum(1.0, self.max_log_step / jnp.maximum(biggest, 1e-12))
                 z = z + scale * dz
-                return k + 1, z, residual(z, present)
+                return k + 1, z, residual(z, present, gibbs)
 
             def unfinished(carry):
                 k, _, r = carry
@@ -971,8 +977,10 @@ class ElementPotentialInitializer(eqx.Module):
                     jnp.linalg.norm(r) > self.residual_tolerance
                 )
 
-            z = sweep(z, present)
-            return lax.while_loop(unfinished, newton, (jnp.array(0), z, residual(z, present)))[1]
+            z = sweep(z, present, gibbs)
+            return lax.while_loop(
+                unfinished, newton, (jnp.array(0), z, residual(z, present, gibbs))
+            )[1]
 
         # -----------------------------------------------------------------------------------
         # STEP 7. Phase selection: switch condensates on and off one at a time.
@@ -981,7 +989,8 @@ class ElementPotentialInitializer(eqx.Module):
         # (ln n_s = a_s.lambda - G_s/RT + c over the gas species), ln N_gas = ln(total),
         # dissolved slots at the even split, condensate slots at trace.
         # 2 * n_condensates + 1 passes let each condensate be switched on and off once; a final
-        # solve follows.
+        # solve follows. After each pass's solve, the condensate G/RT is re-evaluated at the
+        # pressure reached (gas G/RT is for the 1-bar standard state), before the on/off decision.
         # -----------------------------------------------------------------------------------
         design: Array = jnp.where(
             gas[:, None], jnp.concatenate([formula_matrix.T, jnp.ones((n_species, 1))], -1), 0.0
@@ -996,8 +1005,12 @@ class ElementPotentialInitializer(eqx.Module):
         )
 
         def switching_pass(_, carry):
-            z, present = carry
-            z = solve(z, present)
+            z, present, gibbs = carry
+            z = solve(z, present, gibbs)
+            pressure: Array = parameters.state.get_pressure(log_moles(z, present, gibbs)[0])
+            gibbs = jnp.where(
+                condensate, _gibbs_over_RT_all_species(parameters, temperature, pressure), gibbs
+            )
             slots: Array = z[n_elements + 1 :]
             driving_force: Array = formula_matrix.T @ z[:n_elements] - gibbs
             candidates: Array = condensate & ~present & (driving_force > 1e-6)
@@ -1012,20 +1025,23 @@ class ElementPotentialInitializer(eqx.Module):
                 0.5 * jnp.where(n_limit > 0, n_limit, jnp.exp(LOG_TRACE_VALUE))
             )
             slots = jnp.where(on, log_start, jnp.where(off, LOG_TRACE_VALUE, slots))
-            return z.at[n_elements + 1 :].set(slots), (present | on) & ~off
+            return z.at[n_elements + 1 :].set(slots), (present | on) & ~off, gibbs
 
         n_condensates: int = len(reaction_names) - len(reaction_system.phase_system.gas.species)
-        z, present = lax.fori_loop(
-            0, 2 * n_condensates + 1, switching_pass, (z0, jnp.zeros(n_species, dtype=bool))
+        z, present, gibbs = lax.fori_loop(
+            0,
+            2 * n_condensates + 1,
+            switching_pass,
+            (z0, jnp.zeros(n_species, dtype=bool), gibbs),
         )
-        z = solve(z, present)
+        z = solve(z, present, gibbs)
 
         # -----------------------------------------------------------------------------------
         # STEP 8. Output: absent condensates in the solver's stability representation
         # (zeta_c = -d_c), then [log moles, log stability], or the even-split start if not
         # finite.
         # -----------------------------------------------------------------------------------
-        log_n: Array = log_moles(z, present)[0]
+        log_n: Array = log_moles(z, present, gibbs)[0]
         driving_force: Array = formula_matrix.T @ z[:n_elements] - gibbs
         absent: Array = condensate & ~present & (driving_force < 0)
         implied_constant: Array = compute_implied_log_stability(parameters, jnp.zeros(n_species))
