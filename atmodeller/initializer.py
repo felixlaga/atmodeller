@@ -1004,19 +1004,24 @@ class ElementPotentialInitializer(eqx.Module):
             ]
         )
 
-        def switching_pass(_, carry):
+        def switching_pass(k, carry):
             z, present, gibbs = carry
             z = solve(z, present, gibbs)
+            # The last iteration is the final solve: no Gibbs update and no switching. Running it
+            # inside the loop traces solve only once, which keeps the compiled program smaller.
+            switching: Array = k < 2 * n_condensates + 1
             pressure: Array = parameters.state.get_pressure(log_moles(z, present, gibbs)[0])
             gibbs = jnp.where(
-                condensate, _gibbs_over_RT_all_species(parameters, temperature, pressure), gibbs
+                condensate & switching,
+                _gibbs_over_RT_all_species(parameters, temperature, pressure),
+                gibbs,
             )
             slots: Array = z[n_elements + 1 :]
             driving_force: Array = formula_matrix.T @ z[:n_elements] - gibbs
             candidates: Array = condensate & ~present & (driving_force > 1e-6)
             best: Array = jnp.argmax(jnp.where(candidates, driving_force, -jnp.inf))
-            on: Array = (jnp.arange(n_species) == best) & jnp.any(candidates)
-            off: Array = condensate & present & (slots < LOG_TRACE_VALUE + 1.0)
+            on: Array = (jnp.arange(n_species) == best) & jnp.any(candidates) & switching
+            off: Array = condensate & present & (slots < LOG_TRACE_VALUE + 1.0) & switching
             # A newly present condensate starts at half the budget of its limiting element
             n_limit: Array = max_moles_by_limiting_element(
                 formula_matrix, jnp.where(constrained, abundance, jnp.nan), on
@@ -1028,13 +1033,13 @@ class ElementPotentialInitializer(eqx.Module):
             return z.at[n_elements + 1 :].set(slots), (present | on) & ~off, gibbs
 
         n_condensates: int = len(reaction_names) - len(reaction_system.phase_system.gas.species)
+        # 2 * n_condensates + 1 switching passes, then the final solve as the last iteration
         z, present, gibbs = lax.fori_loop(
             0,
-            2 * n_condensates + 1,
+            2 * n_condensates + 2,
             switching_pass,
             (z0, jnp.zeros(n_species, dtype=bool), gibbs),
         )
-        z = solve(z, present, gibbs)
 
         # -----------------------------------------------------------------------------------
         # STEP 8. Output: absent condensates in the solver's stability representation
