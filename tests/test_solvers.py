@@ -127,7 +127,7 @@ def test_make_solver() -> None:
     output: Output = dispatch_solver(parameters, key, base_solution_array)
 
     _assert_valid_output(output, parameters)
-    assert jnp.all(output.multi_attempt_solution.solver_success)
+    assert jnp.all(output.multi_attempt_solution.success)
 
 
 def test_make_solver_with_jit_dual_path() -> None:
@@ -147,7 +147,7 @@ def test_make_solver_with_jit_dual_path() -> None:
     output: Output = solver(parameters, key, base_solution_array)
 
     _assert_valid_output(output, parameters)
-    assert jnp.all(output.multi_attempt_solution.solver_success)
+    assert jnp.all(output.multi_attempt_solution.success)
 
 
 def test_make_solver_with_jit_batch_only() -> None:
@@ -169,10 +169,7 @@ def test_make_solver_with_jit_batch_only() -> None:
     output: Output = solver(parameters, key, base_solution_array)
 
     _assert_valid_output(output, parameters)
-    # make_batch_solver always reports a single attempt, so `solver_success` (from the underlying
-    # optimistix Solution) is the meaningful per-element convergence signal here.
-    assert jnp.all(output.multi_attempt_solution.solution.result == optx.RESULTS.successful)
-    assert jnp.all(output.multi_attempt_solution.solver_success)
+    assert jnp.all(output.multi_attempt_solution.success)
 
 
 def _stub_solution(

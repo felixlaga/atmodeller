@@ -524,14 +524,14 @@ class MultiAttemptSolution(eqx.Module):  # pragma: no cover
     """A solution wrapper for handling multiple solver attempts per problem
 
     This class standardises solver outputs from multi-attempt strategies. Some attributes
-    (e.g. ``converged``, ``solver_success``, ``num_steps``) are broadcast to the batch dimension
+    (e.g. ``success``, ``solver_success``, ``num_steps``) are broadcast to the batch dimension
     to ensure consistent shapes across all outputs, whether the underlying solver returns scalar
     or per-attempt values.
 
     Args:
         solution: Optimistix solution
-        _attempts: Number of attempts required for each batch element to converge (``0`` indicates
-            no successful attempt). Defaults to ``0``.
+        _attempts: Attempt on which each batch element passed both the objective-based check and
+            the solver status (``0`` indicates no successful attempt). Defaults to ``0``.
     """
 
     solution: optx.Solution
@@ -550,11 +550,6 @@ class MultiAttemptSolution(eqx.Module):  # pragma: no cover
     def batch_shape(self) -> tuple[int, ...]:
         """Batch shape (all dimensions except the trailing solution dimension)"""
         return self.solution.value.shape[:-1]
-
-    @property
-    def converged(self) -> Bool[Array, " batch"]:
-        """Boolean mask indicating objective-based convergence"""
-        return jnp.broadcast_to(self.attempts > 0, self.batch_shape)
 
     @property
     def num_steps(self) -> Integer[Array, " batch"]:
@@ -587,8 +582,9 @@ class MultiAttemptSolution(eqx.Module):  # pragma: no cover
 
     @property
     def success(self) -> Bool[Array, " batch"]:
-        """Whether the solution is successful based on both convergence and solver success"""
-        return jnp.logical_and(self.converged, self.solver_success)
+        """Whether the model is solved, i.e. an attempt passed both the objective-based check and
+        the solver status (the latter is checked again here as a safeguard)"""
+        return jnp.logical_and(self.attempts > 0, self.solver_success)
 
     def asdict(self) -> dict[str, ArrayLike]:
         """Converts pertinent solution statistics to a dictionary"""
@@ -596,7 +592,6 @@ class MultiAttemptSolution(eqx.Module):  # pragma: no cover
             "solver_success": self.solver_success,
             "steps": self.num_steps,
             "attempts": self.attempts,
-            "converged": self.converged,
             "success": self.success,
         }
 
@@ -609,9 +604,9 @@ class MultiAttemptSolution(eqx.Module):  # pragma: no cover
         Args:
             logger_: Logger to log the statistics to. Defaults to the module logger.
         """
-        total_models: int = int(self.converged.size)
-        num_successful_models: int = jnp.count_nonzero(self.converged).item()
-        num_failed_models: int = jnp.count_nonzero(~self.converged).item()
+        total_models: int = int(self.success.size)
+        num_successful_models: int = jnp.count_nonzero(self.success).item()
+        num_failed_models: int = jnp.count_nonzero(~self.success).item()
 
         logger_.info(
             "Solve complete: %d (%0.2f%%) successful model(s)",

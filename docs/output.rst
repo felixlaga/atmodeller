@@ -337,7 +337,9 @@ For a generic thermodynamic state (not a planet), the state has the following ad
 Solver
 ------
 
-The solver statistics are under the ``solver`` key.
+The solver statistics are under the ``solver`` key. A model is solved if ``success`` is true. This
+is the flag used to drop unsuccessful solves (``drop_unsuccessful_solves``), to highlight rows in
+Excel, and to count the successful models in the solver log.
 
 .. list-table:: Outputs for solver
    :widths: 30 20 50
@@ -348,20 +350,20 @@ The solver statistics are under the ``solver`` key.
      - Description
    * - success
      - boolean
-     - Whether the solution is successful, i.e. both ``solver_success`` and ``converged``
+     - Whether the model is solved, i.e. an attempt passed both the objective-based convergence
+       check and the solver status
    * - solver_success
      - boolean
-     - Whether the solver terminated successfully according to its internal criteria
-   * - converged
-     - boolean
-     - Whether the solution meets the objective-based convergence criteria, independent of
-       ``solver_success``
+     - Whether the solver terminated successfully according to its internal criteria. For a model
+       that was not solved, this is the status of an attempt that failed the objective-based check
+       or the solver status, so it can be true even if ``success`` is false
    * - steps
      - integer
-     - Number of iterations taken during the successful attempt
+     - Number of iterations taken during the successful attempt. Zero if the model was not solved
    * - attempts
      - integer
-     - Number of solver attempts (e.g. in a multistart procedure). Zero if no attempt converged
+     - Attempt on which the model was solved (e.g. in a multistart procedure). Zero if no attempt
+       succeeded
 
 Solution and initial guess
 --------------------------

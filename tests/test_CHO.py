@@ -305,7 +305,7 @@ def CHO_output() -> dict[str, Any]:
     )
 
     output: Output = EquilibriumModel(parameters).solve_with_default()
-    assert bool(np.all(output.multi_attempt_solution.solver_success))
+    assert bool(np.all(output.multi_attempt_solution.success))
 
     return OutputNamedArraysDict(
         output.parameters, output.multi_attempt_solution, output.initial_guess

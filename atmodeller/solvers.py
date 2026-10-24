@@ -65,6 +65,7 @@ from atmodeller.jax_utils import (
     FloatArray,
     MultiAttemptSolution,
     implicit_polish,
+    max_norm,
     perturb_around_converged,
     vmap_axes_spec,
 )
@@ -404,7 +405,7 @@ def make_tau_sweep_solver(batch_retry_solver: Callable, batch_solver: Callable) 
             parameters.solver_parameters.atol,
             implicit_gradient=False,
         )
-        first_converged: Bool[Array, "..."] = first_sol.converged
+        first_success: Bool[Array, "..."] = first_sol.success
 
         def run_scan(key: PRNGKeyArray) -> MultiAttemptSolution:
             """Run the full tau sweep scan across all batch elements.
@@ -422,7 +423,7 @@ def make_tau_sweep_solver(batch_retry_solver: Callable, batch_solver: Callable) 
             def keep_first(first: Array, sweep: Array) -> Array:
                 """Selects ``first`` for elements that converged on the first attempt"""
                 mask: Bool[Array, "..."] = jnp.expand_dims(
-                    first_converged, tuple(range(first_converged.ndim, first.ndim))
+                    first_success, tuple(range(first_success.ndim, first.ndim))
                 )
                 return jnp.where(mask, first, sweep)
 
@@ -434,12 +435,12 @@ def make_tau_sweep_solver(batch_retry_solver: Callable, batch_solver: Callable) 
             return first_sol
 
         # If all entries converged at TAU on the first attempt, skip the sweep entirely
-        all_converged: Bool[Array, ""] = jnp.all(first_converged)
+        all_converged: Bool[Array, ""] = jnp.all(first_success)
         multi_sol: MultiAttemptSolution = lax.cond(all_converged, run_single_step, run_scan, key)
 
         # The sweep finishes at TAU, so attach the derivatives of the root at TAU
         polished_solution: Float[Array, "... solution"] = implicit_polish(
-            batch_solver, multi_sol.value, multi_sol.converged, initial_parameters
+            batch_solver, multi_sol.value, multi_sol.success, initial_parameters
         )
         multi_sol = eqx.tree_at(lambda m: m.solution.value, multi_sol, polished_solution)
 
@@ -655,6 +656,9 @@ def make_solver_with_jit_batch_only(
     """
     initial_guess_function: Callable = make_initial_guess_function(parameters, initializer)
     batch_solver: Callable = make_batch_solver(parameters)
+    objective_function_vmapped: Callable = eqx.filter_vmap(
+        objective_function, in_axes=(LOG_NUMBER_MOLES_VMAP_AXES, vmap_axes_spec(parameters))
+    )
 
     @eqx.filter_jit
     def batch_only_solver(
@@ -662,11 +666,29 @@ def make_solver_with_jit_batch_only(
         key: PRNGKeyArray,
         base_solution_array: Float[Array, "n_batch twice_species"],
     ) -> Output:
-        """Basic batch solver path without retry or tau-sweep enhancements."""
+        """Basic batch solver path without retry or tau-sweep enhancements.
+
+        A model is solved on its single attempt if it passes the same objective-based check and
+        solver status as in the batch retry solver, so the reported attempts and steps are zero
+        otherwise.
+        """
         # Note: key is unused in basic batch solver, but included for interface compatibility
         del key
         base_solution_array = initial_guess_function(parameters, base_solution_array)
-        multi_sol = batch_solver(base_solution_array, parameters)
+        multi_sol: MultiAttemptSolution = batch_solver(base_solution_array, parameters)
+
+        converged: Bool[Array, "..."] = (
+            max_norm(objective_function_vmapped, multi_sol.value, parameters)
+            < parameters.solver_parameters.atol
+        )
+        success: Bool[Array, "..."] = jnp.logical_and(converged, multi_sol.solver_success)
+        solution: optx.Solution = eqx.tree_at(
+            lambda sol: sol.stats["num_steps"],
+            multi_sol.solution,
+            jnp.where(success, multi_sol.num_steps, jnp.zeros_like(multi_sol.num_steps)),
+        )
+        multi_sol = MultiAttemptSolution(solution, success.astype(int))
+
         return Output(parameters, multi_sol, base_solution_array)
 
     return batch_only_solver
