@@ -15,11 +15,13 @@ import pickle
 from pathlib import Path
 from typing import Any, Literal, Optional
 
+import equinox as eqx
 import jax.numpy as jnp
 import numpy as np
 import pandas as pd
 import pytest
 from jaxtyping import ArrayLike
+from openpyxl import load_workbook
 
 from atmodeller import __version__, debug_logger
 from atmodeller.classes import EquilibriumModel
@@ -202,9 +204,35 @@ def test_to_dataframes(cho_output: Output) -> None:
         cho_output.to_dataframes(output_format="elements_species")["H2O_g"], pd.DataFrame
     )
 
-    n_success: int = int(np.sum(np.asarray(cho_output.multi_attempt_solution.solver_success)))
+    n_success: int = int(np.sum(np.asarray(cho_output.multi_attempt_solution.success)))
     for df in cho_output.to_dataframes(drop_unsuccessful_solves=True).values():
         assert len(df) == n_success
+
+
+def test_unsuccessful_solves(cho_output: Output, tmp_path: Path) -> None:
+    """A model that failed the convergence post-check is dropped and highlighted in Excel, even
+    though the solver status reports success"""
+    # Emulate a failed post-check of the second model, as reported by the batch retry solver
+    output: Output = eqx.tree_at(
+        lambda out: out.multi_attempt_solution._attempts, cho_output, jnp.array([1, 0])
+    )
+    assert np.all(np.asarray(output.multi_attempt_solution.solver_success))
+
+    for df in output.to_dataframes(drop_unsuccessful_solves=True).values():
+        assert df.index.tolist() == [0]
+
+    # Excel rows are 1-indexed and row 1 is the header, so the second model is row 3
+    for drop, expected_rows in ((False, [3]), (True, [])):
+        output.to_excel(
+            file_prefix=tmp_path / "out", drop_unsuccessful_solves=drop, append_version=False
+        )
+        for sheet in load_workbook(tmp_path / "out.xlsx").worksheets:
+            highlighted_rows: list[int] = [
+                number
+                for number, row in enumerate(sheet.iter_rows(), start=1)
+                if row[0].fill.fgColor.rgb == "00FFFF00"
+            ]
+            assert highlighted_rows == expected_rows
 
 
 def _read_excel(path: Path) -> dict[str, pd.DataFrame]:
