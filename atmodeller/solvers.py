@@ -44,16 +44,13 @@ Most solvers return results as :class:`atmodeller.containers.MultiAttemptSolutio
 """
 
 from collections.abc import Callable
-from typing import cast
 
 import equinox as eqx
 import jax
 import jax.numpy as jnp
 import optimistix as optx
-from equinox._enum import EnumerationItem
 from jax import lax
 from jaxtyping import Array, Bool, Float, Integer, PRNGKeyArray
-from optimistix import Solution
 
 from atmodeller.constants import (
     LOG_NUMBER_MOLES_LOWER,
@@ -349,8 +346,8 @@ def make_tau_sweep_solver(batch_retry_solver: Callable, batch_solver: Callable) 
         step for all batch elements. Because ``tau`` must remain a scalar throughout the scan
         (to keep the vmapping axes consistent), converged and failed elements both run the full
         sweep; converged ones simply re-solve quickly from their existing solution, but keep the
-        result of their solve at ``TAU``. An element that failed the solve at ``TAU`` is reported
-        as converged only if the final step of the sweep, which solves at ``TAU``, converged.
+        result of their solve at ``TAU``. The other elements report the final step of the sweep,
+        which solves at ``TAU``.
 
         Args:
             initial_guess: Batched array of initial guesses
@@ -362,24 +359,22 @@ def make_tau_sweep_solver(batch_retry_solver: Callable, batch_solver: Callable) 
             :class:`atmodeller.containers.MultiAttemptSolution` object
         """
 
-        def solve_tau_step(carry: tuple, tau: Float[Array, " ..."]) -> tuple[tuple, tuple]:
+        def solve_tau_step(carry: tuple, tau: Float[Array, " ..."]) -> tuple[tuple, None]:
             """Performs a single batched solver step for one scalar tau value.
 
             Intended for use inside :func:`jax.lax.scan`. Receives a scalar ``tau`` from
             ``varying_schedule``, injects it into a copy of ``parameters``, and runs the batch
-            retry solver on all elements. The solution carried forward is the best result from this
-            step; the outputs stacked by ``scan`` capture the full history across tau steps.
+            retry solver on all elements from the solution carried forward from the previous step.
 
             Args:
-                carry: Tuple of ``(key, solution)`` where ``solution`` has shape
-                    ``(batch, solution)``
+                carry: Tuple of ``(key, multi_sol)`` where ``multi_sol`` is the
+                    :class:`~atmodeller.jax_utils.MultiAttemptSolution` of the previous step
                 tau: Scalar tau value for this scan step
 
             Returns:
-                Updated ``(key, solution)`` carry tuple and an output tuple of
-                ``(solution, result_value, num_steps, attempts)``
+                Updated ``(key, multi_sol)`` carry tuple and no stacked output
             """
-            (key, solution) = carry
+            key, multi_sol = carry
             key, subkey = jax.random.split(key)
 
             # Get new parameters with tau value
@@ -387,7 +382,7 @@ def make_tau_sweep_solver(batch_retry_solver: Callable, batch_solver: Callable) 
             # jax.debug.print("tau = {out}", out=new_parameters.solver_parameters.tau)
 
             new_sol: MultiAttemptSolution = batch_retry_solver(
-                solution,
+                multi_sol.value,
                 new_parameters,
                 subkey,
                 parameters.solver_parameters.max_starts - 1,
@@ -395,17 +390,7 @@ def make_tau_sweep_solver(batch_retry_solver: Callable, batch_solver: Callable) 
                 implicit_gradient=False,
             )
 
-            new_solution: Float[Array, "... solution"] = new_sol.value
-            new_result: optx.RESULTS = new_sol.result
-            new_steps: Integer[Array, "..."] = new_sol.stats["num_steps"]
-            success_attempt: Integer[Array, "..."] = new_sol.attempts
-
-            new_carry: tuple[PRNGKeyArray, Float[Array, "... solution"]] = (key, new_solution)
-
-            # Output current solution for this tau step
-            out: tuple[Array, ...] = (new_solution, new_result._value, new_steps, success_attempt)  # pyright: ignore
-
-            return new_carry, out
+            return (key, new_sol), None
 
         # Initial solve at TAU
         key, subkey = jax.random.split(key)
@@ -419,82 +404,38 @@ def make_tau_sweep_solver(batch_retry_solver: Callable, batch_solver: Callable) 
             parameters.solver_parameters.atol,
             implicit_gradient=False,
         )
-        # jax.debug.print("first_solution = {out}", out=first_sol.value)
-        # jax.debug.print("solver success = {out}", out=first_sol.result._value)
-        first_converged: Bool[Array, "..."] = first_sol.attempts > 0
-        # jax.debug.print("first_converged = {out}", out=first_converged)
-        # jax.debug.print("first_steps = {out}", out=first_sol.num_steps)
+        first_converged: Bool[Array, "..."] = first_sol.converged
 
-        def run_scan(args_in: tuple) -> MultiAttemptSolution:
+        def run_scan(key: PRNGKeyArray) -> MultiAttemptSolution:
             """Run the full tau sweep scan across all batch elements.
 
             Called when at least one element failed the initial solve at ``TAU``. All batch
             elements (including those that already converged) run every step of the
             ``varying_schedule`` scan, but elements that converged at ``TAU`` on the first attempt
-            keep the result of that solve. The remaining elements report the final solution and
-            result of the sweep, along with the maximum step count and attempt index across all
-            tau steps. Only the final step solves at ``TAU``, so these elements have converged
-            only if the final step converged; otherwise their step count and attempt index are
-            zero.
+            keep the result of that solve, so their result does not depend on whether other batch
+            elements failed. The remaining elements report the result of the final step, since
+            only the final step solves at ``TAU``; the earlier steps at larger tau only guide the
+            solution towards the root at ``TAU``.
             """
-            key, first_sol = args_in
-            first_converged: Bool[Array, "..."] = first_sol.attempts > 0
-            initial_carry_: tuple[PRNGKeyArray, Float[Array, "... solution"]] = (
-                key,
-                first_sol.value,
-            )
-            _, results_ = jax.lax.scan(solve_tau_step, initial_carry_, varying_schedule)
-            solution_, result_value_, steps_, attempts_ = results_
+            (_, sweep_sol), _ = jax.lax.scan(solve_tau_step, (key, first_sol), varying_schedule)
 
-            # Convergence at an earlier (larger) tau does not imply convergence at TAU
-            sweep_converged_: Bool[Array, "..."] = attempts_[-1] > 0
-            # jax.debug.print("sweep_converged_ = {out}", out=sweep_converged_)
+            def keep_first(first: Array, sweep: Array) -> Array:
+                """Selects ``first`` for elements that converged on the first attempt"""
+                mask: Bool[Array, "..."] = jnp.expand_dims(
+                    first_converged, tuple(range(first_converged.ndim, first.ndim))
+                )
+                return jnp.where(mask, first, sweep)
 
-            # For steps and attempts, report the maximum across all tau steps to capture the
-            # worst-case performance, or zero if the final step at TAU did not converge.
-            sweep_steps_: Integer[Array, "..."] = jnp.where(
-                sweep_converged_, jnp.max(steps_, axis=0), 0
-            )
-            sweep_attempts_: Integer[Array, "..."] = jnp.where(
-                sweep_converged_, jnp.max(attempts_, axis=0), 0
-            )
+            return jax.tree.map(keep_first, first_sol, sweep_sol)
 
-            # Elements that converged at TAU on the first attempt keep the result of that solve,
-            # so their result does not depend on whether other batch elements failed.
-            report_solution_: Float[Array, "... solution"] = jnp.where(
-                first_converged[..., None], first_sol.value, solution_[-1]
-            )
-            report_result_value_: Integer[Array, "..."] = jnp.where(
-                first_converged,
-                first_sol.result._value,  # pyright: ignore
-                result_value_[-1],
-            )
-            report_steps_: Integer[Array, "..."] = jnp.where(
-                first_converged, first_sol.num_steps, sweep_steps_
-            )
-            report_attempts_: Integer[Array, "..."] = jnp.where(
-                first_converged, first_sol.attempts, sweep_attempts_
-            )
-
-            final_result_: optx.RESULTS = cast(
-                optx.RESULTS,
-                EnumerationItem(report_result_value_, optx.RESULTS),  # pyright: ignore
-            )
-            sol_: Solution = Solution(
-                report_solution_, final_result_, None, {"num_steps": report_steps_}, None
-            )
-            return MultiAttemptSolution(sol_, report_attempts_)
-
-        def run_single_step(_: tuple) -> MultiAttemptSolution:
+        def run_single_step(_: PRNGKeyArray) -> MultiAttemptSolution:
             """All batch elements converged at ``TAU`` on the first attempt: return immediately."""
             # jax.debug.print("All converged at TAU on the first attempt. Skipping tau sweep.")
             return first_sol
 
         # If all entries converged at TAU on the first attempt, skip the sweep entirely
         all_converged: Bool[Array, ""] = jnp.all(first_converged)
-        multi_sol: MultiAttemptSolution = lax.cond(
-            all_converged, run_single_step, run_scan, operand=(key, first_sol)
-        )
+        multi_sol: MultiAttemptSolution = lax.cond(all_converged, run_single_step, run_scan, key)
 
         # The sweep finishes at TAU, so attach the derivatives of the root at TAU
         polished_solution: Float[Array, "... solution"] = implicit_polish(

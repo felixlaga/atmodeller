@@ -11,7 +11,8 @@ public constructors (:func:`~atmodeller.solvers.make_solver`,
 :func:`~atmodeller.solvers.make_solver_with_jit_dual_path`, and
 :func:`~atmodeller.solvers.make_solver_with_jit_batch_only`) are not. This module exercises those
 directly, bypassing :class:`~atmodeller.classes.EquilibriumModel` since it is hardwired to
-:data:`atmodeller.solvers.make_solver_with_jit`.
+:data:`atmodeller.solvers.make_solver_with_jit`. The result reported by the tau sweep is tested
+with a stub retry solver.
 """
 
 import logging
@@ -21,11 +22,15 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 import optimistix as optx
-from jaxtyping import Array, ArrayLike, PRNGKeyArray
+import pytest
+from equinox._enum import EnumerationItem
+from jaxtyping import Array, ArrayLike, Bool, Float, PRNGKeyArray
 
 from atmodeller import debug_logger
+from atmodeller.constants import TAU
 from atmodeller.containers import ChemicalSpecies
 from atmodeller.interfaces import ActivityConstraintProtocol
+from atmodeller.jax_utils import MultiAttemptSolution
 from atmodeller.output import Output
 from atmodeller.parameters import Parameters
 from atmodeller.phases import PurePhase
@@ -34,6 +39,7 @@ from atmodeller.solvers import (
     make_solver,
     make_solver_with_jit_batch_only,
     make_solver_with_jit_dual_path,
+    make_tau_sweep_solver,
 )
 from atmodeller.state import BaseThermodynamicState, Planet
 from atmodeller.thermodata import IronWustiteBuffer
@@ -167,3 +173,67 @@ def test_make_solver_with_jit_batch_only() -> None:
     # optimistix Solution) is the meaningful per-element convergence signal here.
     assert jnp.all(output.multi_attempt_solution.solution.result == optx.RESULTS.successful)
     assert jnp.all(output.multi_attempt_solution.solver_success)
+
+
+def _stub_solution(
+    value: Float[Array, "batch solution"], converged: Bool[Array, " batch"], larger_tau: ArrayLike
+) -> MultiAttemptSolution:
+    """Stub solution that reports more steps and attempts for a solve at a larger tau and, as the
+    batch retry solver, zero steps and attempts for a model that did not converge"""
+    result: optx.RESULTS = EnumerationItem(
+        jnp.full(converged.shape, optx.RESULTS.successful._value),  # pyright: ignore
+        optx.RESULTS,
+    )  # pyright: ignore
+    num_steps: Array = jnp.where(converged, jnp.where(larger_tau, 5, 3), 0)
+    attempts: Array = jnp.where(converged, jnp.where(larger_tau, 2, 1), 0)
+
+    return MultiAttemptSolution(
+        optx.Solution(value, result, None, {"num_steps": num_steps}, None), attempts
+    )
+
+
+@pytest.mark.parametrize(
+    "warm_start_converges, expected_value, expected_steps, expected_attempts",
+    [(True, [1.0, 2.0], [3, 3], [1, 1]), (False, [1.0, 1.0], [3, 0], [1, 0])],
+    ids=["converged_at_final_tau", "failed_at_final_tau"],
+)
+def test_tau_sweep_reports_final_tau(
+    warm_start_converges: bool,
+    expected_value: list[float],
+    expected_steps: list[int],
+    expected_attempts: list[int],
+) -> None:
+    """The tau sweep reports the solve at ``TAU`` when one of two models fails the first solve.
+
+    The first model always converges, so it keeps the result of the first solve. The second model
+    converges at a larger tau, but at ``TAU`` only from a warm start and only if
+    ``warm_start_converges``, so it reports the final step of the sweep. Each converged solve adds
+    one to the initial guess.
+    """
+
+    def batch_retry_solver(
+        initial_guess: Array, parameters: Parameters, *args: object, **kwargs: object
+    ) -> MultiAttemptSolution:
+        larger_tau: Array = parameters.solver_parameters.tau > TAU
+        warm_start: Array = initial_guess[1, 0] > 0
+        converged: Array = jnp.stack(
+            [jnp.array(True), larger_tau | (warm_start & warm_start_converges)]
+        )
+        value: Array = jnp.where(converged[:, None], initial_guess + 1.0, initial_guess)
+
+        return _stub_solution(value, converged, larger_tau)
+
+    def batch_solver(initial_guess: Array, parameters: Parameters) -> MultiAttemptSolution:
+        """Polishes without changing the solution"""
+        return _stub_solution(initial_guess, jnp.ones(2, dtype=bool), False)
+
+    parameters: Parameters = _build_parameters(with_condensate=True)
+    tau_sweep_solver: Callable = make_tau_sweep_solver(batch_retry_solver, batch_solver)
+
+    multi_sol: MultiAttemptSolution = tau_sweep_solver(
+        jnp.zeros((2, 2)), parameters, jax.random.PRNGKey(0)
+    )
+
+    np.testing.assert_array_equal(multi_sol.value[:, 0], expected_value)
+    np.testing.assert_array_equal(multi_sol.num_steps, expected_steps)
+    np.testing.assert_array_equal(multi_sol.attempts, expected_attempts)
