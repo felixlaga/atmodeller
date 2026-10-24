@@ -28,7 +28,7 @@ Atmodeller is a Python package that can be installed on a variety of platforms (
 
 ```pip install atmodeller```
 
-Downloading the source code is also recommended if you'd like access to the example notebooks in `notebooks/`.
+Downloading the source code is also recommended if you'd like access to the example notebooks in `notebooks/examples/`.
 
 ## Citation
 
@@ -46,52 +46,62 @@ Unlike the source code, the logo is licensed under [Creative Commons Attribution
 
 ## Basic usage
 
-Several Jupyter notebooks providing examples are in the `notebooks/` directory. A simple example of how to use Atmodeller is provided below:
+Several Jupyter notebooks providing examples are in the `notebooks/examples/` directory. A simple example of how to use Atmodeller is provided below:
 
-```
+```python
+import logging
+
 from atmodeller import (
-    EquilibriumModel,
-    Planet,
     ChemicalSpecies,
-    SpeciesNetwork,
-    earth_oceans_to_hydrogen_mass,
+    EquilibriumModel,
+    Parameters,
+    Planet,
+    ReservoirSpecies,
+    debug_logger,
+    earth,
+    get_solubility_models,
 )
-from atmodeller.solubility import get_solubility_models
 
-solubility_models = get_solubility_models()
+# Log to the console (use logging.DEBUG for more output)
+logger = debug_logger()
+logger.setLevel(logging.INFO)
+
 # Get the available solubility models
-print("solubility models = ", solubility_models.keys())
+solubility_models = get_solubility_models()
+print("solubility models =", solubility_models.keys())
 
+# Gas species
 H2_g = ChemicalSpecies.create_gas("H2")
-H2O_g = ChemicalSpecies.create_gas("H2O", solubility=solubility_models["H2O_peridotite_sossi23"])
+H2O_g = ChemicalSpecies.create_gas("H2O")
 O2_g = ChemicalSpecies.create_gas("O2")
 
-species = SpeciesNetwork((H2_g, H2O_g, O2_g))
-planet = Planet()
-interior_atmosphere = EquilibriumModel(species)
+# H2O dissolved in the silicate melt
+H2O_d = ReservoirSpecies.create_dissolved(
+    "H2O", solubility=solubility_models["H2O_peridotite_sossi23"]
+)
+
+planet = Planet.from_species((H2_g, H2O_g, O2_g), silicate_melt_species=(H2O_d,))
 
 oceans = 1
-h_kg = earth_oceans_to_hydrogen_mass(oceans)
+h_kg = earth.oceans_to_hydrogen_mass(oceans)
 o_kg = 6.25774e20
 mass_constraints = {"H": h_kg, "O": o_kg}
 
-# If you do not specify an initial solution guess then a default will be used
-# Initial solution guess number moles
-initial_log_number_moles = 50
+parameters = Parameters(planet, mass_constraints=mass_constraints)
+model = EquilibriumModel(parameters)
 
-interior_atmosphere.solve(
-    planet=planet,
-    initial_log_number_moles=initial_log_number_moles,
-    mass_constraints=mass_constraints,
-)
-output = interior_atmosphere.output
+# Solve with the default initial guess
+output = model.solve_with_default()
+
+# Check the solve was successful
+output.solver_stats_to_logger()
 
 # Quick look at the solution
-solution = output.quick_look()
+output.quick_look()
 
-# Get complete solution as a dictionary
-solution_asdict = output.asdict()
-print("solution_asdict =", solution_asdict)
+# Get the complete solution as a nested dictionary
+solution = output.to_dict(to_numpy=True)
+print("H2O partial pressure (bar) =", solution["gas"]["species"]["partial_pressure"]["H2O_g"])
 
 # Write the complete solution to Excel
 output.to_excel("example_single")
