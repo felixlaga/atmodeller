@@ -785,16 +785,6 @@ class OutputNamedArraysDict(BaseOutputDict):
         out["solver"] = self.solver_to_dict()
         out["state"] = self.state_to_dict()
 
-        # Must vmap the residual evaluation to match what the solver did: parameters contains a
-        # mix of scalar and batched leaves, so calling objective_function directly on the 2-D
-        # solution gives incorrect results. vmap_axes_spec maps None/0 per leaf appropriately.
-        # FIXME: This is breaking because all arrays including numpy are seen as batchable under
-        # jit
-        # objective_function_vmapped = eqx.filter_vmap(
-        #    objective_function, in_axes=(0, vmap_axes_spec(self.parameters))
-        # )
-        # out["residual"] = objective_function_vmapped(self.solution, self.parameters)
-
         # Order of operations matters here: expansion must be done before ravel, and both before
         # conversion to NumPy arrays
         if expand_to_batch:
