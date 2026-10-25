@@ -11,6 +11,7 @@ https://www.sphinx-doc.org/en/master/usage/configuration.html
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
+import importlib.metadata
 import os
 import shutil
 import sys
@@ -26,8 +27,8 @@ project = "Atmodeller"
 copyright = "2024-2026, Dan J. Bower and Paolo A. Sossi"
 author = "Dan J. Bower"
 
-# The full version, including alpha/beta/rc tags
-release = "2.0.0"
+# The full version, including alpha/beta/rc tags, from the installed package (pyproject.toml)
+release = importlib.metadata.version("atmodeller")
 
 
 # -- General configuration ---------------------------------------------------
@@ -148,4 +149,3 @@ if shutil.which("pandoc") is None:
             "bundled with pypandoc-binary."
         ) from exc
     os.environ["PATH"] = os.path.dirname(pandoc_path) + os.pathsep + os.environ["PATH"]
-

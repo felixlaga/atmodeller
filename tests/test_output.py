@@ -338,8 +338,8 @@ def test_abundances_relative_to_hydrogen(
     assert not any("log_epsilon" in column or "X_H" in column for column in columns)
 
 
-def test_matches_main(cho_dicts: dict[str, dict[str, Any]]) -> None:
-    """log epsilon and [M/H] match ``logarithmic_abundance`` from ``main`` (77e81aac) for the same
+def test_matches_v1(cho_dicts: dict[str, dict[str, Any]]) -> None:
+    """log epsilon and [M/H] match ``logarithmic_abundance`` from v1 (commit 77e81aac) for the same
     gas-only network. H and C are set by the mass constraints, so agree to round-off; O depends on
     the speciation, so agrees to the solver tolerance."""
     target: dict[str, float] = {"H": 12.0, "C": 10.923865345578943, "O": 11.54801489087738}

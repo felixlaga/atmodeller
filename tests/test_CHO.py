@@ -10,6 +10,7 @@ set of species. The C-H-O comparisons with FactSage and FastChem are rows of a m
 with graphite, which is unstable in the gas-only comparisons.
 """
 
+import importlib.metadata
 import logging
 from collections.abc import Mapping
 from typing import Any
@@ -65,8 +66,8 @@ OCEAN: float = float(np.asarray(earth.oceans_to_hydrogen_mass(1)))
 
 
 def test_version() -> None:
-    """Test version."""
-    assert __version__ == "2.0.0"
+    """The package version matches the installed metadata, i.e. pyproject.toml"""
+    assert __version__ == importlib.metadata.version("atmodeller")
 
 
 def test_H2O() -> None:
