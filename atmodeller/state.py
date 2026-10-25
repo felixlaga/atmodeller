@@ -638,6 +638,11 @@ class BasePlanet(BaseThermodynamicState):
             (untracked) mass split between phases — they do not account for any tracked species
             mass. See :class:`BasePlanet`'s docstring.
 
+            The planet mass and the background core, melt and solid masses are always kept
+            consistent: if any of ``planet_mass``, ``core_mass_fraction`` and
+            ``mantle_melt_fraction`` is given, all the background masses are recomputed as in
+            :meth:`from_species`, and the fractions that are not given keep their current values.
+
         Args:
             planet_mass: Mass of the planet (kg) used to re-size the background phase masses.
                 Defaults to ``None`` (no change).
@@ -668,19 +673,49 @@ class BasePlanet(BaseThermodynamicState):
         # core_mass_fraction feed into the mantle mass split).
         updates: list[tuple[Callable[[Self], Any], Any]] = []
 
-        new_planet_mass: FloatArray = self.background_planet_mass
-        if planet_mass is not None:
-            new_planet_mass = jnp.broadcast_to(
-                as_j64(planet_mass), self.background_planet_mass.shape
-            )
-            updates.append((lambda s: s.background_planet_mass, new_planet_mass))
+        # The planet mass and the background core, melt and solid masses must stay consistent,
+        # so if any of planet_mass, core_mass_fraction and mantle_melt_fraction changes, all four
+        # are rewritten as in from_species. Fractions that are not given keep their current
+        # values. A planet without a background core (core_mass_fraction=None in from_species)
+        # has a current core fraction of zero, so it keeps no background core.
+        if (
+            planet_mass is not None
+            or core_mass_fraction is not None
+            or (mantle_melt_fraction is not None)
+        ):
+            old_planet_mass: FloatArray = self.background_planet_mass
+            old_core_mass: FloatArray = self.background_metallic_core_mass
+            old_melt_mass: FloatArray = self.phase_system.phases[
+                self.silicate_melt_phase_index
+            ].background_mass
+            old_solid_mass: FloatArray = self.phase_system.phases[
+                self.silicate_solid_phase_index
+            ].background_mass
 
-        new_core_mass: FloatArray = self.background_metallic_core_mass
-        if core_mass_fraction is not None:
-            core_mass_fraction = jnp.broadcast_to(
-                as_j64(core_mass_fraction), self.background_metallic_core_mass.shape
-            )
-            new_core_mass = new_planet_mass * core_mass_fraction
+            new_planet_mass: FloatArray = old_planet_mass
+            if planet_mass is not None:
+                new_planet_mass = jnp.broadcast_to(as_j64(planet_mass), old_planet_mass.shape)
+                updates.append((lambda s: s.background_planet_mass, new_planet_mass))
+
+            if core_mass_fraction is not None:
+                core_fraction: FloatArray = jnp.broadcast_to(
+                    as_j64(core_mass_fraction), old_core_mass.shape
+                )
+            else:
+                core_fraction = jnp.where(
+                    old_planet_mass > 0, old_core_mass / old_planet_mass, 0.0
+                )
+
+            if mantle_melt_fraction is not None:
+                melt_fraction: FloatArray = as_j64(mantle_melt_fraction)
+            else:
+                old_mantle_mass: FloatArray = old_melt_mass + old_solid_mass
+                melt_fraction = jnp.where(
+                    old_mantle_mass > 0, old_melt_mass / old_mantle_mass, 1.0
+                )
+
+            new_core_mass: FloatArray = new_planet_mass * core_fraction
+            new_mantle_mass: FloatArray = new_planet_mass - new_core_mass
             updates.append(
                 (
                     lambda s: (
@@ -691,9 +726,6 @@ class BasePlanet(BaseThermodynamicState):
                     new_core_mass,
                 )
             )
-
-        if mantle_melt_fraction is not None:
-            mantle_mass: FloatArray = new_planet_mass - new_core_mass
             updates.append(
                 (
                     lambda s: (
@@ -701,7 +733,7 @@ class BasePlanet(BaseThermodynamicState):
                             self.silicate_melt_phase_index
                         ].background_mass
                     ),
-                    mantle_mass * mantle_melt_fraction,
+                    new_mantle_mass * melt_fraction,
                 )
             )
             updates.append(
@@ -711,7 +743,7 @@ class BasePlanet(BaseThermodynamicState):
                             self.silicate_solid_phase_index
                         ].background_mass
                     ),
-                    mantle_mass * (1 - mantle_melt_fraction),
+                    new_mantle_mass * (1 - melt_fraction),
                 )
             )
 

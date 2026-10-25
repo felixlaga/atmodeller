@@ -34,17 +34,36 @@ def test_thermodynamic_state_update() -> None:
     assert float(state.pressure) == pytest.approx(2.0)
 
 
+def _background_masses(planet: BasePlanet) -> tuple[float, float, float]:
+    """Background core, melt and solid masses (kg)"""
+    phases = planet.phase_system.phases
+    return (
+        float(planet.background_metallic_core_mass),
+        float(phases[planet.silicate_melt_phase_index].background_mass),
+        float(phases[planet.silicate_solid_phase_index].background_mass),
+    )
+
+
 def test_base_planet_update() -> None:
-    """Tests BasePlanet.update with planet_mass and core_mass_fraction kwargs."""
-    planet: BasePlanet = PressureScalingLawPlanet.from_species((H2O_g,), temperature=1000.0)
-
-    new_mass: float = 6.0e24
-    new_core_mass_fraction: float = 0.3
-    updated_planet: BasePlanet = planet.update(
-        planet_mass=new_mass, core_mass_fraction=new_core_mass_fraction
+    """BasePlanet.update keeps the planet mass and the background core, melt and solid masses
+    consistent, whichever of planet_mass, core_mass_fraction and mantle_melt_fraction changes."""
+    planet: BasePlanet = PressureScalingLawPlanet.from_species(
+        (H2O_g,), temperature=1000.0, core_mass_fraction=0.3, mantle_melt_fraction=0.4
     )
+    mass: float = float(planet.background_planet_mass)
 
-    assert float(updated_planet.background_planet_mass) == pytest.approx(new_mass)
-    assert float(updated_planet.background_metallic_core_mass) == pytest.approx(
-        new_mass * new_core_mass_fraction
-    )
+    def check(updated: BasePlanet, planet_mass: float, core_fraction: float, melt: float) -> None:
+        core, melt_mass, solid = _background_masses(updated)
+        assert float(updated.background_planet_mass) == pytest.approx(planet_mass)
+        assert core + melt_mass + solid == pytest.approx(planet_mass)
+        assert core == pytest.approx(planet_mass * core_fraction)
+        assert melt_mass / (melt_mass + solid) == pytest.approx(melt)
+
+    # Only the planet mass: the core and mantle are rescaled, keeping both fractions
+    check(planet.update(planet_mass=2 * mass), 2 * mass, 0.3, 0.4)
+    # Only the core fraction: the mantle takes the rest, keeping its melt fraction
+    check(planet.update(core_mass_fraction=0.5), mass, 0.5, 0.4)
+    # Only the melt fraction
+    check(planet.update(mantle_melt_fraction=0.9), mass, 0.3, 0.9)
+    # All together
+    check(planet.update(planet_mass=6.0e24, core_mass_fraction=0.2), 6.0e24, 0.2, 0.4)
