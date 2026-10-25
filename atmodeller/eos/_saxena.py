@@ -334,22 +334,6 @@ and pressure (bar) using the critical values of :cite:t:`SF88` (:math:`T_c=33.1`
 :math:`c` coefficient of :cite:t:`SF88` is taken as 5.0897e-8; the printed 5.0897e-5 is a misprint.
 """
 
-_H2_high_pressure_SS92_refit: RealGas = SaxenaEightCoefficients(
-    a_coefficients=(1.00574428e00, 0, 1.93022092e-03, 0, -3.79261142e-01, 0, 0, -2.44217972e-03),
-    b_coefficients=(1.31517888e-03, 0, 7.22328441e-02, 0, 4.84354163e-02, 0, 0, -4.19624507e-04),
-    c_coefficients=(2.64454401e-06, 0, -5.18445629e-05, 0, -2.05045979e-04, 0, 0, -3.64843213e-07),
-    d_coefficients=(2.28281107e-11, 0, -1.07138603e-08, 0, 3.67720815e-07, 0, 0, 0),
-    critical_data=critical_data_dictionary["H2"],
-)
-"""H2 high pressure (>1000 bar)
-
-This model has been refitted using a least square regression using the experimental volume,
-pressure, and temperature data from :cite:t:`P69,RRY83` assuming the same functional form for
-pressures above 1 kbar as given by :cite:t:`SS92{Equation 2 and 3a}`, including which coefficients
-are set to zero :cite:p:`SS92{Table 1b}`. The refitting is performed using reduced temperature and
-pressure.
-"""
-
 H2_SS92: RealGas = CombinedRealGas.create(
     [_H2_low_pressure_SS92, _H2_high_pressure_SS92],
     [
