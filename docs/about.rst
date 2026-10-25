@@ -1,7 +1,11 @@
 About
 =====
 
-*Atmodeller* is a Python package for thermochemical equilibrium modeling of planetary interiors and atmospheres, built on `JAX <https://docs.jax.dev/en/latest/>`_. It is released under the `Apache License, Version 2.0 <https://www.apache.org/licenses/LICENSE-2.0>`_. Community development is strongly encouraged. If you use *Atmodeller* in your research, let us know and we'd be happy to include your work in the :ref:`Used In <UsedInFile>` section. This will help us track the impact of *Atmodeller* and also provide a resource for users to see how it has been applied in practice.
+*Atmodeller* is a Python package for thermochemical equilibrium modeling of planetary interiors and atmospheres, built on `JAX <https://docs.jax.dev/en/latest/>`_.
+
+*Atmodeller* computes the chemical equilibrium between a planet's interior and atmosphere, solving gas-phase speciation, condensate stability and volatile solubility in silicate melt together, with real-gas equations of state for high pressures. It is designed for researchers in planetary science, exoplanet science and geochemistry who need these calculations, either standalone or as one component of a larger model. Applications include magma oceans, volcanic outgassing, and the atmospheres of super-Earths and sub-Neptunes. Users assemble a model from the species, solubility laws and equations of state they need, so the effect of each modelling choice can be explored. Because it is built on JAX, a batch of conditions is solved in one call and derivatives of the solution with respect to its inputs are available, which supports parameter sweeps, Monte Carlo sampling and gradient-based Bayesian inference.
+
+It is released under the `Apache License, Version 2.0 <https://www.apache.org/licenses/LICENSE-2.0>`_. Community development is strongly encouraged. If you use *Atmodeller* in your research, let us know and we'd be happy to include your work in the :ref:`Used In <UsedInFile>` section. This will help us track the impact of *Atmodeller* and also provide a resource for users to see how it has been applied in practice.
 
 Citation
 --------
