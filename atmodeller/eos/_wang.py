@@ -37,7 +37,6 @@ class VirialQuadratic(RealGas):
     c_coefficients: tuple[float, ...] = eqx.field(converter=to_native_floats)
     """:math:`c` coefficients"""
 
-    @override
     def _get_compressibility_coefficient(
         self, temperature: ArrayLike, coefficients: tuple[float, ...]
     ) -> FloatArray:

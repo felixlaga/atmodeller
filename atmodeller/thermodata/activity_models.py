@@ -87,7 +87,4 @@ class Si_iron_badro15(ActivityCoefficient):
         epsilon: ArrayLike = EPSILON_SI_SI_T0_BADRO15 * T0_BADRO15 / temperature
         x_Si: FloatArray = mole_fractions[..., self.Si_index]
 
-        # Fabian's original test
-        # return jnp.log(self.gamma * 0.3 * x_si)
-
         return jnp.log(self.gamma) + ln_gamma_Si0 - epsilon * jnp.log(1 - x_Si)
