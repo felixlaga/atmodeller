@@ -68,9 +68,6 @@ from atmodeller.parameters import Parameters
 
 LOG_NUMBER_MOLES_VMAP_AXES: int = 0
 """Axis index for the solution array in the vmapped batch solver"""
-POSTCHECK_TOLERANCE: float = 1.0e-6
-"""Default tolerance for the objective-based convergence validation performed after each solve
-attempt"""
 
 
 def solve_single(initial_guess: FloatArray, parameters: Parameters) -> optx.Solution:
