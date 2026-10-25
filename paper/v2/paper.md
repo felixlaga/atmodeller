@@ -22,7 +22,7 @@ affiliations:
   - name: Institute of Geochemistry and Petrology, Department of Earth and Planetary Sciences, ETH Zurich, Clausiusstrasse 25, 8092 Zurich, Switzerland
     index: 1
     ror: 057rvn534
-date: 18 October 2026
+date: 25 October 2026
 bibliography: paper.bib
 ---
 
@@ -30,12 +30,12 @@ bibliography: paper.bib
 
 Rocky planets exchange volatiles between reservoirs such as the atmosphere and
 the mantle, notably through volcanic outgassing. Gas species react, dissolve
-into molten silicates, and may condense. At high temperatures and pressures they
-behave non-ideally. Modelling these processes requires a self-consistent
-treatment of chemical equilibrium and mass balance. `Atmodeller` is a Python
-library built on JAX [@jax2018github] that performs these calculations. Hence,
-it combines the convenience of a high-level language with the modern features of
-a high-performance computational framework. The library is modular: its
+into molten silicates, and may condense. At high pressures they behave
+non-ideally. Modelling these processes requires a self-consistent treatment of
+chemical equilibrium and mass balance. `Atmodeller` is a Python package built on
+JAX [@jax2018github] that performs these calculations. It thus combines the
+convenience of a high-level language with the modern features of a
+high-performance computational framework. The package is modular: its
 solubility laws, real-gas equations of state, and thermodynamic data can each be
 used in isolation. Applications include the magma ocean stage of young planets,
 volcanic outgassing on Earth and other Solar System bodies, and
@@ -96,7 +96,7 @@ the oxygen fugacity, so there is no mass balance between melt and gas, whereas
 includes neither volatile dissolution nor condensation.
 
 Codes that couple volatiles to the melt are closer in scope. `EVo`
-[@Liggins2022] models volcanic degassing in the C–O–H–S–N system along
+[@Liggins2022] models volcanic degassing in the C--O--H--S--N system along
 decompression paths, with real-gas behaviour from pure-species fugacity
 coefficients combined by ideal mixing. However, its species are hard-coded and
 graphite is its only condensed phase. The global chemical equilibrium model
@@ -176,8 +176,8 @@ tables.
     performance. New outputs include quantities of astronomical interest, such
     as elemental abundances relative to solar and the metallicity of the gas.
 11. **Licence.** `Atmodeller` is now released under the permissive Apache 2.0
-    licence, replacing GPL-3.0, so that it can be incorporated into other
-    software without imposing copyleft obligations.
+    licence, replacing GPL-3.0-or-later, so that it can be incorporated into
+    other software without imposing copyleft obligations.
 
 # Software design
 
@@ -236,7 +236,7 @@ coupled to time-dependent models to explore the consequences of atmospheric loss
 on rocky planets [@Cherubim2025]. Several of these studies were led by groups
 outside the development team [@Cherubim2025; @Polman2026], and `Atmodeller` has
 been adopted independently as an optional chemical-equilibrium backend in the
-JAX-based retrieval code ExoSkyrer [@Lee2026]. It has also been adopted as a
+JAX-based retrieval code `Exo Skryer` [@Lee2026]. It has also been adopted as a
 chemistry module in `PROTEUS` [@Lichtenberg2021; @Nicholls2024; @Nicholls2025],
 a community-developed framework for modelling the coupled evolution of planetary
 interiors and atmospheres. `Atmodeller` grew out of `CALLIOPE`, a prototype
@@ -250,7 +250,7 @@ these capabilities, so coupling chemistry to other processes within a single
 differentiable model has not been practical. `Atmodeller` provides a chemistry
 component that such models can adopt directly, and its design offers a template
 for new codes, supporting the move towards a new generation of differentiable
-and high performance models in Earth and planetary sciences.
+and high-performance models in Earth and planetary sciences.
 
 # AI usage disclosure
 
