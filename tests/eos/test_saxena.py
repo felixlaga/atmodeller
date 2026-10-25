@@ -230,14 +230,14 @@ def test_H2S_medium_pressure_SS92(check_values) -> None:
 
 def test_SO2_low_pressure_SS92(check_values) -> None:
     """:cite:t:`SS92{Figure 2}`"""
-    model: RealGas = cast(RealGas, check_values.get_eos_model("SO2", "shi92"))
+    model: RealGas = cast(RealGas, check_values.get_eos_model("O2S", "shi92"))
     expected: float = 8308.036738813245 * unit_conversion.cm3_to_m3
     check_values.volume(1073, 10, model, expected)
 
 
 def test_SO2_high_pressure_SS92(check_values) -> None:
     """:cite:t:`SS92{Figure 2}`"""
-    model: RealGas = cast(RealGas, check_values.get_eos_model("SO2", "shi92"))
+    model: RealGas = cast(RealGas, check_values.get_eos_model("O2S", "shi92"))
     expected: float = 70.86864302460566 * unit_conversion.cm3_to_m3
     check_values.volume(1873, 4000, model, expected)
 

@@ -269,7 +269,7 @@ Note:
     :data:`CO2_beattie_holley58`).
 """
 
-NH3_beattie_holley58: RealGas = BeattieBridgeman(
+H3N_beattie_holley58: RealGas = BeattieBridgeman(
     A0=A0_conversion(2.3930),
     a=volume_conversion(0.17031),
     B0=volume_conversion(0.03415),
@@ -277,8 +277,8 @@ NH3_beattie_holley58: RealGas = BeattieBridgeman(
     c=volume_conversion(476.87e4),
 )
 """NH3 Beattie-Bridgeman :cite:p:`HWZ58`"""
-NH3_beattie_holley58_bounded: RealGas = CombinedRealGas.create(
-    [NH3_beattie_holley58], [ExperimentalCalibration(300, 1000, pressure_min, atm2bar(500))]
+H3N_beattie_holley58_bounded: RealGas = CombinedRealGas.create(
+    [H3N_beattie_holley58], [ExperimentalCalibration(300, 1000, pressure_min, atm2bar(500))]
 )
 """NH3 Beattie-Bridgeman bounded :cite:p:`HWZ58`"""
 
@@ -325,7 +325,7 @@ def get_holley_eos_models() -> dict[str, RealGas]:
     eos_models["H2_beattie_holley58"] = H2_beattie_holley58_bounded
     eos_models["He_beattie_holley58"] = He_beattie_holley58_bounded
     eos_models["N2_beattie_holley58"] = N2_beattie_holley58_bounded
-    eos_models["NH3_beattie_holley58"] = NH3_beattie_holley58_bounded
+    eos_models["H3N_beattie_holley58"] = H3N_beattie_holley58_bounded
     eos_models["O2_beattie_holley58"] = O2_beattie_holley58_bounded
 
     return eos_models

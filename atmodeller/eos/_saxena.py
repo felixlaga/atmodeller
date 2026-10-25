@@ -386,7 +386,7 @@ error arises mostly at 1 to 5 kbar, where the compressibility factor falls below
 range the ``H2_chabrier21`` EOS model is preferred.
 """
 
-SO2_SS92: RealGas = SaxenaEightCoefficients(
+O2S_SS92: RealGas = SaxenaEightCoefficients(
     a_coefficients=(0.92854, 0.43269e-1, -0.24671, 0, 0.24999, 0, -0.53182, -0.16461e-1),
     b_coefficients=(
         0.84866e-3,
@@ -412,8 +412,8 @@ SO2_SS92: RealGas = SaxenaEightCoefficients(
     critical_data=critical_data_dictionary["O2S"],
 )
 """SO2 EOS :cite:p:`SS92{Table 1c}` from 1 to 10e3 bar"""
-SO2_SS92_bounded: RealGas = CombinedRealGas.create(
-    [SO2_SS92], [ExperimentalCalibration(pressure_min=1, pressure_max=10000)]
+O2S_SS92_bounded: RealGas = CombinedRealGas.create(
+    [O2S_SS92], [ExperimentalCalibration(pressure_min=1, pressure_max=10000)]
 )
 """SO2 EOS :cite:p:`SS92{Table 1c}` from 1 to 10e3 bar"""
 
@@ -580,6 +580,6 @@ def get_saxena_eos_models() -> dict[str, RealGas]:
     eos_models["N2_cs_saxena87"] = N2_SF87
     eos_models["O2_cs_shi92"] = O2_SS92
     eos_models["S2_cs_shi92"] = S2_SS92
-    eos_models["SO2_shi92"] = SO2_SS92_bounded
+    eos_models["O2S_shi92"] = O2S_SS92_bounded
 
     return eos_models
