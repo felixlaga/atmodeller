@@ -14,7 +14,6 @@ https://www.sphinx-doc.org/en/master/usage/configuration.html
 import os
 import shutil
 import sys
-from pathlib import Path
 
 sys.path.insert(0, os.path.abspath("."))
 
@@ -24,7 +23,7 @@ import sphinx.builders.latex.transforms
 # -- Project information -----------------------------------------------------
 
 project = "Atmodeller"
-copyright = "2024, Dan J. Bower"
+copyright = "2024-2026, Dan J. Bower and Paolo A. Sossi"
 author = "Dan J. Bower"
 
 # The full version, including alpha/beta/rc tags
@@ -150,11 +149,3 @@ if shutil.which("pandoc") is None:
         ) from exc
     os.environ["PATH"] = os.path.dirname(pandoc_path) + os.pathsep + os.environ["PATH"]
 
-
-# This avoids a warning about unable to copy the examples notebook
-# Path to the existing file in the build output
-destination_path = Path("_build/html/examples.ipynb")
-
-# Remove the file if it already exists
-if destination_path.exists():
-    destination_path.unlink()

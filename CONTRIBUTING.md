@@ -21,8 +21,8 @@ A pull request can be merged once the automated checks pass and a maintainer has
 
 1. **Tests**: all tests pass on Ubuntu (Python 3.11 and 3.13) and macOS (Python 3.13). Run `pytest` locally.
 2. **Code style and types**: the pre-commit checks pass (ruff linting and formatting, and pyright type checking). Run `pre-commit run --all-files` locally.
-3. **Test coverage**: at least 80% of the lines that the pull request adds or changes in `atmodeller/` are covered by tests. Run `pytest --cov=atmodeller --cov-report=xml` and then `diff-cover coverage.xml --compare-branch=upstream/main` locally, where `upstream` is the remote for this repository.
-4. **Documentation**: if the pull request changes the documentation, the package, the notebooks or the dependencies, the documentation builds without warnings. Run `sphinx-build -W --keep-going -b html docs docs/_build/html` locally.
+3. **Test coverage**: at least 80% of the lines that the pull request adds or changes in `atmodeller/` are covered by tests. Run `pytest --cov=atmodeller --cov-report=xml` and then `diff-cover coverage.xml --compare-branch=upstream/main --fail-under=80` locally, where `upstream` is the remote for this repository.
+4. **Documentation**: if the pull request changes the documentation, the package, the notebooks or the dependencies, the documentation builds without warnings. Run `sphinx-apidoc -f -o docs/source atmodeller` and then `sphinx-build -W --keep-going -b html docs docs/_build/html` locally (the first command generates the API pages, which are not stored in the repository).
 
 Codecov also comments on the pull request with the coverage of the changed lines and any change in overall coverage.
 

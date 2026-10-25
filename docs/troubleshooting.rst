@@ -14,7 +14,7 @@ The solver fails
 
 *Atmodeller* assembles and solves systems of non-linear equations, and is therefore subject to all the usual considerations that arise when dealing with such systems. Under the hood, it uses the JAX-based solver library `optimistix <https://github.com/patrick-kidger/optimistix>`_, whose documentation is available `here <https://docs.kidger.site/optimistix>`_. Pay particular attention to the FAQ section. 
 
-Because the solution process is compiled and optimized by JAX, it can be challenging to inspect the solver's internal workings without using `JAX debugging tools <https://jax.readthedocs.io/en/latest/debugging.html>`_. However, the nature of the failure can often provide insight into the underlying issue:
+Because the solution process is compiled and optimized by JAX, it can be challenging to inspect the solver's internal workings without using `JAX debugging tools <https://docs.jax.dev/en/latest/debugging.html>`_. However, the nature of the failure can often provide insight into the underlying issue:
 
 - A solution cannot be found
 - The solver detects an nan (not a number) or infinity in a function

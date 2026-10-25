@@ -6,7 +6,7 @@ Developer's Guide
 Introduction
 ------------
 
-Community development of *Atmodeller* is strongly encouraged, and bug fixes and new features are welcome. *Atmodeller* uses JAX so familiarise yourself with `How to think in JAX <https://jax.readthedocs.io/en/latest/notebooks/thinking_in_jax.html>`_ and `JAX - The Sharp Bits <https://jax.readthedocs.io/en/latest/notebooks/Common_Gotchas_in_JAX.html>`_, as well as other resources offered on the JAX site and the web in general. You are welcome to enquire about the reasoning behind the structure and design of the code with the development team.
+Community development of *Atmodeller* is strongly encouraged, and bug fixes and new features are welcome. *Atmodeller* uses JAX so familiarise yourself with `How to think in JAX <https://docs.jax.dev/en/latest/notebooks/thinking_in_jax.html>`_ and `JAX - The Sharp Bits <https://docs.jax.dev/en/latest/notebooks/Common_Gotchas_in_JAX.html>`_, as well as other resources offered on the JAX site and the web in general. You are welcome to enquire about the reasoning behind the structure and design of the code with the development team.
 
 Contributing
 ------------
@@ -58,11 +58,13 @@ To generate HTML documentation use the appropriate command for your operating sy
 
 Mac/Linux::
 
-    make html
+    make html SPHINXOPTS="-W --keep-going"
 
 Windows::
 
     .\make html
+
+The ``-W --keep-going`` options turn warnings into errors, as in the documentation check for pull requests (on Windows, set ``SPHINXOPTS`` in the environment instead).
 
 To generate PDF documentation, noting that a LaTeX distribution must be available on your system::
 

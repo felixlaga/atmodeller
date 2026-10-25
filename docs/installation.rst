@@ -20,7 +20,7 @@ Use pip::
 
     pip install atmodeller
 
-Downloading the source code is also recommended if you'd like access to the example notebooks in ``notebooks/``.
+Downloading the source code is also recommended if you'd like access to the example notebooks in ``notebooks/examples/``.
 
 .. _developer_install:
 
