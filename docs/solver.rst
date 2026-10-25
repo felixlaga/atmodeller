@@ -18,7 +18,9 @@ What makes the problem harder is that the parts of the model are coupled. A real
 
 Initializer
 -----------
-*Atmodeller* makes the initial guess with an *initializer*: a simplified version of the problem (pure condensates, and an ideal gas so that the Gibbs energies of the gases are held fixed) that can be solved quickly and reliably.
+*Atmodeller* makes the initial guess with an *initializer*: a simplified version of the problem (pure condensates, and an ideal gas speciation so that the Gibbs energies of the gases are held fixed) that can be solved quickly and reliably.
+
+Composing an initializer is something of a dark art. It must be simplified enough to solve robustly from almost no information, yet honour enough of the necessary complexity to produce a meaningful initial guess for the main solver. For example, nonideality has a strong control on dissolution, because solubility depends on fugacity rather than partial pressure. *Atmodeller*'s initializer therefore treats the gas speciation as ideal, but evaluates the solubility laws with the real-gas fugacities, so that the amount dissolved in the melt, which can be a large share of the volatile budget, is already close to the answer.
 
 The initializer uses element potentials. The composition of a system is specified by its element abundances (e.g. total H, C and O), not by its species, and there are usually far fewer elements than species. It is therefore attractive to solve for one variable per element instead of one per species. At equilibrium each element has an *element potential*, and these are the building blocks of the species potentials: the potential of a species is the sum of the potentials of the elements it contains, weighted by its stoichiometry. Once the element potentials are known, the amount of every gas species follows directly. This element potential method is standard in chemical equilibrium codes :cite:p:`Gordon1994`.
 
@@ -36,7 +38,7 @@ The initializer uses element potentials. The composition of a system is specifie
 
 Main solver
 -----------
-The main solver starts from the initializer's result and drops its simplifications: it brings back the real-gas equations of state and the coupling between the parts of the model described in `Equations`_, and solves the complete system together. It uses Newton's method from Optimistix :cite:p:`optimistix2024`, with the Jacobian from automatic differentiation and full Newton steps clipped to fixed bounds on every unknown (see :doc:`troubleshooting`). A solve counts as converged only if Newton reports success *and* the largest residual of the equations is below the tolerance (``atol``, default :math:`10^{-6}`).
+The main solver starts from the initializer's result and drops its simplifications: it brings back the real-gas equations of state in the gas speciation and the coupling between the parts of the model described in `Equations`_, and solves the complete system together. It uses Newton's method from Optimistix :cite:p:`optimistix2024`, with the Jacobian from automatic differentiation and full Newton steps clipped to fixed bounds on every unknown (see :doc:`troubleshooting`). A solve counts as converged only if Newton reports success *and* the largest residual of the equations is below the tolerance (``atol``, default :math:`10^{-6}`).
 
 1. **Solve and retry.** All conditions in the batch are solved together from their initial guesses. Conditions that fail are given a new guess and solved again, up to ``max_starts`` attempts in total (default 10), while converged conditions are kept as they are. The new guess is drawn at random around the conditions that did converge: each log number of moles is sampled uniformly over the range spanned by the converged solutions, centred on their median, and the stabilities are then recomputed from the new guess.
 
