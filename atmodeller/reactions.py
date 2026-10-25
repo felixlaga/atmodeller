@@ -656,8 +656,6 @@ class ReactionSystem(BaseReactionBlock):
         log_activity_dissolution: Float[Array, "... n_dissolution_species"] = jnp.take(
             log_activity,
             indices=self.dissolution.reaction_indices_map,
-            unique_indices=True,
-            indices_are_sorted=True,
             axis=-1,
         )
         # jax.debug.print("log_activity_dissolution = {out}", out=log_activity_dissolution)
