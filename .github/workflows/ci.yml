@@ -23,6 +23,8 @@ permissions:
 
 jobs:
   build:
+    # Named without the coverage flag, so that the names match the required status checks
+    name: build (${{ matrix.os }}, ${{ matrix.python-version }})
     strategy:
       matrix:
         include:
@@ -41,8 +43,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          # The coverage leg needs the history of the base branch for the changed-lines check
-          fetch-depth: ${{ matrix.coverage && 0 || 1 }}
+          # Full history, so that the changed-lines check can compare with the base branch. (An
+          # expression such as `matrix.coverage && 0 || 1` would always give 1, since 0 is falsy.)
+          fetch-depth: 0
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
