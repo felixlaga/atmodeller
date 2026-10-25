@@ -1,0 +1,43 @@
+name: Paper
+
+# Builds the JOSS paper (paper/v2/paper.md) with the Open Journals tooling that JOSS itself uses,
+# and attaches the PDF to the run, so formatting and citations can be checked before submission.
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - 'paper/**'
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - 'paper/**'
+  workflow_dispatch:
+
+concurrency:
+  group: paper-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  paper:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build the draft PDF
+        uses: openjournals/openjournals-draft-action@master
+        with:
+          journal: joss
+          paper-path: paper/v2/paper.md
+
+      - name: Upload the PDF
+        uses: actions/upload-artifact@v4
+        with:
+          name: paper
+          path: paper/v2/paper.pdf
