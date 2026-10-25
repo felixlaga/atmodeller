@@ -39,8 +39,8 @@ class HeuristicInitializer(eqx.Module):
     Notation: :math:`b_e` is the budget of element :math:`e` (moles; undefined if :math:`e` is not
     mass constrained), :math:`a_{es}` the formula matrix (moles of element :math:`e` in species
     :math:`s`), :math:`n_s` the moles of species :math:`s`, :math:`\phi` the
-    ``condensate_allocation_fraction``, :math:`\epsilon = \exp(\texttt{LOG\_TRACE\_VALUE})` the
-    trace moles (:data:`~atmodeller.initializer.core.LOG_TRACE_VALUE`), :math:`S` the set of
+    ``condensate_allocation_fraction``, :math:`\epsilon = \exp(\texttt{log\_trace\_value})` the
+    trace moles (``log_trace_value``), :math:`S` the set of
     condensates predicted stable, :math:`\nu_{rs}` the stoichiometry of species :math:`s` in
     reaction :math:`r` of the solver's reaction network, and :math:`K_r` and :math:`Q_r` the
     equilibrium constant and the reaction quotient of reaction :math:`r`.
@@ -136,6 +136,9 @@ class HeuristicInitializer(eqx.Module):
     Args:
         condensate_allocation_fraction: Fraction :math:`\phi` of the element budget to allocate to
             predicted-stable condensates. Defaults to ``0.5``.
+        log_trace_value: Log number of moles given to species with a negligible element budget,
+            and to condensates predicted absent. Defaults to
+            :data:`~atmodeller.initializer.core.LOG_TRACE_VALUE`.
     """
 
     condensate_allocation_fraction: float = 0.5
@@ -145,6 +148,8 @@ class HeuristicInitializer(eqx.Module):
     excessively large portion of the element budget, which can drive gas species to unrealistically
     low initial abundances.
     """
+    log_trace_value: float = LOG_TRACE_VALUE
+    """Log number of moles given to species with a negligible element budget"""
 
     def start(self, parameters: Parameters) -> Float[Array, " twice_species"]:
         """Cold initial guess from the heuristic.
@@ -353,11 +358,11 @@ class HeuristicInitializer(eqx.Module):
 
         n_condensate = n_condensate * self.condensate_allocation_fraction
 
-        # Species outside the predicted-stable set (NaN) get the trace value exp(LOG_TRACE_VALUE).
+        # Species outside the predicted-stable set (NaN) get the trace value exp(log_trace_value).
         # They do not consume element budget, because only predicted-stable condensates enter
         # element_used below, and the entries of non-condensate species are not used.
         n_condensate_fallback: Float[Array, " n_species"] = jnp.where(
-            jnp.isnan(n_condensate), jnp.exp(LOG_TRACE_VALUE), n_condensate
+            jnp.isnan(n_condensate), jnp.exp(self.log_trace_value), n_condensate
         )
         # jax.debug.print("n_condensate_fallback = {out}", out=n_condensate_fallback)
 
@@ -441,7 +446,7 @@ class HeuristicInitializer(eqx.Module):
         # jax.debug.print("log_geometric_mean = {out}", out=log_geometric_mean)
 
         n_other_fallback = jnp.where(unconstrained, jnp.exp(log_geometric_mean), n_other)
-        n_other_fallback = jnp.where(exhausted, jnp.exp(LOG_TRACE_VALUE), n_other_fallback)
+        n_other_fallback = jnp.where(exhausted, jnp.exp(self.log_trace_value), n_other_fallback)
 
         # jax.debug.print("n_condensate after fallback = {out}", out=n_condensate_fallback)
         # jax.debug.print("n_other after fallback = {out}", out=n_other_fallback)

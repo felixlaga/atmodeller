@@ -89,7 +89,7 @@ class ElementPotentialInitializer(eqx.Module):
         \ln \left( \sum_s a_{es} n_s / b_e \right) & \text{mass balance, constrained elements} \\
         \ln p_s - \ln f_s & \text{imposed gas fugacities} \\
         d_c & \text{present condensates} \\
-        \ln n_c - \texttt{LOG\_TRACE\_VALUE} & \text{absent condensate slots} \\
+        \ln n_c - \texttt{log\_trace\_value} & \text{absent condensate slots} \\
         \ln \sum_\mathrm{gas} p - \ln P(n) & \text{pressure closure} \\
         \text{dissolution residual} & \text{dissolved species}
         \end{array}
@@ -108,7 +108,7 @@ class ElementPotentialInitializer(eqx.Module):
        pass solves, re-evaluates the condensate :math:`G_c/RT` at the pressure reached, switches
        on the most supersaturated absent condensate (if :math:`d_c > 10^{-6}`; it starts at half
        the budget of its limiting element), and switches off present condensates whose log moles
-       fall below :data:`~atmodeller.initializer.core.LOG_TRACE_VALUE` + 1. Switching one at a
+       fall below ``log_trace_value`` + 1. Switching one at a
        time means that a present polymorph fixes its element's potential and the other becomes
        undersaturated. The start pressure (from the even split) can differ from the converged
        pressure by an order of magnitude, enough to put a condensate near saturation on the wrong
@@ -217,6 +217,9 @@ class ElementPotentialInitializer(eqx.Module):
             sweeps stop. Defaults to ``1e-8``.
         damping: Damping :math:`\mu` of the normal equations for the Newton direction. Defaults
             to ``1e-6``.
+        log_trace_value: Log number of moles of absent species (absent condensates, and species
+            outside the reaction network). Defaults to
+            :data:`~atmodeller.initializer.core.LOG_TRACE_VALUE`.
     """
 
     newton_iterations: int = 100
@@ -238,6 +241,8 @@ class ElementPotentialInitializer(eqx.Module):
     damping: float = 1e-6
     r"""Damping :math:`\mu` of the normal equations for the Newton direction, which keeps
     :math:`J^\mathsf{T} J + \mu^2 I` positive definite in degenerate steps"""
+    log_trace_value: float = LOG_TRACE_VALUE
+    """Log number of moles of absent species"""
 
     def start(self, parameters: Parameters) -> Float[Array, " twice_species"]:
         """Cold initial guess from the element-potential equilibrium.
@@ -307,7 +312,7 @@ class ElementPotentialInitializer(eqx.Module):
         total: Array = jnp.sum(jnp.where(constrained, abundance, 0.0))
         total = jnp.where(total > 0, total, 1.0)
         log_n_each: Array = jnp.log(total / jnp.maximum(jnp.sum(gas), 1))
-        start_log_n: Float[Array, " n_species"] = jnp.where(gas, log_n_each, LOG_TRACE_VALUE)
+        start_log_n: Float[Array, " n_species"] = jnp.where(gas, log_n_each, self.log_trace_value)
         gibbs: Float[Array, " n_species"] = _gibbs_over_RT_all_species(
             parameters, temperature, parameters.state.get_pressure(start_log_n)
         )
@@ -328,7 +333,7 @@ class ElementPotentialInitializer(eqx.Module):
             log_n: Array = jnp.where(
                 gas,
                 log_p - log_p_sum + log_n_gas,
-                jnp.where((condensate & present) | dissolved, slots, LOG_TRACE_VALUE),
+                jnp.where((condensate & present) | dissolved, slots, self.log_trace_value),
             )
             return log_n, log_p, log_p_sum
 
@@ -352,7 +357,7 @@ class ElementPotentialInitializer(eqx.Module):
             condensed: Array = jnp.where(
                 condensate & present,
                 formula_matrix.T @ lam - gibbs,
-                jnp.where(condensate, slots - LOG_TRACE_VALUE, 0.0),
+                jnp.where(condensate, slots - self.log_trace_value, 0.0),
             )
             closure: Array = jnp.atleast_1d(log_p_sum - jnp.log(pressure))
             rows: list[Array] = [mass, fugacity, condensed, closure]
@@ -513,7 +518,7 @@ class ElementPotentialInitializer(eqx.Module):
             [
                 fit[:n_elements],
                 jnp.atleast_1d(jnp.log(total)),
-                jnp.where(dissolved, log_n_each, LOG_TRACE_VALUE),
+                jnp.where(dissolved, log_n_each, self.log_trace_value),
             ]
         )
 
@@ -534,15 +539,15 @@ class ElementPotentialInitializer(eqx.Module):
             candidates: Array = condensate & ~present & (driving_force > 1e-6)
             best: Array = jnp.argmax(jnp.where(candidates, driving_force, -jnp.inf))
             on: Array = (jnp.arange(n_species) == best) & jnp.any(candidates) & switching
-            off: Array = condensate & present & (slots < LOG_TRACE_VALUE + 1.0) & switching
+            off: Array = condensate & present & (slots < self.log_trace_value + 1.0) & switching
             # A newly present condensate starts at half the budget of its limiting element
             n_limit: Array = max_moles_by_limiting_element(
                 formula_matrix, jnp.where(constrained, abundance, jnp.nan), on
             )
             log_start: Array = jnp.log(
-                0.5 * jnp.where(n_limit > 0, n_limit, jnp.exp(LOG_TRACE_VALUE))
+                0.5 * jnp.where(n_limit > 0, n_limit, jnp.exp(self.log_trace_value))
             )
-            slots = jnp.where(on, log_start, jnp.where(off, LOG_TRACE_VALUE, slots))
+            slots = jnp.where(on, log_start, jnp.where(off, self.log_trace_value, slots))
             return z.at[n_elements + 1 :].set(slots), (present | on) & ~off, gibbs
 
         n_condensates: int = len(reaction_names) - len(reaction_system.phase_system.gas.species)
@@ -566,7 +571,7 @@ class ElementPotentialInitializer(eqx.Module):
         log_n = jnp.where(
             absent, implied_constant - jnp.log(jnp.where(absent, -driving_force, 1.0)), log_n
         )
-        log_n = jnp.where(in_reaction | dissolved, log_n, LOG_TRACE_VALUE)
+        log_n = jnp.where(in_reaction | dissolved, log_n, self.log_trace_value)
         result: Array = jnp.concatenate([log_n, compute_implied_log_stability(parameters, log_n)])
         start: Array = jnp.concatenate(
             [start_log_n, compute_implied_log_stability(parameters, start_log_n)]
