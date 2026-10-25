@@ -162,7 +162,7 @@ To install additional dependencies:
 -------------------
 The dependencies in *Atmodeller* are defined in the ``pyproject.toml`` file, with special handling for JAX:
 
-- **Apple Intel (x86_64)**: JAX is pinned to version ``0.4.38``, the last release that supports this architecture.
+- **Apple Intel (x86_64)**: JAX is pinned to version ``0.4.38``, the last release that supports this architecture. JAX ``0.4.38`` is available for Python 3.10 to 3.13, so use Python 3.11, 3.12 or 3.13 on an Intel Mac. Dependencies that require a newer JAX (such as ``lineax``) are kept at the last compatible version.
 - **All other platforms**: JAX is not pinned; any release after ``0.4.38`` can be used, except versions known to be incompatible (currently ``0.7.0`` and ``0.7.1``).
 
 This approach balances stability and reliability on older systems with the latest features and performance improvements from JAX and related libraries on supported platforms.

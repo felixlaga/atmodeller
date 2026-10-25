@@ -44,7 +44,7 @@ dependencies = [
     "jax==0.4.38; sys_platform == 'darwin' and platform_machine == 'x86_64'",
     # JAX requirements for all other platforms
     "jax>0.4.38,!=0.7.0,!=0.7.1; sys_platform != 'darwin' or platform_machine != 'x86_64'",
-    # SciPy and NumPy minimum requirements for jax 0.4.31
+    # SciPy and NumPy minimum requirements for jax 0.4.38
     "scipy>=1.10.0",
     "numpy>=1.24.0",
     "pandas>=2.3.0",
@@ -54,9 +54,6 @@ dependencies = [
     "matplotlib>=3.9.0",
     "jupyter>=1.0.0",
     "typing-extensions>=4.12.2; python_version < '3.12'",
-    # Optax pinned for Intel macOS
-    "optax==0.2.5; sys_platform == 'darwin' and platform_machine == 'x86_64'",
-    "optax>0.2.5; sys_platform != 'darwin' or platform_machine != 'x86_64'",
     "optimistix>=0.1.0",
     # Linear solves in the element-potential initial guess (also an optimistix dependency).
     # lineax 0.1.x requires jax>=0.10, so Intel macOS (jax pinned above) stays on 0.0.8
