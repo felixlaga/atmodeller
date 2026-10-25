@@ -144,7 +144,7 @@ def fO2_temperature_correction(
     pressure: ArrayLike,
     reference_temperature: ArrayLike,
 ) -> FloatArray:
-    r"""Applies a temperature correction to :math:`\log_{10} f\rm{O}_2`.
+    r"""Applies a temperature correction to :math:`f\rm{O}_2`.
 
     Some experimentally derived solubility laws operate on absolute :math:`\log_{10} f\rm{O}_2`,
     which depends on temperature and pressure. A temperature correction has to be applied to
@@ -153,12 +153,14 @@ def fO2_temperature_correction(
     Args:
         fO2: Absolute oxygen fugacity at ``temperature`` (bar)
         temperature: Temperature (K)
-        pressure: Absolute pressure (bar)
+        pressure: Absolute pressure (bar). The iron-wustite buffer used for the correction is
+            evaluated at 1 bar by default, so this has no effect on the result.
         reference_temperature: Reference temperature, which is usually the temperature at which the
             experiment was performed.
 
     Returns:
-        Adjusted :math:`\log_{10} f\rm{O}_2`
+        Oxygen fugacity (bar) at ``reference_temperature`` with the same :math:`\log_{10}
+        f\rm{O}_2` shift from the iron-wustite buffer as ``fO2`` has at ``temperature``
     """
     iron_wustite_buffer: RedoxBufferProtocol = IronWustiteBuffer()
     logiw_fugacity_at_current_temp: ArrayLike = iron_wustite_buffer.log10_fugacity(

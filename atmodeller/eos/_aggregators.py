@@ -66,8 +66,9 @@ class CombinedRealGas(RealGas):
 
         Reasonable extrapolation behaviour is required to ensure that the function is bounded to
         avoid throwing NaNs or infs which will crash the solver. Physically, it is reasonable to
-        extend the lower bound using the ideal gas law and the upper bound assuming a linear
-        pressure dependence of the compressibility factor.
+        extend the lower bound using the ideal gas law and the upper bound by holding the
+        compressibility factor at its value at the maximum calibration pressure (the linear
+        pressure term is currently disabled; see :meth:`UpperBoundRealGas._dzdp0`).
 
         There is no bounding for temperature; hence it is assumed that the extrapolation
         behaviour of temperature is reasonable. This is practically useful because the calibrations
@@ -314,8 +315,9 @@ class CombinedRealGas(RealGas):
 class UpperBoundRealGas(RealGas):
     """An upper bound for an EOS
 
-    This is used to extrapolate an EOS assuming that the compressibility factor is a linear
-    function of pressure. Importantly, this class is not intended to be used directly, but rather
+    This is used to extrapolate an EOS above its calibration range. The compressibility factor is
+    written as a linear function of pressure, but the gradient is currently zero (see
+    :meth:`_dzdp0`), so it is held at its value at the maximum calibration pressure. Importantly, this class is not intended to be used directly, but rather
     as a component of :class:`~atmodeller.eos._aggregators.CombinedRealGas`.
 
     ``p_eval`` is used to evaluate the compressibility factor and its gradient, and therefore to
@@ -440,9 +442,9 @@ class CombinedRealGasFugacity(RealGasBase):
         real_gases: Real gases to use
         calibrations: Experimental calibrations that correspond to ``real_gases``
         min_log_fugacity_coefficient: Minimum log fugacity coefficient to avoid numerical issues.
-            Defaults to ``-15``.
+            Defaults to ``None`` (no clipping).
         max_log_fugacity_coefficient: Maximum log fugacity coefficient to avoid numerical issues.
-            Defaults to ``15``.
+            Defaults to ``None`` (no clipping).
     """
 
     real_gases: tuple[RealGasBase, ...]

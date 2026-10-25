@@ -279,7 +279,7 @@ class MRKCorrespondingStatesHP91(RedlichKwongABC):
 
     @override
     def b(self) -> ArrayLike:
-        r"""MRK :math:`b` parameter computed from :attr:`b0` :cite:p:`HP91{Equation 9}`.
+        r"""MRK :math:`b` parameter computed from the universal constant ``_b`` :cite:p:`HP91{Equation 9}`.
 
         Returns:
             MRK :math:`b` parameter (:math:`\mathrm{m}^3\ \mathrm{mol}^{-1}`)
@@ -858,11 +858,11 @@ H2_cork_cs_holland91_bounded: RealGas = CombinedRealGas.create(
 H2S_cork_cs_holland11: RealGas = CORK(
     H2S_mrk_cs_holland11, virial_compensation_corresponding_states, critical_data_dictionary["H2S"]
 )
-"""H2S CORK corresponding states :cite:p:`HP91`"""
+"""H2S CORK corresponding states :cite:p:`HP91,HP11`"""
 H2S_cork_cs_holland11_bounded: RealGas = CombinedRealGas.create(
     [H2S_cork_cs_holland11], [experimental_calibration_holland91]
 )
-"""H2S CORK corresponding states bounded :cite:p:`HP91`"""
+"""H2S CORK corresponding states bounded :cite:p:`HP91,HP11`"""
 N2_cork_cs_holland91: RealGas = CORK(
     N2_mrk_cs_holland91, virial_compensation_corresponding_states, critical_data_dictionary["N2"]
 )
@@ -874,11 +874,11 @@ N2_cork_cs_holland91_bounded: RealGas = CombinedRealGas.create(
 S2_cork_cs_holland11: RealGas = CORK(
     S2_mrk_cs_holland11, virial_compensation_corresponding_states, critical_data_dictionary["S2"]
 )
-"""S2 CORK corresponding states :cite:p:`HP91`"""
+"""S2 CORK corresponding states :cite:p:`HP91,HP11`"""
 S2_cork_cs_holland11_bounded: RealGas = CombinedRealGas.create(
     [S2_cork_cs_holland11], [experimental_calibration_holland91]
 )
-"""S2 CORK corresponding states bounded :cite:p:`HP91`"""
+"""S2 CORK corresponding states bounded :cite:p:`HP91,HP11`"""
 
 dummy_critical_data: CriticalData = CriticalData(1, 1)
 """Dummy critical data

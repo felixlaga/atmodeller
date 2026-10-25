@@ -787,7 +787,6 @@ class ThinAtmospherePlanet(BasePlanet):
     Args:
         reaction_system: Reaction system representing the thermodynamic state of the planetary body
         surface_radius: Radius of the surface (m)
-        metallic_core_mass: Metallic core mass (kg)
         temperature: Temperature (K)
         pressure: Pressure (bar)
         background_planet_mass: Planet mass (kg) from only the background melt and solid mass,
@@ -846,7 +845,6 @@ class PressureScalingLawPlanet(BasePlanet):
     Args:
         reaction_system: Reaction system representing the thermodynamic state of the planetary body
         surface_radius: Radius of the surface (m)
-        metallic_core_mass: Metallic core mass (kg)
         temperature: Temperature (K)
         pressure: Pressure (bar)
         background_planet_mass: Planet mass (kg) from only the background melt and solid mass, plus

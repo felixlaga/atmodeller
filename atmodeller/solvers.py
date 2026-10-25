@@ -39,7 +39,7 @@ Quick guide:
 - ``batch_only``: Fastest compilation; can still solve active-stability systems, but skips retry
     and tau-sweep robustness logic
 
-Most solvers return results as :class:`atmodeller.containers.MultiAttemptSolution` or
+Most solvers return results as :class:`~atmodeller.jax_utils.MultiAttemptSolution` or
 :class:`~atmodeller.output.Output` objects, with detailed convergence and step statistics.
 """
 
@@ -190,7 +190,7 @@ def make_batch_solver(parameters: Parameters) -> Callable:
         parameters: Parameters used to derive the vmapping axes at construction time
 
     Returns:
-        Callable that returns a :class:`atmodeller.containers.MultiAttemptSolution` with
+        Callable that returns a :class:`~atmodeller.jax_utils.MultiAttemptSolution` with
         ``attempts=1``
     """
     solver_function_vmapped: Callable = eqx.filter_vmap(
@@ -211,7 +211,7 @@ def make_batch_solver(parameters: Parameters) -> Callable:
             *args: Unused; present for interface consistency with :func:`make_batch_retry_solver`
 
         Returns:
-            :class:`atmodeller.containers.MultiAttemptSolution` with ``attempts=1`` for all batch elements
+            :class:`~atmodeller.jax_utils.MultiAttemptSolution` with ``attempts=1`` for all batch elements
         """
         del args
         # jax.debug.print("Running batch single-pass solver with vmapped single solve")
@@ -246,7 +246,7 @@ def make_batch_retry_solver(solver_function: Callable, objective_fn: Callable) -
         objective_fn: Callable for the objective function
 
     Returns:
-        Callable that returns a :class:`atmodeller.containers.MultiAttemptSolution` object
+        Callable that returns a :class:`~atmodeller.jax_utils.MultiAttemptSolution` object
     """
 
     def perturb_fn(
@@ -286,7 +286,7 @@ def make_batch_retry_solver_from_parameters(parameters: Parameters) -> Callable:
         parameters: Parameters used to derive the vmapping axes at construction time
 
     Returns:
-        Callable that returns a :class:`atmodeller.containers.MultiAttemptSolution` object
+        Callable that returns a :class:`~atmodeller.jax_utils.MultiAttemptSolution` object
     """
     batch_solver: Callable = make_batch_solver(parameters)
     objective_function_vmapped: Callable = eqx.filter_vmap(
@@ -320,7 +320,7 @@ def make_tau_sweep_solver(batch_retry_solver: Callable, batch_solver: Callable) 
             final solve that attaches the derivatives
 
     Returns:
-        Callable that returns a :class:`atmodeller.containers.MultiAttemptSolution` object
+        Callable that returns a :class:`~atmodeller.jax_utils.MultiAttemptSolution` object
     """
     get_leaf: Callable = lambda t: t.solver_parameters.tau  # noqa: E731
 
@@ -346,7 +346,7 @@ def make_tau_sweep_solver(batch_retry_solver: Callable, batch_solver: Callable) 
             key: JAX PRNG key for reproducible random perturbations
 
         Returns:
-            :class:`atmodeller.containers.MultiAttemptSolution` object
+            :class:`~atmodeller.jax_utils.MultiAttemptSolution` object
         """
 
         def solve_tau_step(carry: tuple, tau: Float[Array, " ..."]) -> tuple[tuple, None]:
@@ -490,7 +490,7 @@ def make_solver(
         key: PRNGKeyArray,
         base_solution_array: Float[Array, "n_batch twice_species"],
     ) -> Output:
-        """JIT-compiled entry point that dispatches to the appropriate solver branch.
+        """Entry point that dispatches to the appropriate solver branch.
 
         Checks whether any species have active stability and routes accordingly via
         :func:`jax.lax.cond`: the tau sweep solver is used when stability species are

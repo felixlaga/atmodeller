@@ -197,11 +197,12 @@ H4Si_wang18: RealGas = VirialQuadratic(
     b_coefficients=(3.8552e-4, -1.822e-7, 2.54e-11),
     c_coefficients=(-1.942e-10, 1.088e-13, -1.62e-17),
 )
+"""H4Si quadratic virial :cite:p:`WLL18`"""
 
 H4Si_wang18_bounded: RealGas = CombinedRealGas.create(
     [H4Si_wang18], [experimental_calibration_wang18]
 )
-"""H4Si Wang18 corresponding states bounded :cite:p:`WLL18`"""
+"""H4Si quadratic virial bounded :cite:p:`WLL18`"""
 
 
 def get_wang_eos_models() -> dict[str, RealGas]:

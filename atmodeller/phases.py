@@ -5,7 +5,7 @@
 
 """Phase container classes for thermodynamic equilibrium calculations.
 
-This module defines the core phase abstractions and four concrete phase types used in the
+This module defines the core phase abstractions and three concrete phase types used in the
 equilibrium solver.
 
 The available phase types are:
@@ -13,13 +13,11 @@ The available phase types are:
 - :class:`GasPhase`: Multicomponent gas mixture, supporting both ideal and non-ideal (real gas)
   behavior. Tracks the O2 index for redox calculations and provides gas-specific outputs (e.g.,
   partial pressures, volume).
-- :class:`MeltPhase`: Multicomponent silicate melt, optionally with dissolved volatiles and/or
-  condensed species treated as additional to the solvent. Phase-level properties (mass, moles,
-  molar mass, and derived fractions) can be computed relative to just the solvent mass, while
-  per-species properties such as activity are always computed from raw species amounts.
-- :class:`SolidPhase`: Multicomponent silicate solid, with similar background handling as the
-  melt phase.
-- :class:`MetalPhase`: Multicomponent metal, with similar background handling as the melt phase.
+- :class:`CondensedPhase`: Multicomponent condensed phase, used for the silicate melt, the
+  silicate solid and the metal, optionally with dissolved volatiles and/or condensed species
+  treated as additional to the solvent. Phase-level properties (mass, moles, molar mass, and
+  derived fractions) can be computed relative to just the solvent mass, while per-species
+  properties such as activity are always computed from raw species amounts.
 - :class:`PurePhase`: Single-species, unity-activity phase (e.g., a pure mineral, ice, or
   liquid). Only one species is permitted, and its activity is fixed at unity.
 
@@ -606,7 +604,8 @@ class PhaseOutput(eqx.Module, Generic[TPhase_co]):
     # Phase outputs
     @property
     def phase_species_number_moles(self) -> Float[Array, "#n_batch 1"]:
-        """Total phase moles from all constituent species and inert background"""
+        """Total phase moles from the species included in the phase mass
+        (``include_in_phase_mass``) and the inert background"""
         return jnp.exp(self.phase.get_log_phase_moles(self.log_number_moles))
 
     @property
@@ -814,7 +813,7 @@ class CondensedPhase(BasePhase[SpeciesProtocol]):
 
     Args:
         species: An iterable of species in the phase
-        name: Name of the phase. Defaults to ``condensed``.
+        name: Name of the phase. Defaults to ``condensed_phase``.
         background_mass: Mass of the background (untracked) component (kg); see
             :class:`BasePhase`'s docstring. Defaults to :data:`DEFAULT_BACKGROUND_MASS` (zero).
         background_molar_mass: Molar mass of the background component (kg mol\\ :sup:`-1`).

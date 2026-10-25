@@ -709,8 +709,7 @@ class OutputNamedArraysDict(BaseOutputDict):
         Args:
             expand_to_batch: Whether to expand arrays to the batch size. Defaults to ``False``.
             ravel: Whether to ravel arrays to 1-D after expanding. Can be used when the expanded
-                arrays are intended for conversion to DataFrames (which also requires
-                ``to_numpy=False``). Defaults to ``False``.
+                arrays are intended for conversion to DataFrames. Defaults to ``False``.
             to_numpy: Whether to convert JAX arrays to NumPy arrays. Defaults to ``False``. Must be
                 ``False`` if used within a jitted context, as NumPy arrays are not compatible with
                 JAX transformations (jit, vmap, etc.).

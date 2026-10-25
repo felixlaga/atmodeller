@@ -161,7 +161,7 @@ class Output(eqx.Module):
     ) -> dict[str, pd.DataFrame]:
         """Drops unsuccessful solves.
 
-        A solve is unsuccessful unless it passes both the convergence post-check and the solver
+        A solve is unsuccessful unless it passes both the objective-based check and the solver
         status, consistent with the rows highlighted by :meth:`to_excel`.
 
         .. warning::
@@ -191,10 +191,9 @@ class Output(eqx.Module):
             Not compatible with JAX-compiled workflows (e.g., inside a :func:`jax.jit` context)
 
         Args:
-            output_format: The format of the output dictionary. Can be ``natural`` for the natural
-                output format based on the arrays used internally, ``named_arrays`` for an
-                alternative format with named arrays, or ``elements_species`` for an alternative
-                format grouped by element and species names. Defaults to ``named_arrays``.
+            output_format: The format of the output dictionary. Can be ``named_arrays`` for a
+                format with named arrays, or ``elements_species`` for a format grouped by element
+                and species names. Defaults to ``named_arrays``.
             drop_unsuccessful_solves: Whether to drop unsuccessful solves from the output. Defaults
                 to ``False``.
 
@@ -235,10 +234,9 @@ class Output(eqx.Module):
         Args:
             file_prefix: Prefix of the output file. Accepts ``str`` or :class:`pathlib.Path`.
                 Defaults to atmodeller_out.
-            output_format: The format of the output dictionary. Can be ``natural`` for the natural
-                output format based on the arrays used internally, ``named_arrays`` for an
-                alternative format with named arrays, or ``elements_species`` for an alternative
-                format grouped by element and species names. Defaults to ``named_arrays``.
+            output_format: The format of the output dictionary. Can be ``named_arrays`` for a
+                format with named arrays, or ``elements_species`` for a format grouped by element
+                and species names. Defaults to ``named_arrays``.
             drop_unsuccessful_solves: Whether to drop unsuccessful solves from the output. Defaults
                 to ``False``.
             append_version: Whether to append ``_v<package_version>`` to the output filename.
@@ -262,7 +260,7 @@ class Output(eqx.Module):
         # analysis. Define a fill colour for highlighting rows (e.g., yellow)
         highlight_fill = PatternFill(start_color="FFFF00", end_color="FFFF00", fill_type="solid")
 
-        # Get the indices which agrees with both convergence post-check and solver success.
+        # Get the indices of the solves that fail the objective-based check or the solver status
         unsuccessful_indices: NpArray = np.where(~np.asarray(self.multi_attempt_solution.success))[
             0
         ]
@@ -300,10 +298,9 @@ class Output(eqx.Module):
         Args:
             file_prefix: Prefix of the output file. Accepts ``str`` or :class:`pathlib.Path`.
                 Defaults to atmodeller_out.
-            output_format: The format of the output dictionary. Can be ``natural`` for the natural
-                output format based on the arrays used internally, ``named_arrays`` for an
-                alternative format with named arrays, or ``elements_species`` for an alternative
-                format grouped by element and species names. Defaults to ``named_arrays``.
+            output_format: The format of the output dictionary. Can be ``named_arrays`` for a
+                format with named arrays, or ``elements_species`` for a format grouped by element
+                and species names. Defaults to ``named_arrays``.
             drop_unsuccessful_solves: Whether to drop unsuccessful solves from the output. Defaults
                 to ``False``.
             append_version: Whether to append ``_v<package_version>`` to the output filename.
