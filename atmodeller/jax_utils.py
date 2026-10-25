@@ -620,8 +620,8 @@ class MultiAttemptSolution(eqx.Module):  # pragma: no cover
                 num_failed_models * 100 / total_models,
             )
 
-        # Count unique values and their frequencies, ignoring failed models (attempts == 0)
-        successful_attempts = self.attempts[self.attempts > 0]
+        # Count unique values and their frequencies over the successful models
+        successful_attempts = self.attempts[self.success]
         unique_vals, counts = jnp.unique(successful_attempts, return_counts=True)
         for val, count in zip(unique_vals.tolist(), counts.tolist()):
             if val == 1:
@@ -630,12 +630,9 @@ class MultiAttemptSolution(eqx.Module):  # pragma: no cover
                 msg = "Solve attempt %d: %d (%0.2f%%) additional model(s) solved"
             logger_.info(msg, val, count, count * 100 / total_models)
 
-        # Steps of 0 indicate no solution; replace with nan and report the max over solved models
-        steps_float: Array = cast(
-            Array, jnp.where(self.num_steps == 0, jnp.nan, self.num_steps.astype(float))
-        )
-        max_steps: Array = jnp.nanmax(steps_float)
-        logger_.info("Solver steps (max) = %s", int(max_steps.item()))
+        # Maximum over the successful models, or 0 if none succeeded, as failed models report 0
+        max_steps: int = int(jnp.max(jnp.where(self.success, self.num_steps, 0)).item())
+        logger_.info("Solver steps (max) = %d", max_steps)
 
 
 def perturb_around_converged(
