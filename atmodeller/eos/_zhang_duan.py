@@ -154,7 +154,7 @@ def get_zhang_eos_models() -> dict[str, RealGas]:
     eos_models["H2_zhang09"] = H2_zhang09_bounded
     eos_models["H2_zhang09_unbounded"] = H2_zhang09
     eos_models["CO_zhang09"] = CO_zhang09_bounded
-    eos_models["CO_zhang09_unbounded"] = CO2_zhang09
+    eos_models["CO_zhang09_unbounded"] = CO_zhang09
     eos_models["O2_zhang09"] = O2_zhang09_bounded
     eos_models["O2_zhang09_unbounded"] = O2_zhang09
     eos_models["C2H6_zhang09"] = C2H6_zhang09_bounded
