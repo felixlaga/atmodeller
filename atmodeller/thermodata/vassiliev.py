@@ -3,7 +3,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-"""Heat capacity models for graphite and diamond from :cite:t:`Vassiliev2021`"""
+"""Heat capacity models for diamond, graphite and silicon from :cite:t:`Vassiliev2021`"""
 
 import equinox as eqx
 import jax.numpy as jnp
@@ -74,7 +74,7 @@ def _debye_integral(y: ArrayLike) -> Array:
 
 
 class VassilievHeatCapacity(eqx.Module):
-    """Heat capacity model for graphite and diamond from :cite:t:`Vassiliev2021`.
+    """Heat capacity model for diamond, graphite and silicon from :cite:t:`Vassiliev2021`.
 
     Args:
         n: Number of experimental (T, Cp) pairs used in the fit (metadata only)

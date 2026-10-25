@@ -3,8 +3,9 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-"""Tests the integrated thermodynamic properties, the diamond of Gustafson (1986), and the
-NASA Glenn data outside their temperature ranges"""
+"""Tests the integrated thermodynamic properties, the diamond of Gustafson (1986), the NASA
+Glenn data outside their temperature ranges, and the alternative carbon and silicon models of
+Vassiliev (2021) and Holland and Powell"""
 
 from typing import cast
 
@@ -19,6 +20,7 @@ from atmodeller.thermodata import (
     IntegratedThermodynamicProperties,
     ThermodynamicProperties,
 )
+from atmodeller.thermodata import holland_powell, vassiliev
 from atmodeller.thermodata.gustafson import GRAPHITE_VOLUME_GUSTAFSON, diamond_gustafson
 from atmodeller.thermodata.janaf import NasaGlennThermodynamicProperties, glenn_properties
 
@@ -111,3 +113,80 @@ def test_glenn_extrapolation_uses_nearest_range() -> None:
         graphite.get_gibbs_over_RT(6000.0, 1.0),
         rtol=1e-8,
     )
+
+
+def test_vassiliev_heat_capacity() -> None:
+    """The Vassiliev (2021) heat capacities agree with standard values at 298.15 K, and are pinned
+    at 1000 K"""
+    # Standard heat capacities at 298.15 K (J/mol/K): graphite from the NASA Glenn data, diamond
+    # and silicon from NIST-JANAF
+    reference: dict[str, float] = {
+        "diamond": 6.115,
+        "graphite": float(graphite.cp(TEMPERATURE_REFERENCE)),
+        "silicon": 20.00,
+    }
+    models: dict[str, list[vassiliev.VassilievHeatCapacity]] = {
+        "diamond": [
+            vassiliev.cp_diamond_1a,
+            vassiliev.cp_diamond_1b,
+            vassiliev.cp_diamond_1c,
+            vassiliev.cp_diamond_1d,
+        ],
+        "graphite": [vassiliev.cp_graphite_2a, vassiliev.cp_graphite_2b, vassiliev.cp_graphite_2c],
+        "silicon": [vassiliev.cp_silicon_3a, vassiliev.cp_silicon_3b],
+    }
+    for material, material_models in models.items():
+        for model in material_models:
+            np.testing.assert_allclose(
+                model.cp(TEMPERATURE_REFERENCE), reference[material], rtol=0.04
+            )
+
+    pinned_1000: list[tuple[vassiliev.VassilievHeatCapacity, float]] = [
+        (vassiliev.cp_diamond_1a, 21.1462),
+        (vassiliev.cp_graphite_2a, 21.7438),
+        (vassiliev.cp_silicon_3a, 26.5799),
+    ]
+    for model, expected in pinned_1000:
+        np.testing.assert_allclose(model.cp(1000.0), expected, rtol=1e-5)
+
+
+def test_holland_powell_volume() -> None:
+    """The Holland and Powell Murnaghan and Tait volume models of graphite and diamond: the
+    reference volume at 298.15 K and 1 bar, a zero volume integral at 1 bar, agreement between the
+    two forms at 50 kbar, and pinned integrals"""
+    pairs: dict[str, tuple[holland_powell.MurnaghanEOS, holland_powell.TaitEOS, float]] = {
+        "diamond": (
+            holland_powell.DIAMOND_VOLUME_MURNAGHAN,
+            holland_powell.DIAMOND_VOLUME_TAIT,
+            0.342,
+        ),
+        "graphite": (
+            holland_powell.GRAPHITE_VOLUME_MURNAGHAN,
+            holland_powell.GRAPHITE_VOLUME_TAIT,
+            0.530,
+        ),
+    }
+    pinned: dict[str, tuple[float, float]] = {
+        "diamond": (17229.528855, 17276.191681),
+        "graphite": (25777.298750, 25504.057812),
+    }
+    for material, (murnaghan, tait, volume_reference) in pairs.items():
+        np.testing.assert_allclose(murnaghan.volume_1bar(TEMPERATURE_REFERENCE), volume_reference)
+        np.testing.assert_allclose(tait.volume(TEMPERATURE_REFERENCE, 1.0), volume_reference)
+        for model in (murnaghan, tait):
+            np.testing.assert_allclose(model.volume_integral(1000.0, 1.0), 0.0, atol=1e-12)
+
+        integral_murnaghan = murnaghan.volume_integral(1500.0, 5.0e4)
+        integral_tait = tait.volume_integral(1500.0, 5.0e4)
+        np.testing.assert_allclose(integral_murnaghan, integral_tait, rtol=0.015)
+        np.testing.assert_allclose(
+            [integral_murnaghan, integral_tait], pinned[material], rtol=1e-6
+        )
+
+    # The linear approximation of the 1-bar volume and the Einstein temperature
+    np.testing.assert_allclose(
+        holland_powell.DIAMOND_VOLUME_MURNAGHAN.volume_1bar_linear(1000.0),
+        holland_powell.DIAMOND_VOLUME_MURNAGHAN.volume_1bar(1000.0),
+        rtol=1e-4,
+    )
+    np.testing.assert_allclose(holland_powell.einstein_temperature(2.38, 1), 10636 / (2.38 + 6.44))
