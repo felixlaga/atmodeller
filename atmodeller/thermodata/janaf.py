@@ -297,9 +297,9 @@ def read_glenn_coefficients(
     )
     coefficient_dict: dict[str, ThermodynamicProperties] = {}
 
-    for row in unique_combinations.itertuples(index=False):
-        hill_formula: str = str(row.hill_formula)
-        state: str = str(row.state)
+    for hill_formula_value, state_value in unique_combinations.itertuples(index=False, name=None):
+        hill_formula: str = str(hill_formula_value)
+        state: str = str(state_value)
         name: str = f"{hill_formula}_{state}"
 
         # Find all data across all temperature ranges
