@@ -1,0 +1,59 @@
+name: Docs
+
+# Builds the documentation as Read the Docs does (.readthedocs.yaml), with warnings as errors, so
+# that a broken docs build shows up on the PR rather than after merging. The build also runs the
+# example notebooks that are stored without outputs.
+
+on:
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - 'docs/**'
+      - 'atmodeller/**'
+      - 'notebooks/**'
+      - 'README.md'
+      - 'pyproject.toml'
+      - 'uv.lock'
+      - '.readthedocs.yaml'
+  workflow_dispatch:
+
+concurrency:
+  group: docs-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      UV_PYTHON: "3.13"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          # The same uv version as used to write uv.lock
+          version: "0.12.3"
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+
+      - name: Install the project with the docs extra
+        run: uv sync --locked --extra docs
+
+      # As the pre_build job in .readthedocs.yaml
+      - name: Generate the API module stubs
+        run: uv run sphinx-apidoc -f -o docs/source atmodeller
+
+      - name: Build the documentation
+        run: uv run sphinx-build -W --keep-going -b html docs docs/_build/html
