@@ -27,7 +27,6 @@ from scipy.constants import gravitational_constant
 
 from atmodeller import override
 from atmodeller.constants import (
-    GAS_PHASE_INDEX,
     METAL_PHASE_INDEX,
     SILICATE_MELT_PHASE_INDEX,
     SILICATE_SOLID_PHASE_INDEX,
@@ -55,10 +54,6 @@ class BaseThermodynamicState(eqx.Module):
     def phase_system(self) -> PhaseSystem:
         """Phase system representing the thermodynamic state of the planetary body"""
         return self.reaction_system.phase_system
-
-    @property
-    def gas_phase_index(self) -> int:  # pragma: no cover
-        return GAS_PHASE_INDEX
 
     @property
     def silicate_melt_phase_index(self) -> int:

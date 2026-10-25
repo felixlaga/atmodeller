@@ -370,11 +370,6 @@ class SpeciesCollection(eqx.Module, Generic[TSpecies_co]):
         )
 
     @property
-    def reservoir_species_mask(self) -> Bool[Array, "..."]:  # pragma: no cover
-        """Mask for reservoir species in the collection"""
-        return jnp.array([isinstance(species_, ReservoirSpecies) for species_ in self], dtype=bool)
-
-    @property
     def unique_elements(self) -> tuple[str, ...]:
         """Unique elements in species in alphabetical order"""
         return tuple(self.unique_elements_map.keys())

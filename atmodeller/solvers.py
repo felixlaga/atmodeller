@@ -197,9 +197,7 @@ def make_batch_solver(parameters: Parameters) -> Callable:
         solve_single, in_axes=(LOG_NUMBER_MOLES_VMAP_AXES, vmap_axes_spec(parameters))
     )
 
-    def batch_single_pass_solver(
-        solution: Array, parameters: Parameters, *args
-    ) -> MultiAttemptSolution:
+    def batch_single_pass_solver(solution: Array, parameters: Parameters) -> MultiAttemptSolution:
         """Runs the vmapped single-pass batch solve.
 
         ``_attempts`` is set to ``1`` unconditionally; objective-based per-element convergence
@@ -208,12 +206,10 @@ def make_batch_solver(parameters: Parameters) -> Callable:
         Args:
             solution: Batched initial guess with shape ``(batch, solution)``
             parameters: Parameters passed through to each vmapped :func:`solve_single` call
-            *args: Unused; present for interface consistency with :func:`make_batch_retry_solver`
 
         Returns:
             :class:`~atmodeller.jax_utils.MultiAttemptSolution` with ``attempts=1`` for all batch elements
         """
-        del args
         # jax.debug.print("Running batch single-pass solver with vmapped single solve")
         # jax.debug.print("solution = {out}", out=solution)
         # jax.debug.print("tau = {out}", out=parameters.solver_parameters.tau)

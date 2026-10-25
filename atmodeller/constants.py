@@ -17,8 +17,6 @@ STANDARD_FUGACITY: float = STANDARD_PRESSURE
 """Standard fugacity for gases (bar)"""
 GAS_STATE: str = "g"
 """Suffix to identify gases as per JANAF convention for the state of aggregation"""
-LIQUID_STATE: str = "l"
-"""Suffix to identify liquids as per JANAF convention for the state of aggregation"""
 SOLID_STATE: str = "s"
 """Suffix to identify solids as per JANAF convention for the state of aggregation"""
 DISSOLVED_STATE: str = "d"

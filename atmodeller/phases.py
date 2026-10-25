@@ -166,18 +166,6 @@ class BasePhase(eqx.Module, Generic[TSpecies_co]):
             tuple(str(species) for species in self.species),
         )
 
-    @classmethod
-    def empty(cls) -> "BasePhase":  # pragma: no cover
-        """Creates an empty phase instance with no species and zero background mass.
-
-        Returns:
-            An empty phase instance
-        """
-        # Use a keyword argument since concrete subclasses override __init__ with a different
-        # positional argument order (species before name), whereas the base class signature here
-        # has name first.
-        return cls(name="empty")
-
     @property
     def is_empty(self) -> bool:
         """Indicates whether the phase contains no species"""
