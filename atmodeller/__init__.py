@@ -140,6 +140,7 @@ from atmodeller.solvers import (  # noqa: E402, F401
     make_solver,
     make_solver_with_jit,  # Alias for the default solver
     make_solver_with_jit_batch_only,
+    make_solver_with_jit_dual_path,
     make_solver_with_jit_single_path,
 )
 from atmodeller.state import (  # noqa: E402, F401
