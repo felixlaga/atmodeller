@@ -1,23 +1,13 @@
+# SPDX-FileCopyrightText: 2024-2026 Dan J. Bower <dbower@eaps.ethz.ch>
+# SPDX-FileCopyrightText: 2024-2026 Paolo A. Sossi
 #
-# Copyright 2024 Dan J. Bower
-#
-# This file is part of Atmodeller.
-#
-# Atmodeller is free software: you can redistribute it and/or modify it under the terms of the GNU
-# General Public License as published by the Free Software Foundation, either version 3 of the
-# License, or (at your option) any later version.
-#
-# Atmodeller is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
-# even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License along with Atmodeller. If not,
-# see <https://www.gnu.org/licenses/>.
-#
+# SPDX-License-Identifier: Apache-2.0
+
 """Tests solubility laws for hydrogen species"""
 
 import inspect
 import logging
+from typing import cast
 
 import numpy as np
 from jaxtyping import ArrayLike
@@ -25,6 +15,7 @@ from jaxtyping import ArrayLike
 from atmodeller import debug_logger
 from atmodeller.interfaces import RedoxBufferProtocol
 from atmodeller.solubility import get_solubility_models
+from atmodeller.solubility._hydrogen_species import _H2_chachan18
 from atmodeller.solubility.core import Solubility
 from atmodeller.thermodata import IronWustiteBuffer
 
@@ -161,6 +152,28 @@ def test_H2O_basalt_dixon(check_values) -> None:
     )
 
 
+def test_H2O_basalt_dixon_table5(check_values) -> None:
+    """Tests H2O in MORB liquids, fitted to the model of :cite:p:`DSH95`.
+
+    Reference Parameters (fH2O and H2O Conc) from Table 5, P = 1000 bar, fH2O = 993 bar, total
+    H2O = 3.22 wt%. The fit reproduces it within 1.3%.
+    """
+
+    function_name: str = inspect.currentframe().f_code.co_name  # type: ignore
+    solubility_model: Solubility = solubility_models["H2O_basalt_dixon95_table5"]
+    target_concentration: ArrayLike = 32200
+    test_fugacity_H2O_dixon_table5: ArrayLike = 993
+    check_values.concentration(
+        function_name,
+        solubility_model,
+        target_concentration,
+        test_fugacity_H2O_dixon_table5,
+        TEST_TEMPERATURE,
+        TEST_PRESSURE,
+        TEST_FO2,
+    )
+
+
 def test_H2O_basalt_mitchell(check_values) -> None:
     """Tests H2O in basaltic melt :cite:p:`MGO17`.
 
@@ -182,6 +195,30 @@ def test_H2O_basalt_mitchell(check_values) -> None:
     )
 
 
+def test_H2O_basalt_moore(check_values) -> None:
+    """Tests H2O in MORB liquid :cite:p:`MVC98`.
+
+    Reference Parameters (P, T, fH2O and measured H2O Conc) from Table 2, experiment 17H on the
+    MORB TT152-21-35 of :cite:t:`DSH95`. The model reproduces it within 0.12 wt%.
+    """
+
+    function_name: str = inspect.currentframe().f_code.co_name  # type: ignore
+    solubility_model: Solubility = solubility_models["H2O_basalt_moore98"]
+    target_concentration: ArrayLike = 25600
+    test_fugacity_H2O_moore_basalt: ArrayLike = 711
+    test_temperature_moore_basalt: ArrayLike = 1200 + 273.15
+    test_pressure_moore_basalt: ArrayLike = 717
+    check_values.concentration(
+        function_name,
+        solubility_model,
+        target_concentration,
+        test_fugacity_H2O_moore_basalt,
+        test_temperature_moore_basalt,
+        test_pressure_moore_basalt,
+        TEST_FO2,
+    )
+
+
 def test_H2O_lunar_glass_newcombe(check_values) -> None:
     """Tests H2O in lunar basalt :cite:p:`NBB17`.
 
@@ -198,6 +235,46 @@ def test_H2O_lunar_glass_newcombe(check_values) -> None:
         target_concentration,
         test_fugacity_H2O_newcombe_lunarglass,
         TEST_TEMPERATURE,
+        TEST_PRESSURE,
+        TEST_FO2,
+    )
+
+
+def test_H2_chachan18(check_values) -> None:
+    """Tests H2 solubility :cite:p:`CS18`.
+
+    Evaluating at the calibration fugacity and temperature should recover the calibration mass
+    fraction (converted to ppmw) exactly, by construction of the model.
+    """
+    function_name: str = inspect.currentframe().f_code.co_name  # type: ignore
+    solubility_model = cast(_H2_chachan18, solubility_models["H2_chachan18"])
+    target_concentration: ArrayLike = solubility_model.X_calibration * 1.0e6
+    check_values.concentration(
+        function_name,
+        solubility_model,
+        target_concentration,
+        solubility_model.f_calibration,
+        solubility_model.T_calibration,
+        TEST_PRESSURE,
+        TEST_FO2,
+    )
+
+
+def test_H2_kite19(check_values) -> None:
+    """Tests H2 solubility :cite:p:`KFS19`.
+
+    Evaluating at the calibration fugacity and temperature should recover the calibration mass
+    fraction (converted to ppmw) exactly, by construction of the model.
+    """
+    function_name: str = inspect.currentframe().f_code.co_name  # type: ignore
+    solubility_model = cast(_H2_chachan18, solubility_models["H2_kite19"])
+    target_concentration: ArrayLike = solubility_model.X_calibration * 1.0e6
+    check_values.concentration(
+        function_name,
+        solubility_model,
+        target_concentration,
+        solubility_model.f_calibration,
+        solubility_model.T_calibration,
         TEST_PRESSURE,
         TEST_FO2,
     )

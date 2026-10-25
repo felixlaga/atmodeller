@@ -1,19 +1,8 @@
+# SPDX-FileCopyrightText: 2024-2026 Dan J. Bower <dbower@eaps.ethz.ch>
+# SPDX-FileCopyrightText: 2024-2026 Paolo A. Sossi
 #
-# Copyright 2024 Dan J. Bower
-#
-# This file is part of Atmodeller.
-#
-# Atmodeller is free software: you can redistribute it and/or modify it under the terms of the GNU
-# General Public License as published by the Free Software Foundation, either version 3 of the
-# License, or (at your option) any later version.
-#
-# Atmodeller is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
-# even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License along with Atmodeller. If not,
-# see <https://www.gnu.org/licenses/>.
-#
+# SPDX-License-Identifier: Apache-2.0
+
 """Solubility library
 
 .. code-block::
@@ -43,7 +32,9 @@ from atmodeller.solubility._hydrogen_species import (
     H2_silicic_melts_gaillard03,
     H2O_ano_dio_newcombe17,
     H2O_basalt_dixon95,
+    H2O_basalt_dixon95_table5,
     H2O_basalt_mitchell17,
+    H2O_basalt_moore98,
     H2O_lunar_glass_newcombe17,
     H2O_peridotite_sossi23,
 )
@@ -96,7 +87,9 @@ def get_solubility_models() -> dict[str, Solubility]:
     models["H2_kite19"] = H2_kite19
     models["H2O_ano_dio_newcombe17"] = H2O_ano_dio_newcombe17
     models["H2O_basalt_dixon95"] = H2O_basalt_dixon95
+    models["H2O_basalt_dixon95_table5"] = H2O_basalt_dixon95_table5
     models["H2O_basalt_mitchell17"] = H2O_basalt_mitchell17
+    models["H2O_basalt_moore98"] = H2O_basalt_moore98
     models["H2O_lunar_glass_newcombe17"] = H2O_lunar_glass_newcombe17
     models["H2O_peridotite_sossi23"] = H2O_peridotite_sossi23
 

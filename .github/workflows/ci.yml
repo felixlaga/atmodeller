@@ -9,18 +9,43 @@ on:
     branches: [ "main" ]
     paths-ignore:
       - 'docs/**'
+  workflow_dispatch:
+  # Reused by publish.yaml to test before publishing
+  workflow_call:
+
+# A newer push to the same branch or PR cancels the run in progress
+concurrency:
+  group: ci-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
 jobs:
   build:
+    # Named without the coverage flag, so that the names match the required status checks
+    name: build (${{ matrix.os }}, ${{ matrix.python-version }})
     strategy:
       matrix:
-        python-version: [ "3.11" ] #, "3.12", "3.13" ]
-        os: [ "ubuntu-latest" ]
+        include:
+          # Lowest and highest supported Python on Linux, and Apple-silicon macOS. Coverage is
+          # measured on one leg only, since it roughly doubles the test time.
+          - { os: "ubuntu-latest", python-version: "3.11", coverage: false }
+          - { os: "ubuntu-latest", python-version: "3.13", coverage: true }
+          - { os: "macos-latest", python-version: "3.13", coverage: false }
       fail-fast: false
     runs-on: ${{ matrix.os }}
+    timeout-minutes: ${{ matrix.coverage && 45 || 30 }}
+    env:
+      UV_PYTHON: ${{ matrix.python-version }}
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          # Full history, so that the changed-lines check can compare with the base branch. (An
+          # expression such as `matrix.coverage && 0 || 1` would always give 1, since 0 is falsy.)
+          fetch-depth: 0
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
@@ -30,16 +55,47 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v6
         with:
-          # Install a specific version of uv.
-          version: "0.7.20"
+          # The same uv version as used to write uv.lock
+          version: "0.12.3"
           enable-cache: true
           cache-dependency-glob: uv.lock
 
+      # --locked installs exactly the versions in uv.lock, and fails if it is out of date with
+      # pyproject.toml
       - name: Install the project
-        run: uv sync --all-extras --dev
+        run: uv sync --locked --all-extras --dev
 
       - name: Checks with pre-commit
+        if: matrix.coverage
         run: uv run pre-commit run --all-files
 
       - name: Run tests
-        run: uv run pytest
+        if: ${{ !matrix.coverage }}
+        run: uv run pytest -m "not performance" --durations=20
+
+      # Line coverage with sys.monitoring (COVERAGE_CORE=sysmon) is the fastest option on Python
+      # 3.13; branch coverage would fall back to the slower tracer
+      - name: Run tests with coverage
+        if: matrix.coverage
+        env:
+          COVERAGE_CORE: sysmon
+        run: >-
+          uv run pytest -m "not performance" --durations=20
+          --cov=atmodeller --cov-report=xml --cov-report=term
+
+      # The organisation allows uploads without a token, so a missing secret is not an error
+      - name: Upload coverage to Codecov
+        if: matrix.coverage
+        uses: codecov/codecov-action@v5
+        with:
+          files: coverage.xml
+          flags: unit
+          disable_search: true
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false
+
+      - name: Check coverage of the changed lines
+        if: matrix.coverage && github.event_name == 'pull_request'
+        run: >-
+          uv run diff-cover coverage.xml --compare-branch=origin/${{ github.base_ref }}
+          --fail-under=80

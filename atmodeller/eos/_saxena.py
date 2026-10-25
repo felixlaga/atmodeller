@@ -1,42 +1,27 @@
+# SPDX-FileCopyrightText: 2024-2026 Dan J. Bower <dbower@eaps.ethz.ch>
+# SPDX-FileCopyrightText: 2024-2026 Paolo A. Sossi
 #
-# Copyright 2024 Dan J. Bower
-#
-# This file is part of Atmodeller.
-#
-# Atmodeller is free software: you can redistribute it and/or modify it under the terms of the GNU
-# General Public License as published by the Free Software Foundation, either version 3 of the
-# License, or (at your option) any later version.
-#
-# Atmodeller is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
-# even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License along with Atmodeller. If not,
-# see <https://www.gnu.org/licenses/>.
-#
+# SPDX-License-Identifier: Apache-2.0
+
 """Real gas EOSs from :cite:t:`SF87,SF87a,SF88,SS92`
 
 The papers state a volume integration from :math:`P_0` to :math:`P`, where :math:`f(P_0=1)=1`.
-Hence for bounded EOS a minimum pressure of 1 bar is assumed.
+Hence for a bounded EOS a minimum pressure of 1 bar is assumed.
 """
 
-import logging
 from abc import abstractmethod
 
 import equinox as eqx
 import jax.numpy as jnp
-from jaxmod.constants import GAS_CONSTANT_BAR
-from jaxmod.utils import as_j64, to_native_floats
-from jaxtyping import Array, ArrayLike
+from jaxtyping import ArrayLike
 
 from atmodeller import override
 from atmodeller.constants import STANDARD_PRESSURE
 from atmodeller.eos._aggregators import CombinedRealGas
 from atmodeller.eos.core import RealGas
+from atmodeller.jax_utils import FloatArray, as_j64, to_native_floats
+from atmodeller.sci_utils import GAS_CONSTANT_BAR, ExperimentalCalibration
 from atmodeller.thermodata import CriticalData, critical_data_dictionary
-from atmodeller.utilities import ExperimentalCalibration
-
-logger: logging.Logger = logging.getLogger(__name__)
 
 
 class SaxenaABC(RealGas):
@@ -45,34 +30,34 @@ class SaxenaABC(RealGas):
     This form of the EOS can also be used for the models in :cite:t:`SF87a,SF87,SF88`.
 
     Args:
-        a_coefficients: `a` coefficients
-        b_coefficients: `b` coefficients
-        c_coefficients: `c` coefficients
-        d_coefficients: `d` coefficients
+        a_coefficients: :math:`a` coefficients
+        b_coefficients: :math:`b` coefficients
+        c_coefficients: :math:`c` coefficients
+        d_coefficients: :math:`d` coefficients
         critical_data: Critical data. Defaults to empty.
     """
 
     a_coefficients: tuple[float, ...] = eqx.field(converter=to_native_floats)
-    """`a` coefficients"""
+    """:math:`a` coefficients"""
     b_coefficients: tuple[float, ...] = eqx.field(converter=to_native_floats)
-    """`b` coefficients"""
+    """:math:`b` coefficients"""
     c_coefficients: tuple[float, ...] = eqx.field(converter=to_native_floats)
-    """`c` coefficients"""
+    """:math:`c` coefficients"""
     d_coefficients: tuple[float, ...] = eqx.field(converter=to_native_floats)
-    """`d` coefficients"""
+    """:math:`d` coefficients"""
     critical_data: CriticalData = CriticalData()
     """Critical data"""
 
     @abstractmethod
     def _get_compressibility_coefficient(
         self, scaled_temperature: ArrayLike, coefficients: tuple[float, ...]
-    ) -> Array:
+    ) -> FloatArray:
         """General form of the coefficients for the compressibility calculation
         :cite:p:`SS92{Equation 1}`
 
         Args:
-            scaled_temperature: Scaled temperature, which is dimensionless
-            coefficients: Tuple of the coefficients `a`, `b`, `c`, or `d`.
+            scaled_temperature: Scaled temperature (dimensionless)
+            coefficients: Tuple of the coefficients :math:`a`, :math:`b`, :math:`c`, or :math:`d`.
 
         Returns
             The relevant coefficient
@@ -80,101 +65,88 @@ class SaxenaABC(RealGas):
 
     @property
     def critical_pressure(self) -> float:
-        """Critical pressure in bar"""
+        """Critical Pressure (bar)"""
         return self.critical_data.pressure
 
     @property
     def critical_temperature(self) -> float:
-        """Critical temperature in K"""
+        """Critical temperature (K)"""
         return self.critical_data.temperature
 
-    @eqx.filter_jit
-    def a(self, scaled_temperature: ArrayLike) -> Array:
-        """`a` parameter
+    def a(self, scaled_temperature: ArrayLike) -> FloatArray:
+        """:math:`a` parameter
 
         Args:
-            scaled_temperature: Scaled temperature, which is dimensionless
+            scaled_temperature: Scaled temperature (dimensionless)
 
         Returns:
             a parameter
         """
-        a: Array = self._get_compressibility_coefficient(scaled_temperature, self.a_coefficients)
+        return self._get_compressibility_coefficient(scaled_temperature, self.a_coefficients)
 
-        return a
-
-    @eqx.filter_jit
-    def b(self, scaled_temperature: ArrayLike) -> Array:
-        """`b` parameter
+    def b(self, scaled_temperature: ArrayLike) -> FloatArray:
+        """:math:`b` parameter
 
         Args:
-            scaled_temperature: Scaled temperature, which is dimensionless
+            scaled_temperature: Scaled temperature (dimensionless)
 
         Returns:
             b parameter
         """
-        b: Array = self._get_compressibility_coefficient(scaled_temperature, self.b_coefficients)
+        return self._get_compressibility_coefficient(scaled_temperature, self.b_coefficients)
 
-        return b
-
-    @eqx.filter_jit
-    def c(self, scaled_temperature: ArrayLike) -> Array:
-        """`c` parameter
+    def c(self, scaled_temperature: ArrayLike) -> FloatArray:
+        """:math:`c` parameter
 
         Args:
-            scaled_temperature: Scaled temperature, which is dimensionless
+            scaled_temperature: Scaled temperature (dimensionless)
 
         Returns:
             c parameter
         """
-        c: Array = self._get_compressibility_coefficient(scaled_temperature, self.c_coefficients)
+        return self._get_compressibility_coefficient(scaled_temperature, self.c_coefficients)
 
-        return c
-
-    @eqx.filter_jit
-    def d(self, scaled_temperature: ArrayLike) -> Array:
-        """`d` parameter
+    def d(self, scaled_temperature: ArrayLike) -> FloatArray:
+        """:math:`d` parameter
 
         Args:
-            scaled_temperature: Scaled temperature, which is dimensionless
+            scaled_temperature: Scaled temperature (dimensionless)
 
         Returns:
             d parameter
         """
-        d: Array = self._get_compressibility_coefficient(scaled_temperature, self.d_coefficients)
+        return self._get_compressibility_coefficient(scaled_temperature, self.d_coefficients)
 
-        return d
-
-    @eqx.filter_jit
     def scaled_pressure(self, pressure: ArrayLike) -> ArrayLike:
         """Scaled (reduced) pressure
 
         Args:
-            pressure: Pressure in bar
+            pressure: Pressure (bar)
 
         Returns:
-            The scaled (reduced) pressure, which is dimensionless
+            The scaled (reduced) pressure (dimensionless)
         """
         scaled_pressure: ArrayLike = pressure / self.critical_pressure
 
         return scaled_pressure
 
-    @eqx.filter_jit
     def scaled_temperature(self, temperature: ArrayLike) -> ArrayLike:
         """Scaled (reduced) temperature
 
         Args:
-            temperature: Temperature in K
+            temperature: Temperature (K)
 
         Returns:
-            The scaled (reduced) temperature, which is dimensionless
+            The scaled (reduced) temperature (dimensionless)
         """
         scaled_temperature: ArrayLike = temperature / self.critical_temperature
 
         return scaled_temperature
 
     @override
-    @eqx.filter_jit
-    def compressibility_factor(self, temperature: ArrayLike, pressure: ArrayLike) -> Array:
+    def compressibility_factor(
+        self, temperature: ArrayLike, pressure: ArrayLike, mole_fractions: ArrayLike | None = None
+    ) -> FloatArray:
         """Compressibility factor :cite:p:`SS92{Equation 2}`
 
         This overrides the base class because the compressibility factor is used to determine the
@@ -182,15 +154,20 @@ class SaxenaABC(RealGas):
         factor.
 
         Args:
-            temperature: Temperature in K
-            pressure: Pressure in bar
+            temperature: Temperature (K)
+            pressure: Pressure (bar)
+            mole_fractions: Mole fractions of all species in the phase (dimensionless). Ignored by
+                default for pure-phase EOSs; may be used by overriding subclasses. Defaults to
+                ``None``.
 
         Returns:
-            The compressibility factor, which is dimensionless
+            The compressibility factor (dimensionless)
         """
+        del mole_fractions
+
         Tr: ArrayLike = self.scaled_temperature(temperature)
         Pr: ArrayLike = self.scaled_pressure(pressure)
-        Z: Array = (
+        Z: FloatArray = (
             self.a(Tr)
             + self.b(Tr) * Pr
             + self.c(Tr) * jnp.square(Pr)
@@ -200,48 +177,60 @@ class SaxenaABC(RealGas):
         return Z
 
     @override
-    @eqx.filter_jit
-    def log_fugacity(self, temperature: ArrayLike, pressure: ArrayLike) -> Array:
-        log_fugacity: Array = self.volume_integral(temperature, pressure) / (
+    def log_fugacity(
+        self, temperature: ArrayLike, pressure: ArrayLike, mole_fractions: ArrayLike | None = None
+    ) -> FloatArray:
+        del mole_fractions
+        log_fugacity: FloatArray = self.volume_integral(temperature, pressure) / (
             GAS_CONSTANT_BAR * temperature
         )
 
         return log_fugacity
 
     @override
-    @eqx.filter_jit
-    def volume(self, temperature: ArrayLike, pressure: ArrayLike) -> Array:
+    def volume(
+        self, temperature: ArrayLike, pressure: ArrayLike, mole_fractions: ArrayLike | None = None
+    ) -> FloatArray:
         r"""Volume :cite:p:`SS92{Equation 1}`
 
         Args:
-            temperature: Temperature in K
-            pressure: Pressure in bar
+            temperature: Temperature (K)
+            pressure: Pressure (bar)
+            mole_fractions: Mole fractions of all species in the phase (dimensionless). Ignored by
+                default for pure-phase EOSs; may be used by overriding subclasses. Defaults to
+                ``None``.
 
         Returns:
-            Volume in :math:`\mathrm{m}^3\ \mathrm{mol}^{-1}`
+            Volume (:math:`\mathrm{m}^3\ \mathrm{mol}^{-1}`)
         """
-        Z: Array = self.compressibility_factor(temperature, pressure)
+        Z: FloatArray = self.compressibility_factor(temperature, pressure, mole_fractions)
         volume_ideal: ArrayLike = GAS_CONSTANT_BAR * temperature / pressure
-        volume: Array = Z * volume_ideal
+        volume: FloatArray = Z * volume_ideal
 
         return volume
 
     @override
-    @eqx.filter_jit
-    def volume_integral(self, temperature: ArrayLike, pressure: ArrayLike) -> Array:
+    def volume_integral(
+        self, temperature: ArrayLike, pressure: ArrayLike, mole_fractions: ArrayLike | None = None
+    ) -> FloatArray:
         r"""Volume integral :cite:p:`SS92{Equation 11}`
 
         Args:
-            temperature: Temperature in K
-            pressure: Pressure in bar
+            temperature: Temperature (K)
+            pressure: Pressure (bar)
+            mole_fractions: Mole fractions of all species in the phase (dimensionless). Ignored by
+                default for pure-phase EOSs; may be used by overriding subclasses. Defaults to
+                ``None``.
 
         Returns:
-            Volume integral in :math:`\mathrm{m}^3\ \mathrm{bar}\ \mathrm{mol}^{-1}`
+            Volume integral (:math:`\mathrm{m}^3\ \mathrm{bar}\ \mathrm{mol}^{-1}`)
         """
+        del mole_fractions
+
         Tr: ArrayLike = self.scaled_temperature(temperature)
         Pr: ArrayLike = self.scaled_pressure(pressure)
         STANDARD_PRESSURE_SCALED: float = STANDARD_PRESSURE / self.critical_pressure
-        volume_integral: Array = (
+        volume_integral: FloatArray = (
             (
                 self.a(Tr) * jnp.log(Pr / STANDARD_PRESSURE_SCALED)
                 + self.b(Tr) * (Pr - STANDARD_PRESSURE_SCALED)
@@ -259,21 +248,20 @@ class SaxenaFiveCoefficients(SaxenaABC):
     """Real gas EOS with five coefficients, which is generally used for low pressures"""
 
     @override
-    @eqx.filter_jit
     def _get_compressibility_coefficient(
         self, scaled_temperature: ArrayLike, coefficients: tuple[float, ...]
-    ) -> Array:
+    ) -> FloatArray:
         """General form of the coefficients for the compressibility calculation
         :cite:p:`SS92{Equation 3b}`
 
         Args:
-            temperature: Scaled temperature, which is dimensionless
-            coefficients: Tuple of the coefficients `a`, `b`, `c`, or `d`.
+            temperature: Scaled temperature (dimensionless)
+            coefficients: Tuple of the coefficients :math:`a`, :math:`b`, :math:`c`, or :math:`d`.
 
         Returns
             The relevant coefficient
         """
-        coefficient: Array = (
+        coefficient: FloatArray = (
             as_j64(coefficients[0])  # To keep type checker happy
             + coefficients[1] / scaled_temperature
             + coefficients[2] / jnp.power(scaled_temperature, 3.0 / 2)
@@ -288,21 +276,20 @@ class SaxenaEightCoefficients(SaxenaABC):
     """Real gas EOS with eight coefficients, which is generally used for high pressures"""
 
     @override
-    @eqx.filter_jit
     def _get_compressibility_coefficient(
         self, scaled_temperature: ArrayLike, coefficients: tuple[float, ...]
-    ) -> Array:
+    ) -> FloatArray:
         """General form of the coefficients for the compressibility calculation
         :cite:p:`SS92{Equation 3a}`
 
         Args:
-            temperature: Scaled temperature, which is dimensionless
-            coefficients: Tuple of the coefficients `a`, `b`, `c`, or `d`.
+            temperature: Scaled temperature (dimensionless)
+            coefficients: Tuple of the coefficients :math:`a`, :math:`b`, :math:`c`, or :math:`d`.
 
         Returns
             The relevant coefficient
         """
-        coefficient: Array = (
+        coefficient: FloatArray = (
             as_j64(coefficients[0])  # To keep type checker happy
             + coefficients[1] * scaled_temperature
             + coefficients[2] / scaled_temperature
@@ -329,8 +316,8 @@ _H2_low_pressure_SS92: RealGas = SaxenaFiveCoefficients(
 The coefficients are the same as for the corresponding states model in :cite:t:`SS92{Table 1a}`
 because they originate from :cite:t:`SF87a{Equation 23}`.
 
-In :cite:t:`SF87a{Equation 23}` the final `c` coefficient is 0.1472e-1, not 0.1427e-1 as given in
-:cite:t:`SS92{Table 1b}`. The earlier work is assumed to be correct.
+In :cite:t:`SF87a{Equation 23}` the final :math:`c` coefficient is 0.1472e-1, not 0.1427e-1 as
+given in :cite:t:`SS92{Table 1b}`. The earlier work is assumed to be correct.
 """
 _H2_high_pressure_SS92: RealGas = SaxenaEightCoefficients(
     a_coefficients=(2.2615, 0, -6.8712e1, 0, -1.0573e4, 0, 0, -1.6936e-1),
@@ -340,25 +327,11 @@ _H2_high_pressure_SS92: RealGas = SaxenaEightCoefficients(
 )
 """H2 high pressure (>1000 bar) :cite:p:`SS92{Table 1b}`
 
-This model cannot be a corresponding states model because the data do not appear correct when
-plotted, so presumably it requires the actual temperature and pressure (hence critical data are not
-provided as arguments). Visually, the fit compares well to :obj:`_H2_high_pressure_SS92_refit`.
-"""
-
-_H2_high_pressure_SS92_refit: RealGas = SaxenaEightCoefficients(
-    a_coefficients=(1.00574428e00, 0, 1.93022092e-03, 0, -3.79261142e-01, 0, 0, -2.44217972e-03),
-    b_coefficients=(1.31517888e-03, 0, 7.22328441e-02, 0, 4.84354163e-02, 0, 0, -4.19624507e-04),
-    c_coefficients=(2.64454401e-06, 0, -5.18445629e-05, 0, -2.05045979e-04, 0, 0, -3.64843213e-07),
-    d_coefficients=(2.28281107e-11, 0, -1.07138603e-08, 0, 3.67720815e-07, 0, 0, 0),
-    critical_data=critical_data_dictionary["H2"],
-)
-"""H2 high pressure (>1000 bar)
-
-This model has been refitted using a least square regression using the experimental volume,
-pressure, and temperature data from :cite:t:`P69,RRY83` assuming the same functional form for
-pressures above 1 kbar as given by :cite:t:`SS92{Equation 2 and 3a}`, including which coefficients
-are set to zero :cite:p:`SS92{Table 1b}`. The refitting is performed using reduced temperature and
-pressure.
+These coefficients are those of :cite:t:`SF88`, rewritten from reduced to absolute temperature (K)
+and pressure (bar) using the critical values of :cite:t:`SF88` (:math:`T_c=33.1` K,
+:math:`P_c=13` bar), so no critical data are given (they default to 1). Converting the
+:cite:t:`SF88` coefficients reproduces this table to four significant figures, provided the final
+:math:`c` coefficient of :cite:t:`SF88` is taken as 5.0897e-8; the printed 5.0897e-5 is a misprint.
 """
 
 H2_SS92: RealGas = CombinedRealGas.create(
@@ -370,28 +343,34 @@ H2_SS92: RealGas = CombinedRealGas.create(
 )
 """H2 EOS, which combines the low and high pressure EOS :cite:p:`SS92{Table 1b}`
 
-Impose an upper bound on the high pressure fit to avoid unphysical extrapolation for pressures
-beyond around 100 kbar. This limit was determined by visual inspection of plots of the fugacity
-versus pressure at various temperatures, where beyond 100 kbar a sudden downturn in fugacity was
-observed due to the breakdown of the functional form (polynomial representation).
+:cite:t:`SF87,SF87a` included H2 in their corresponding states equations, but :cite:t:`SF88`
+found that H2, with its softer intermolecular potential, is not well represented by corresponding
+states: above 5 kbar the :cite:t:`SF87{Equation 11}` model overestimates the observed
+compressibility factor of H2 by 7-10% along the shock-wave data. :cite:t:`SS92` therefore adopt the
+H2-specific fit of :cite:t:`SF88` above 1 kbar, which supersedes the corresponding states model for
+H2, while the branch below 1 kbar retains the corresponding states form of
+:cite:t:`SF87a{Equation 23}`.
+
+The high pressure fit is constrained by static data at a few kbar and by shock-wave data that lie
+along a path of rising temperature and pressure, from about 10 kbar at 300 K to about 115 kbar at
+3500 K :cite:p:`RRY83,SF87{Table 1}`. Along this path it reproduces the observed compressibility
+factor to within 1.5%, but away from it the polynomial is unconstrained. The upper bound of
+100 kbar is retained for high temperature use, beyond which the polynomial is not evaluated and
+the EOS is extrapolated.
+
+At lower temperatures the fit breaks down well below 100 kbar. The compressibility factor stops
+increasing with pressure at about 20, 35, 50 and 70 kbar at 300, 600, 1000 and 2000 K,
+respectively, and becomes negative (so the fugacity decreases with pressure) above about 41, 62 and
+87 kbar at 300, 500 and 800 K, respectively.
+
+Between 2000 and 3000 K and 1 to 50 kbar, compared with :cite:t:`CD21`, which also reproduces the
+shock-wave data, the compressibility factor deviates by up to 6% at 2000 K and up to 25% at 3000 K,
+and the fugacity by up to about 8% at 2000 K and 30% at 3000 K. At high temperature the fugacity
+error arises mostly at 1 to 5 kbar, where the compressibility factor falls below unity. For this
+range the ``H2_chabrier21`` EOS model is preferred.
 """
 
-_H2_high_pressure_SF88: RealGas = SaxenaEightCoefficients(
-    a_coefficients=(1.6688, 0, -2.0759, 0, -9.6173, 0, 0, -0.1694),
-    b_coefficients=(-2.0410e-3, 0, 7.9230e-2, 0, 5.4295e-2, 0, 0, 4.0887e-4),
-    c_coefficients=(-2.1693e-7, 0, 1.7406e-6, 0, -2.1885e-4, 0, 0, 5.0897e-5),
-    d_coefficients=(-7.1635e-12, 0, 1.6197e-10, 0, -4.8181e-9, 0, 0, 0),
-    critical_data=critical_data_dictionary["H2"],
-)
-"""H2 high pressure :cite:p:`SF88{Table on page 1196}`
-
-This model does not at all agree with :cite:t:`SS92` or data, regardless of whether the temperature
-and pressure inputs are the actual or reduced values.
-
-Further investigations are warranted before this model should be used.
-"""
-
-SO2_SS92: RealGas = SaxenaEightCoefficients(
+O2S_SS92: RealGas = SaxenaEightCoefficients(
     a_coefficients=(0.92854, 0.43269e-1, -0.24671, 0, 0.24999, 0, -0.53182, -0.16461e-1),
     b_coefficients=(
         0.84866e-3,
@@ -417,8 +396,8 @@ SO2_SS92: RealGas = SaxenaEightCoefficients(
     critical_data=critical_data_dictionary["O2S"],
 )
 """SO2 EOS :cite:p:`SS92{Table 1c}` from 1 to 10e3 bar"""
-SO2_SS92_bounded: RealGas = CombinedRealGas.create(
-    [SO2_SS92], [ExperimentalCalibration(pressure_min=1, pressure_max=10000)]
+O2S_SS92_bounded: RealGas = CombinedRealGas.create(
+    [O2S_SS92], [ExperimentalCalibration(pressure_min=1, pressure_max=10000)]
 )
 """SO2 EOS :cite:p:`SS92{Table 1c}` from 1 to 10e3 bar"""
 
@@ -472,10 +451,23 @@ def get_corresponding_states_SS92(species: str) -> RealGas:
     """Corresponding states :cite:p:`SS92{Table 1a}`
 
     Coefficients for the low and medium pressure regimes are from
-    :cite:t:`SF87a{Equation 23 and 21}`, respectively, although some values disagree either in
-    value or sign with :cite:t:`SS92{Table 1a}`. Eventually it should be determined which is right,
-    but for the time being it is assumed that the earlier work is correct. Coefficients for the
-    high pressure regime are from :cite:t:`SF87{Equation 11}`.
+    :cite:t:`SF87a{Equation 23 and 21}`, respectively, and for the high pressure regime from
+    :cite:t:`SF87{Equation 11}`. Two printed values conflict between sources:
+
+    - Low pressure, final :math:`c` coefficient: 0.1472e-1 in :cite:t:`SF87a{Equation 23}`
+      (abstract and body) versus 0.1427e-1 in :cite:t:`SS92{Table 1a}`. The original source is
+      adopted; the SS92 value is likely a transposition when transcribing from :cite:t:`SF87a`. For
+      T >= 400 K the two values differ by up to about 0.03 in Z below 1 kbar, within the stated fit
+      error of 0.076.
+    - Medium pressure, :math:`c` coefficient of :math:`T_r^{-2}`: -1.4164e-4 in the body of
+      :cite:t:`SF87a{Equation 21}` and in :cite:t:`SS92{Table 1a}`, but +1.4164e-4 in the
+      abstract of :cite:t:`SF87a`, which is a misprint. The negative value agrees to within a
+      few percent with the observed CO2 compressibility factors in :cite:t:`SF87a{Table 1}`
+      (the positive value is 13-35% off) and agrees better with independent EOSs (e.g. CORK,
+      Zhang and Duan) at 1-5 kbar.
+
+    Although :cite:t:`SF87,SF87a` included H2 in their fits, this function should not be used for
+    H2; see :obj:`H2_SS92`.
 
     Args:
         species: A species
@@ -489,7 +481,7 @@ def get_corresponding_states_SS92(species: str) -> RealGas:
     low_pressure: RealGas = SaxenaFiveCoefficients(
         a_coefficients=(1, 0, 0, 0, 0),
         b_coefficients=(0, 0.9827e-1, 0, -0.2709, 0),
-        # Saxena and Fei (1987) CMP, Eq. 23, C final coefficient = 0.1472e-1 (not 0.1427e-1)
+        # SF87a Eq. 23: final c coefficient 0.1472e-1 (SS92 Table 1a: 0.1427e-1, likely a typo)
         c_coefficients=(0, 0, -0.1030e-2, 0, 0.1472e-1),
         d_coefficients=(0, 0, 0, 0, 0),
         critical_data=critical_data,
@@ -499,8 +491,8 @@ def get_corresponding_states_SS92(species: str) -> RealGas:
     medium_pressure: RealGas = SaxenaEightCoefficients(
         a_coefficients=(1, 0, 0, 0, -5.917e-1, 0, 0, 0),
         b_coefficients=(0, 0, 9.122e-2, 0, 0, 0, 0, 0),
-        # Saxena and Fei (1987) CMP, Eq. 21, C first coefficient = 1.4164e-4 (not negative)
-        c_coefficients=(0, 0, 0, 0, 1.4164e-4, 0, 0, -2.8349e-6),
+        # SF87a Eq. 21 (body) and SS92 Table 1a: -1.4164e-4 (SF87a abstract misprints the sign)
+        c_coefficients=(0, 0, 0, 0, -1.4164e-4, 0, 0, -2.8349e-6),
         d_coefficients=(0, 0, 0, 0, 0, 0, 0, 0),
         critical_data=critical_data,
     )
@@ -545,12 +537,6 @@ Ar_SF87: RealGas = get_corresponding_states_SS92("Ar")
 The low pressure extension given by the corresponding states model of :cite:t:`SS92{Table 1a}` is
 also adopted.
 """
-H2_SF87: RealGas = get_corresponding_states_SS92("H2")
-"""H2 corresponding states :cite:p:`SF87{Equation 11}`
-
-The low pressure extension given by the corresponding states model of :cite:t:`SS92{Table 1a}` is
-also adopted.
-"""
 N2_SF87: RealGas = get_corresponding_states_SS92("N2")
 """N2 corresponding states :cite:p:`SF87{Equation 11}`
 
@@ -578,6 +564,6 @@ def get_saxena_eos_models() -> dict[str, RealGas]:
     eos_models["N2_cs_saxena87"] = N2_SF87
     eos_models["O2_cs_shi92"] = O2_SS92
     eos_models["S2_cs_shi92"] = S2_SS92
-    eos_models["SO2_shi92"] = SO2_SS92_bounded
+    eos_models["O2S_shi92"] = O2S_SS92_bounded
 
     return eos_models

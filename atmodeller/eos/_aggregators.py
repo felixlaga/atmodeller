@@ -1,39 +1,24 @@
+# SPDX-FileCopyrightText: 2024-2026 Dan J. Bower <dbower@eaps.ethz.ch>
+# SPDX-FileCopyrightText: 2024-2026 Paolo A. Sossi
 #
-# Copyright 2024 Dan J. Bower
-#
-# This file is part of Atmodeller.
-#
-# Atmodeller is free software: you can redistribute it and/or modify it under the terms of the GNU
-# General Public License as published by the Free Software Foundation, either version 3 of the
-# License, or (at your option) any later version.
-#
-# Atmodeller is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
-# even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License along with Atmodeller. If not,
-# see <https://www.gnu.org/licenses/>.
-#
+# SPDX-License-Identifier: Apache-2.0
+
 """Classes that aggregate EOS
 
 Units for temperature and pressure are K and bar, respectively.
 """
 
-import logging
 from collections.abc import Callable, Sequence
 
 import equinox as eqx
 import jax.numpy as jnp
 from jax import lax
-from jaxmod.constants import GAS_CONSTANT_BAR
-from jaxmod.utils import as_j64, to_hashable, to_native_floats
 from jaxtyping import Array, ArrayLike
 
 from atmodeller import override
 from atmodeller.eos.core import IdealGas, RealGas, RealGasBase
-from atmodeller.utilities import ExperimentalCalibration
-
-logger: logging.Logger = logging.getLogger(__name__)
+from atmodeller.jax_utils import FloatArray, as_j64, to_hashable, to_native_floats
+from atmodeller.sci_utils import GAS_CONSTANT_BAR, ExperimentalCalibration
 
 
 class CombinedRealGas(RealGas):
@@ -41,6 +26,9 @@ class CombinedRealGas(RealGas):
 
     This class computes the contribution to the volume integral separately for each EOS based on
     the range covered by its P-T calibration, and then combines them.
+
+    Note:
+        This is not presently compatible with batched mole_fractions.
 
     Args:
         real_gases: Real gases to combine
@@ -78,8 +66,9 @@ class CombinedRealGas(RealGas):
 
         Reasonable extrapolation behaviour is required to ensure that the function is bounded to
         avoid throwing NaNs or infs which will crash the solver. Physically, it is reasonable to
-        extend the lower bound using the ideal gas law and the upper bound assuming a linear
-        pressure dependence of the compressibility factor.
+        extend the lower bound using the ideal gas law and the upper bound by holding the
+        compressibility factor at its value at the maximum calibration pressure (the linear
+        pressure term is currently disabled; see :meth:`UpperBoundRealGas._dzdp0`).
 
         There is no bounding for temperature; hence it is assumed that the extrapolation
         behaviour of temperature is reasonable. This is practically useful because the calibrations
@@ -108,8 +97,7 @@ class CombinedRealGas(RealGas):
 
     @staticmethod
     def _append_lower_bound(
-        real_gases: list[RealGas],
-        calibrations: list[ExperimentalCalibration],
+        real_gases: list[RealGas], calibrations: list[ExperimentalCalibration]
     ) -> None:
         """Appends the lower bound, which gives ideal gas behaviour
 
@@ -125,14 +113,13 @@ class CombinedRealGas(RealGas):
 
     @staticmethod
     def _append_upper_bound(
-        real_gases: list[RealGas],
-        calibrations: list[ExperimentalCalibration],
+        real_gases: list[RealGas], calibrations: list[ExperimentalCalibration]
     ) -> None:
         """Appends the upper bound
 
         Args:
             real_gases: Real gases to combine
-            calibrations: Experimental calibrations that correspond to `real_gases`
+            calibrations: Experimental calibrations that correspond to ``real_gases``
         """
         assert calibrations[-1].pressure_max is not None
         pressure_min: float = calibrations[-1].pressure_max
@@ -167,12 +154,11 @@ class CombinedRealGas(RealGas):
 
         return tuple(upper_pressure_bounds)
 
-    @eqx.filter_jit
     def _get_index(self, pressure: ArrayLike) -> Array:
         """Gets the index of the appropriate EOS model based on ``pressure``.
 
         Args:
-            pressure: Pressure in bar
+            pressure: Pressure (bar)
 
         Returns:
             Index of the relevant EOS model
@@ -185,9 +171,10 @@ class CombinedRealGas(RealGas):
         return index
 
     @override
-    @eqx.filter_jit
     # @eqx.debug.assert_max_traces(max_traces=1)
-    def volume(self, temperature: ArrayLike, pressure: ArrayLike) -> ArrayLike:
+    def volume(
+        self, temperature: ArrayLike, pressure: ArrayLike, mole_fractions: ArrayLike | None = None
+    ) -> ArrayLike:
         temperature, pressure = jnp.broadcast_arrays(temperature, pressure)
         original_shape: tuple[int, ...] = temperature.shape
         # jax.debug.print("temperature = {out}", out=temperature)
@@ -200,49 +187,56 @@ class CombinedRealGas(RealGas):
         indices: Array = self._get_index(pressure)
         # jax.debug.print("indices = {out}", out=indices)
 
-        def apply_volume(index: ArrayLike, temperature, pressure) -> Array:
-            return lax.switch(index, self._volume_functions, temperature, pressure)
+        def apply_volume(index: ArrayLike, temperature, pressure, mole_fractions) -> FloatArray:
+            return lax.switch(index, self._volume_functions, temperature, pressure, mole_fractions)
 
-        vmap_volume: Callable = eqx.filter_vmap(apply_volume, in_axes=(0, 0, 0))
-        volume: Array = vmap_volume(indices, temperature, pressure)
+        vmap_volume: Callable = eqx.filter_vmap(apply_volume, in_axes=(0, 0, 0, None))
+        volume: FloatArray = vmap_volume(indices, temperature, pressure, mole_fractions)
         # jax.debug.print("volume = {out}", out=volume)
 
         return jnp.reshape(volume, original_shape)
 
     @override
-    @eqx.filter_jit
     # @eqx.debug.assert_max_traces(max_traces=1)
-    def volume_integral(self, temperature: ArrayLike, pressure: ArrayLike) -> Array:
+    def volume_integral(
+        self, temperature: ArrayLike, pressure: ArrayLike, mole_fractions: ArrayLike | None = None
+    ) -> FloatArray:
         index: Array = self._get_index(pressure)
 
-        def compute_integral(i: Array, pressure_high: ArrayLike, pressure_low: ArrayLike) -> Array:
+        def compute_integral(
+            i: Array,
+            pressure_high: ArrayLike,
+            pressure_low: ArrayLike,
+            mole_fractions: ArrayLike | None,
+        ) -> FloatArray:
             """Computes the volume integral for the given pressure range.
 
             Args:
                 i: Index of the EOS model
                 pressure_high: Upper pressure bound
                 pressure_low: Lower pressure bound
+                mole_fractions: Mole fractions
 
             Returns:
                 Volume integral
             """
-            volume_integral_high: Array = lax.switch(
-                i, self._volume_integral_functions, temperature, pressure_high
+            volume_integral_high: FloatArray = lax.switch(
+                i, self._volume_integral_functions, temperature, pressure_high, mole_fractions
             )
             # jax.debug.print(
             #    "compute_integral: volume_integral_high = {out}", out=volume_integral_high
             # )
-            volume_integral_low: Array = lax.switch(
-                i, self._volume_integral_functions, temperature, pressure_low
+            volume_integral_low: FloatArray = lax.switch(
+                i, self._volume_integral_functions, temperature, pressure_low, mole_fractions
             )
             # jax.debug.print(
             #    "compute_integral: volume_integral_low = {out}", out=volume_integral_low
             # )
-            integral: Array = volume_integral_high - volume_integral_low
+            integral: FloatArray = volume_integral_high - volume_integral_low
 
             return integral
 
-        def scan_fn(carry: Array, i: Array) -> tuple:
+        def scan_fn(carry: FloatArray, i: Array) -> tuple:
             """Scan function for accumulating the volume integral
 
             Args:
@@ -265,19 +259,21 @@ class CombinedRealGas(RealGas):
                 jnp.array(self.upper_pressure_bounds), i, keepdims=False
             )
             # jax.debug.print("pressure_high = {out}", out=pressure_high)
-            contrib_middle: Array = compute_integral(i, pressure_high, pressure_low)
+            contrib_middle: FloatArray = compute_integral(
+                i, pressure_high, pressure_low, mole_fractions
+            )
             carry = carry + jnp.where(mask_middle, contrib_middle, 0.0)
 
             # Final integral
             mask_final: Array = i == index
             # jax.debug.print("mask_final = {out}", out=mask_final)
-            contrib_final: Array = compute_integral(i, pressure, pressure_low)
+            contrib_final: FloatArray = compute_integral(i, pressure, pressure_low, mole_fractions)
             carry = carry + jnp.where(mask_final, contrib_final, 0.0)
             # jax.debug.print("carry = {out}", out=carry)
 
             return carry, None
 
-        def add_first_integral(total_integral: Array) -> Array:
+        def add_first_integral(total_integral: FloatArray) -> FloatArray:
             """Adds the contribution of the first integral to the total integral.
 
             This is necessary because the first integral is not included in the loop over the
@@ -290,20 +286,22 @@ class CombinedRealGas(RealGas):
                 Total integral with the first integral contribution added
             """
             # If the index is 0, then the first integral is the only one that is added.
-            integral: Array = lax.switch(0, self._volume_integral_functions, temperature, pressure)
+            integral: FloatArray = lax.switch(
+                0, self._volume_integral_functions, temperature, pressure, mole_fractions
+            )
             # Otherwise, the first integral is added to the total integral.
-            pressure_max: Array = lax.dynamic_index_in_dim(
+            pressure_max: FloatArray = lax.dynamic_index_in_dim(
                 jnp.array(self.upper_pressure_bounds), 0, keepdims=False
             )
-            integral2: Array = lax.switch(
-                0, self._volume_integral_functions, temperature, pressure_max
+            integral2: FloatArray = lax.switch(
+                0, self._volume_integral_functions, temperature, pressure_max, mole_fractions
             )
 
             # jax.debug.print("add_only_first_integral: integral = {out}", out=integral)
             return jnp.where(index == 0, total_integral + integral, total_integral + integral2)
 
         # Initialize. Must be 0.0 to ensure float array.
-        total_integral: Array = jnp.array(0.0)
+        total_integral: FloatArray = jnp.array(0.0)
         total_integral = add_first_integral(total_integral)
 
         # Scan over the indices of the EOS models.
@@ -317,8 +315,9 @@ class CombinedRealGas(RealGas):
 class UpperBoundRealGas(RealGas):
     """An upper bound for an EOS
 
-    This is used to extrapolate an EOS assuming that the compressibility factor is a linear
-    function of pressure. Importantly, this class is not intended to be used directly, but rather
+    This is used to extrapolate an EOS above its calibration range. The compressibility factor is
+    written as a linear function of pressure, but the gradient is currently zero (see
+    :meth:`_dzdp0`), so it is held at its value at the maximum calibration pressure. Importantly, this class is not intended to be used directly, but rather
     as a component of :class:`~atmodeller.eos._aggregators.CombinedRealGas`.
 
     ``p_eval`` is used to evaluate the compressibility factor and its gradient, and therefore to
@@ -327,16 +326,15 @@ class UpperBoundRealGas(RealGas):
 
     Args:
         real_gas: Real gas to evaluate the compressibility factor at ``p_eval``.
-        p_eval: Evaluation pressure in bar. This is usually the maximum calibration pressure
+        p_eval: Evaluation pressure (bar). This is usually the maximum calibration pressure
             of ``real_gas``. Defaults to ``1`` bar.
     """
 
     real_gas: RealGas
     """Real gas to evaluate the compressibility factor at ``p_eval``"""
     p_eval: float = eqx.field(converter=float, default=1.0)
-    """Evaluation pressure in bar. Defaults to ``1`` bar."""
+    """Evaluation pressure (bar). Defaults to ``1`` bar."""
 
-    @eqx.filter_jit
     # @eqx.debug.assert_max_traces(max_traces=1)
     def _z0(self, temperature: ArrayLike) -> ArrayLike:
         """Compressibility factor of the previous EOS to blend smoothly with.
@@ -345,11 +343,10 @@ class UpperBoundRealGas(RealGas):
         pass :attr:`p_eval` as an array.
 
         Args:
-            temperature: Temperature in K
+            temperature: Temperature (K)
         """
         return self.real_gas.compressibility_factor(temperature, as_j64(self.p_eval))
 
-    @eqx.filter_jit
     # @eqx.debug.assert_max_traces(max_traces=1)
     def _dzdp0(self, temperature: ArrayLike) -> ArrayLike:
         """Gradient of the compressibility factor of the previous EOS to blend smoothly with.
@@ -358,7 +355,7 @@ class UpperBoundRealGas(RealGas):
         pass :attr:`p_eval` as an array.
 
         Args:
-            temperature: Temperature in K
+            temperature: Temperature (K)
         """
         del temperature
 
@@ -370,23 +367,28 @@ class UpperBoundRealGas(RealGas):
         return 0.0  # self.real_gas.dzdp(temperature, as_j64(self.p_eval))
 
     @override
-    @eqx.filter_jit
     # @eqx.debug.assert_max_traces(max_traces=1)
-    def log_fugacity(self, temperature: ArrayLike, pressure: ArrayLike) -> Array:
+    def log_fugacity(  # pragma: no cover
+        self, temperature: ArrayLike, pressure: ArrayLike, mole_fractions: ArrayLike | None = None
+    ) -> Array:
         """Log fugacity cannot be computed.
 
-        This method should not be used because the volume integral is only defined above `p_eval`,
-        meaning that the log fugacity cannot be calculated.
+        This method should not be used because the volume integral is only defined above
+        ``p_eval``, meaning that the log fugacity cannot be calculated.
         """
         del temperature
         del pressure
+        del mole_fractions
 
         raise NotImplementedError("This method should not be used")
 
     @override
-    @eqx.filter_jit
     # @eqx.debug.assert_max_traces(max_traces=1)
-    def compressibility_factor(self, temperature: ArrayLike, pressure: ArrayLike) -> ArrayLike:
+    def compressibility_factor(
+        self, temperature: ArrayLike, pressure: ArrayLike, mole_fractions: ArrayLike | None = None
+    ) -> ArrayLike:
+        del mole_fractions
+
         compressibility_factor: ArrayLike = self._z0(temperature) + self._dzdp0(temperature) * (
             pressure - self.p_eval
         )
@@ -394,11 +396,12 @@ class UpperBoundRealGas(RealGas):
         return compressibility_factor
 
     @override
-    @eqx.filter_jit
     # @eqx.debug.assert_max_traces(max_traces=1)
-    def volume(self, temperature: ArrayLike, pressure: ArrayLike) -> ArrayLike:
+    def volume(
+        self, temperature: ArrayLike, pressure: ArrayLike, mole_fractions: ArrayLike | None = None
+    ) -> ArrayLike:
         volume: ArrayLike = (
-            self.compressibility_factor(temperature, pressure)
+            self.compressibility_factor(temperature, pressure, mole_fractions)
             * GAS_CONSTANT_BAR
             * temperature
             / pressure
@@ -407,10 +410,13 @@ class UpperBoundRealGas(RealGas):
         return volume
 
     @override
-    @eqx.filter_jit
     # @eqx.debug.assert_max_traces(max_traces=1)
-    def volume_integral(self, temperature: ArrayLike, pressure: ArrayLike) -> Array:
-        volume_integral: Array = (
+    def volume_integral(
+        self, temperature: ArrayLike, pressure: ArrayLike, mole_fractions: ArrayLike | None = None
+    ) -> FloatArray:
+        del mole_fractions
+
+        volume_integral: FloatArray = (
             (
                 jnp.log(pressure / self.p_eval)
                 * (self._z0(temperature) - self._dzdp0(temperature) * self.p_eval)
@@ -429,13 +435,16 @@ class CombinedRealGasFugacity(RealGasBase):
     This directly obtains the (log) fugacity at the relevant pressure by selecting the appropriate
     EOS model based on the pressure bounds of each calibration.
 
+    Note:
+        This is not presently compatible with batched mole_fractions.
+
     Args:
         real_gases: Real gases to use
         calibrations: Experimental calibrations that correspond to ``real_gases``
         min_log_fugacity_coefficient: Minimum log fugacity coefficient to avoid numerical issues.
-            Defaults to ``-15``.
+            Defaults to ``None`` (no clipping).
         max_log_fugacity_coefficient: Maximum log fugacity coefficient to avoid numerical issues.
-            Defaults to ``15``.
+            Defaults to ``None`` (no clipping).
     """
 
     real_gases: tuple[RealGasBase, ...]
@@ -445,17 +454,17 @@ class CombinedRealGasFugacity(RealGasBase):
     upper_pressure_bounds: tuple[float, ...] = eqx.field(converter=to_native_floats)
     """Upper pressure bounds"""
     _log_fugacity_coefficient_functions: tuple[Callable, ...]
-    min_log_fugacity_coefficient: float
+    min_log_fugacity_coefficient: float | None
     """Minimum log fugacity coefficient to avoid numerical issues"""
-    max_log_fugacity_coefficient: float
+    max_log_fugacity_coefficient: float | None
     """Maximum log fugacity coefficient to avoid numerical issues"""
 
     def __init__(
         self,
         real_gases: tuple[RealGasBase, ...],
         calibrations: tuple[ExperimentalCalibration, ...],
-        min_log_fugacity_coefficient: float = -15,
-        max_log_fugacity_coefficient: float = 15,
+        min_log_fugacity_coefficient: float | None = None,
+        max_log_fugacity_coefficient: float | None = None,
     ):
         self.real_gases = real_gases
         self.calibrations = calibrations
@@ -492,12 +501,11 @@ class CombinedRealGasFugacity(RealGasBase):
 
         return tuple(upper_pressure_bounds)
 
-    @eqx.filter_jit
     def _get_index(self, pressure: ArrayLike) -> Array:
         """Gets the index of the appropriate EOS model based on ``pressure``.
 
         Args:
-            pressure: Pressure in bar
+            pressure: Pressure (bar)
 
         Returns:
             Index of the relevant EOS model
@@ -509,8 +517,9 @@ class CombinedRealGasFugacity(RealGasBase):
 
         return index
 
-    @eqx.filter_jit
-    def log_fugacity(self, temperature: ArrayLike, pressure: ArrayLike) -> Array:
+    def log_fugacity(
+        self, temperature: ArrayLike, pressure: ArrayLike, mole_fractions: ArrayLike | None = None
+    ) -> FloatArray:
         temperature, pressure = jnp.broadcast_arrays(temperature, pressure)
         original_shape: tuple[int, ...] = temperature.shape
         # jax.debug.print("temperature = {out}", out=temperature)
@@ -523,25 +532,31 @@ class CombinedRealGasFugacity(RealGasBase):
         indices: Array = self._get_index(pressure)
         # jax.debug.print("indices = {out}", out=indices)
 
-        def apply_log_fugacity_coefficient(index: ArrayLike, temperature, pressure) -> Array:
+        def apply_log_fugacity_coefficient(
+            index: ArrayLike, temperature, pressure, mole_fractions
+        ) -> FloatArray:
             return lax.switch(
-                index, self._log_fugacity_coefficient_functions, temperature, pressure
+                index,
+                self._log_fugacity_coefficient_functions,
+                temperature,
+                pressure,
+                mole_fractions,
             )
 
         vmap_log_fugacity_coefficient: Callable = eqx.filter_vmap(
-            apply_log_fugacity_coefficient, in_axes=(0, 0, 0)
+            apply_log_fugacity_coefficient, in_axes=(0, 0, 0, None)
         )
-        log_fugacity_coefficient: Array = vmap_log_fugacity_coefficient(
-            indices, temperature, pressure
+        log_fugacity_coefficient: FloatArray = vmap_log_fugacity_coefficient(
+            indices, temperature, pressure, mole_fractions
         )
 
         log_fugacity_coefficient = jnp.clip(
             log_fugacity_coefficient,
-            a_min=self.min_log_fugacity_coefficient,
-            a_max=self.max_log_fugacity_coefficient,
+            min=self.min_log_fugacity_coefficient,
+            max=self.max_log_fugacity_coefficient,
         )
         # jax.debug.print("log_fugacity_coefficient = {out}", out=log_fugacity_coefficient)
 
-        log_fugacity: Array = log_fugacity_coefficient + jnp.log(pressure)
+        log_fugacity: FloatArray = log_fugacity_coefficient + jnp.log(pressure)
 
         return jnp.reshape(log_fugacity, original_shape)

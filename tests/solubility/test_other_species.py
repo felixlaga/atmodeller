@@ -1,32 +1,23 @@
+# SPDX-FileCopyrightText: 2024-2026 Dan J. Bower <dbower@eaps.ethz.ch>
+# SPDX-FileCopyrightText: 2024-2026 Paolo A. Sossi
 #
-# Copyright 2024 Dan J. Bower
-#
-# This file is part of Atmodeller.
-#
-# Atmodeller is free software: you can redistribute it and/or modify it under the terms of the GNU
-# General Public License as published by the Free Software Foundation, either version 3 of the
-# License, or (at your option) any later version.
-#
-# Atmodeller is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
-# even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License along with Atmodeller. If not,
-# see <https://www.gnu.org/licenses/>.
-#
+# SPDX-License-Identifier: Apache-2.0
+
 """Tests solubility laws for other species"""
 
 import inspect
 import logging
 
+import jax.numpy as jnp
 import numpy as np
-from jaxmod.units import unit_conversion
+import pytest
+from atmodeller.sci_utils import unit_conversion
 from jaxtyping import ArrayLike
 
 from atmodeller import debug_logger
 from atmodeller.interfaces import RedoxBufferProtocol
 from atmodeller.solubility import get_solubility_models
-from atmodeller.solubility.core import Solubility
+from atmodeller.solubility.core import NoSolubility, Solubility
 from atmodeller.thermodata import IronWustiteBuffer
 
 logger: logging.Logger = debug_logger()
@@ -57,6 +48,18 @@ logger.info("TEST_FO2 = %e bar", TEST_FO2)
 logger.info("TEST_FO2_GPA = %e bar", TEST_FO2_GPA)
 
 solubility_models: dict[str, Solubility] = get_solubility_models()
+
+
+def test_no_solubility() -> None:
+    """Tests that NoSolubility().concentration(...) always returns zero."""
+    no_solubility: NoSolubility = NoSolubility()
+
+    concentration = no_solubility.concentration(
+        TEST_FUGACITY, temperature=TEST_TEMPERATURE, pressure=TEST_PRESSURE, fO2=TEST_FO2
+    )
+
+    assert concentration == pytest.approx(0.0)
+    assert concentration == jnp.array(0.0)
 
 
 def test_Cl2_ano_dio_for_thomas(check_values) -> None:

@@ -1,23 +1,11 @@
+# SPDX-FileCopyrightText: 2024-2026 Dan J. Bower <dbower@eaps.ethz.ch>
+# SPDX-FileCopyrightText: 2024-2026 Paolo A. Sossi
 #
-# Copyright 2024 Dan J. Bower
-#
-# This file is part of Atmodeller.
-#
-# Atmodeller is free software: you can redistribute it and/or modify it under the terms of the GNU
-# General Public License as published by the Free Software Foundation, either version 3 of the
-# License, or (at your option) any later version.
-#
-# Atmodeller is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
-# even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License along with Atmodeller. If not,
-# see <https://www.gnu.org/licenses/>.
-#
+# SPDX-License-Identifier: Apache-2.0
+
 """Real gas EOS from :cite:t:`CD21`"""
 
 import importlib.resources
-import logging
 from collections.abc import Callable
 from contextlib import AbstractContextManager
 from pathlib import Path
@@ -27,10 +15,7 @@ import equinox as eqx
 import jax.numpy as jnp
 import pandas as pd
 from jax.scipy.interpolate import RegularGridInterpolator
-from jaxmod.constants import GAS_CONSTANT_BAR
-from jaxmod.units import unit_conversion
-from jaxmod.utils import as_j64, to_native_floats
-from jaxtyping import Array, ArrayLike, Float
+from jaxtyping import ArrayLike, Float
 from molmass import Formula
 
 from atmodeller import override
@@ -38,24 +23,40 @@ from atmodeller.constants import STANDARD_PRESSURE
 from atmodeller.eos import DATA_DIRECTORY
 from atmodeller.eos._aggregators import CombinedRealGas, CombinedRealGasFugacity
 from atmodeller.eos.core import IdealGas, RealGas, RealGasBase
-from atmodeller.utilities import ExperimentalCalibration
+from atmodeller.jax_utils import FloatArray, as_j64, to_native_floats
+from atmodeller.sci_utils import GAS_CONSTANT_BAR, ExperimentalCalibration, unit_conversion
 
-logger: logging.Logger = logging.getLogger(__name__)
+MIN_LOG_FUGACITY_COEFFICIENT: float = -15.0
+"""Minimum log fugacity coefficient to avoid numerical issues when solving with the Chabrier EOS"""
+MAX_LOG_FUGACITY_COEFFICIENT: float = 15.0
+"""Maximum log fugacity coefficient to avoid numerical issues when solving with the Chabrier EOS"""
 
 
 class Chabrier(RealGas):
     r"""Chabrier EOS from :cite:t:`CD21`
 
-    This uses rho-T-P tables to lookup density (rho). Note that the numerical integration can be
-    unstable at low pressures causing nans/zeros to propagate through calculations and crash
-    simulations. Therefore, it is recommended to use the polynomial fit version if possible.
+    This uses rho-T-P tables to lookup density (rho), from which the log fugacity is integrated
+    from 1 bar.
+
+    .. note::
+        The tabulated densities are not reliable in two ranges, which the bounded versions do not
+        exclude:
+
+        - At very low densities, roughly :math:`P/T \lesssim 10^{-7}` bar/K (below about
+          :math:`10^{-3}` bar at :math:`10^4` K and :math:`10^{-5}` bar at 300 K), the densities
+          are erroneous; for He the compressibility factor ranges from 0.05 to 5 instead of 1.
+        - At high pressures and low temperatures the densities jump to unphysical values, with
+          compressibility factors of up to about :math:`10^8` and log fugacities of up to about
+          :math:`10^{10}`: for :math:`\mathrm{H}_2` between about 460 and 780 K above about
+          :math:`10^5` bar, and for the :math:`\mathrm{H}_2`-He mixtures between about 270 and
+          380 K above about :math:`2.5 \times 10^6` bar. He is unaffected.
 
     Args:
         log10_density_func: Spline lookup for density from :cite:t:`CD21` T-P-rho tables
-        He_fraction: He fraction
+        He_fraction: He mass fraction (Y)
         H2_molar_mass_g_mol: Molar mass of :math:`\mathrm{H}_2`
         He_molar_mass_g_mol: Molar mass of He
-        integration_steps: Number of integration steps
+        integration_steps: Number of pressure nodes for Simpson integration (odd)
     """
 
     CHABRIER_DIRECTORY: ClassVar[Path] = Path("chabrier")
@@ -63,28 +64,29 @@ class Chabrier(RealGas):
     log10_density_func: Callable
     """Spline lookup for density from :cite:t:`CD21` T-P-rho tables"""
     He_fraction: float = eqx.field(converter=float)
-    """He fraction"""
+    """He mass fraction (Y)"""
     H2_molar_mass_g_mol: float = eqx.field(converter=float)
     r"""Molar mass of :math:`\mathrm{H}_2`"""
     He_molar_mass_g_mol: float = eqx.field(converter=float)
     """Molar mass of He"""
     integration_steps: int
-    """Number of integration steps"""
+    """Number of pressure nodes for Simpson integration (odd)"""
 
     @classmethod
-    def create(cls, filename: Path, integration_steps: int = 100) -> RealGas:
+    def create(cls, filename: Path, integration_steps: int = 101) -> RealGas:
         r"""Creates a Chabrier instance.
 
         Args:
             filename: Filename of the density-T-P data
-            integration_steps: Number of integration steps. Defaults to ``100``, which computes the
-                fugacity of :math:`\mathrm{H}_2` to within 4% (relative to 1000 steps, for T from
-                1000 to 5000 K and pressure to 10 GPa), and to within 10% (relative to 1000 steps,
-                for T from 1000 to 5000 K and pressure to 100 GPa). Increasing the integration
-                steps will increase the run time but provide better accuracy.
+            integration_steps: Number of pressure nodes for Simpson integration, which must be
+                odd (an even value is increased by one). Defaults to ``101``, which computes the
+                log fugacity to within 1.2e-3 for T from 500 to 10000 K and pressure to 10 GPa,
+                and to within 3e-3 for T from 1000 to 10000 K and pressure to 100 GPa, relative to
+                a converged integration. The error does not decrease monotonically with the number
+                of nodes below about 150 because the tabulated density is linearly interpolated.
 
         Returns:
-            Instance
+            An instance
         """
         log10_density_func: Callable = cls._get_interpolator(filename)
         He_fraction: float = cls.get_He_fraction_map()[filename.name]
@@ -132,43 +134,44 @@ class Chabrier(RealGas):
                 skiprows=2,
             )
         pivot_table: pd.DataFrame = df.pivot(index=T_name, columns=P_name, values=rho_name)
-        log_T: Array = jnp.array(pivot_table.index.to_numpy())
-        log_P: Array = jnp.array(pivot_table.columns.to_numpy())
-        log_rho: Array = jnp.array(pivot_table.to_numpy())
+        log_T: FloatArray = jnp.array(pivot_table.index.to_numpy())
+        log_P: FloatArray = jnp.array(pivot_table.columns.to_numpy())
+        log_rho: FloatArray = jnp.array(pivot_table.to_numpy())
 
         interpolator: RegularGridInterpolator = RegularGridInterpolator(
             (log_T, log_P), log_rho, method="linear"
         )
 
-        def interpolator_hashable_function_wrapper(x) -> Array:
+        def interpolator_hashable_function_wrapper(x) -> FloatArray:
             """Converts interpolator to a hashable function"""
             return interpolator(x)
 
         return interpolator_hashable_function_wrapper
 
-    @eqx.filter_jit
-    def _convert_to_molar_density(self, log10_density_gcc: ArrayLike) -> Array:
+    def _convert_to_molar_density(self, log10_density_gcc: ArrayLike) -> FloatArray:
         r"""Converts density to molar density
 
         Args:
-            log10_density_gcc: Log10 density in g/cc
+            log10_density_gcc: Log10 density (:math:`\mathrm{g}\ \mathrm{cm}^{-3}`)
 
         Returns:
-            Molar density in :math:`\mathrm{mol}\mathrm{m}^{-3}`
+            Molar density (:math:`\mathrm{mol}\ \mathrm{m}^{-3}`)
         """
-        molar_density: Array = jnp.power(10, log10_density_gcc) / unit_conversion.cm3_to_m3
-        composition_factor: float = (
-            self.He_molar_mass_g_mol * self.He_fraction
-            + self.H2_molar_mass_g_mol * (1 - self.He_fraction)
+        molar_density: FloatArray = jnp.power(10, log10_density_gcc) / unit_conversion.cm3_to_m3
+        # He_fraction is a mass fraction, so the mean molar mass is the mass-weighted harmonic mean
+        mean_molar_mass_g_mol: float = 1.0 / (
+            self.He_fraction / self.He_molar_mass_g_mol
+            + (1 - self.He_fraction) / self.H2_molar_mass_g_mol
         )
-        molar_density = molar_density / composition_factor
+        molar_density = molar_density / mean_molar_mass_g_mol
 
         return molar_density
 
     @staticmethod
     def get_He_fraction_map() -> dict[str, float]:
-        """Mole fraction of He in the gas mixture, the other component being H2.
+        """Mass fraction of He (Y) in the gas mixture, the other component being hydrogen.
 
+        Y is the helium mass fraction as defined by :cite:t:`CD21`, not a mole fraction.
         Dictionary keys should correspond to the name of the Chabrier file.
         """
         He_fraction_map: dict[str, float] = {
@@ -182,73 +185,80 @@ class Chabrier(RealGas):
         return He_fraction_map
 
     @override
-    @eqx.filter_jit
-    def log_fugacity(self, temperature: ArrayLike, pressure: ArrayLike) -> Array:
-        """Log fugacity
+    def log_fugacity(
+        self, temperature: ArrayLike, pressure: ArrayLike, mole_fractions: ArrayLike | None = None
+    ) -> FloatArray:
+        r"""Log fugacity
 
-        This performs a numerical integration to compute the fugacity, although an obvious
-        speedup to implement is to precompute the fugacity (integral), either by calculating it
-        during initialisation or by storing it in a lookup table that is read in.
+        Computed as :math:`\ln f = \ln P + \int_{P_0}^{P} (Z - 1)\, d\ln P` with
+        :math:`P_0 = 1` bar, using Simpson's rule on nodes evenly spaced in :math:`\ln P`. Writing
+        the integrand as :math:`Z - 1` treats the ideal-gas part exactly. An obvious speedup to
+        implement is to precompute the fugacity (integral), either by calculating it during
+        initialisation or by storing it in a lookup table that is read in.
 
         Args:
-            temperature: Temperature in K
-            pressure: Pressure in bar
+            temperature: Temperature (K)
+            pressure: Pressure (bar)
+            mole_fractions: Mole fractions of all species in the phase (dimensionless). Ignored by
+                default for pure-phase EOSs; may be used by overriding subclasses. Defaults to
+                ``None``.
 
         Returns:
-            Log fugacity in bar
+            Log fugacity (bar)
         """
+        del mole_fractions
+
         # pressure = eqx.error_if(
         #    jnp.asarray(pressure), jnp.asarray(pressure) <= 0, "pressure must be positive"
         # )
         temperature = as_j64(temperature)
-        log10_pressure: Array = jnp.log10(pressure)
+        log10_pressure: FloatArray = jnp.log10(pressure)
         temperature, log10_pressure = jnp.broadcast_arrays(temperature, log10_pressure)
 
-        # Pressure range to integrate over
-        pressures: Array = jnp.logspace(
-            jnp.log10(STANDARD_PRESSURE), log10_pressure, num=self.integration_steps
+        # Pressure nodes evenly spaced in ln P from the standard pressure to the pressure. Simpson's
+        # rule requires an odd number of nodes, so an even value is increased by one.
+        num: int = self.integration_steps + 1 - self.integration_steps % 2
+        pressures: FloatArray = jnp.logspace(jnp.log10(STANDARD_PRESSURE), log10_pressure, num=num)
+        dlnP: FloatArray = (
+            (log10_pressure - jnp.log10(STANDARD_PRESSURE)) * jnp.log(10) / (num - 1)
         )
-        # jax.debug.print("log10_pressure = {out}", out=log10_pressure)
-        # pressures = eqx.error_if(pressures, jnp.any(pressures <= 0), "pressures must not be zero")
-        # jax.debug.print("pressures.shape = {out}", out=pressures.shape)
-        dP: Array = jnp.diff(pressures, axis=0)
-        # jax.debug.print("dP.shape = {out}", out=dP.shape)
-        # dP = eqx.error_if(dP, jnp.any(dP <= 0), "dP must be positive")
 
-        volumes: Array = self.volume(temperature, pressures)
-        # volumes = eqx.error_if(volumes, jnp.any(jnp.isnan(volumes)), "volume must not be nan")
-        # jax.debug.print("volumes.shape = {out}", out=volumes.shape)
-        avg_volumes: Array = (volumes[:-1] + volumes[1:]) * 0.5
-        # jax.debug.print("avg_volumes.shape = {out}", out=avg_volumes.shape)
+        volumes: FloatArray = self.volume(temperature, pressures)
+        integrand: FloatArray = pressures * volumes / (GAS_CONSTANT_BAR * temperature) - 1.0
 
-        # Trapezoid integration
-        volume_integral: Array = jnp.sum(avg_volumes * dP, axis=0)
-        # jax.debug.print("volume_integral = {out}", out=volume_integral)
-        # jax.debug.print("volume_integral.shape = {out}", out=volume_integral.shape)
+        # Simpson's rule weights 1, 4, 2, 4, ..., 2, 4, 1 along the node axis
+        weights: FloatArray = jnp.ones(num).at[1:-1:2].set(4.0).at[2:-1:2].set(2.0)
+        weights = weights.reshape((num,) + (1,) * (integrand.ndim - 1))
+        integral: FloatArray = dlnP / 3.0 * jnp.sum(weights * integrand, axis=0)
 
-        log_fugacity: Array = volume_integral / (GAS_CONSTANT_BAR * temperature)
-        # jax.debug.print("log_fugacity = {out}", out=log_fugacity)
+        log_fugacity: FloatArray = log10_pressure * jnp.log(10) + integral
 
         return log_fugacity
 
     @override
-    @eqx.filter_jit
-    def volume(self, temperature: ArrayLike, pressure: ArrayLike) -> Array:
-        log10_density_gcc: Array = self.log10_density_func(
+    def volume(
+        self, temperature: ArrayLike, pressure: ArrayLike, mole_fractions: ArrayLike | None = None
+    ) -> FloatArray:
+        del mole_fractions
+
+        log10_density_gcc: FloatArray = self.log10_density_func(
             (jnp.log10(temperature), jnp.log10(unit_conversion.bar_to_GPa * pressure))
         )
         # jax.debug.print("log10_density_gcc = {out}", out=log10_density_gcc)
-        molar_density: Array = self._convert_to_molar_density(log10_density_gcc)
-        volume: Array = jnp.reciprocal(molar_density)
+        molar_density: FloatArray = self._convert_to_molar_density(log10_density_gcc)
+        volume: FloatArray = jnp.reciprocal(molar_density)
         # jax.debug.print("volume = {out}", out=volume)
 
         return volume
 
     @override
-    @eqx.filter_jit
-    def volume_integral(self, temperature: ArrayLike, pressure: ArrayLike) -> Array:
-        log_fugacity: Array = self.log_fugacity(temperature, pressure)
-        volume_integral: Array = log_fugacity * GAS_CONSTANT_BAR * temperature
+    def volume_integral(
+        self, temperature: ArrayLike, pressure: ArrayLike, mole_fractions: ArrayLike | None = None
+    ) -> FloatArray:
+        del mole_fractions
+
+        log_fugacity: FloatArray = self.log_fugacity(temperature, pressure)
+        volume_integral: FloatArray = log_fugacity * GAS_CONSTANT_BAR * temperature
 
         return volume_integral
 
@@ -256,8 +266,11 @@ class Chabrier(RealGas):
 class ChabrierFunction(RealGasBase):
     r"""Chabrier EOS from :cite:t:`CD21` using a function fit.
 
-    This provides a faster and more robust alternative to the full Chabrier EOS, which requires
-    numerical integration and can be unstable at low pressures.
+    This provides a faster alternative to the full Chabrier EOS, which integrates the tabulated
+    volume. The fits at 3000 K and 4000 K are fitted to the log fugacity coefficient of
+    :data:`H2_chabrier21` from 1 bar to :math:`10^6` bar (100 GPa), and reproduce it to within
+    about 0.15 over that range. This is well within the range of typical atmospheres considered
+    for planetary applications. Above :math:`10^6` bar the fits diverge from the table.
 
     Args:
         coeffs: Coefficients for the log fugacity coefficient function
@@ -266,37 +279,48 @@ class ChabrierFunction(RealGasBase):
     coeffs: tuple[float, ...] = eqx.field(converter=to_native_floats)
 
     @override
-    @eqx.filter_jit
-    def log_fugacity(self, temperature: ArrayLike, pressure: ArrayLike) -> Array:
-        return self.log_fugacity_coefficient(temperature, pressure) + jnp.log(pressure)
+    def log_fugacity(
+        self, temperature: ArrayLike, pressure: ArrayLike, mole_fractions: ArrayLike | None = None
+    ) -> FloatArray:
+        return self.log_fugacity_coefficient(temperature, pressure, mole_fractions) + jnp.log(
+            pressure
+        )
 
     @override
-    @eqx.filter_jit
-    def log_fugacity_coefficient(self, temperature: ArrayLike, pressure: ArrayLike) -> Array:
+    def log_fugacity_coefficient(
+        self, temperature: ArrayLike, pressure: ArrayLike, mole_fractions: ArrayLike | None = None
+    ) -> FloatArray:
         """Log fugacity coefficient
 
         Args:
-            temperature: Temperature in K
-            pressure: Pressure in bar
+            temperature: Temperature (K)
+            pressure: Pressure (bar)
+            mole_fractions: Mole fractions of all species in the phase (dimensionless). Ignored by
+                default for pure-phase EOSs; may be used by overriding subclasses. Defaults to
+                ``None``.
 
         Returns:
             Log fugacity coefficient, which is dimensionless
         """
+        del mole_fractions
+
         _, logP = jnp.broadcast_arrays(jnp.log(temperature), jnp.log(pressure))
-        c: Float[Array, " coeffs"] = jnp.array(self.coeffs)
+        c: Float[FloatArray, " coeffs"] = jnp.array(self.coeffs)
 
         # The chosen functional form is empirical, but by construction recovers a unity fugacity
         # coefficient at 1 bar. The c[0]*exp(c[1]*logP) term captures the overall exponential
         # behavior, while the c[2] + c[3]*logP terms provide additional flexibility to fit the data
         # more accurately before the exponential term dominates at higher pressures.
         # The terms are calculated and summed term-by-term to ensure broadcasting works correctly.
-        log_fugacity_coefficient: Array = logP * (c[0] * jnp.exp(c[1] * logP) + c[2] + c[3] * logP)
+        log_fugacity_coefficient: FloatArray = logP * (
+            c[0] * jnp.exp(c[1] * logP) + c[2] + c[3] * logP
+        )
 
         return log_fugacity_coefficient
 
 
 _H2_3000K_chabrier21: RealGasBase = ChabrierFunction(
-    coeffs=((0.000791384922536, 0.538439447246127, 0.102092848927715, -0.015980196398366))
+    coeffs=((0.000796975857387194, 0.537830199470527, 0.102923173815428, -0.0162512662920581))
 )
 """Function-fit version at 3000 K for H2 Chabrier EOS between 1 bar and 1e6 bar :cite:p:`CD21`"""
 
@@ -306,14 +330,20 @@ H2_3000K_chabrier21: RealGasBase = CombinedRealGasFugacity(
     (
         ExperimentalCalibration(pressure_max=1),
         ExperimentalCalibration(
-            temperature_min=3000, temperature_max=3000, pressure_min=1, pressure_max=1e6
+            temperature_min=3000, temperature_max=3000, pressure_min=1, pressure_max=8e5
         ),
     ),
+    min_log_fugacity_coefficient=MIN_LOG_FUGACITY_COEFFICIENT,
+    max_log_fugacity_coefficient=MAX_LOG_FUGACITY_COEFFICIENT,
 )
-"""H2 Chabrier EOS at 3000 K between 1 bar and 1e6 bar :cite:p:`CD21`"""
+"""H2 Chabrier EOS at 3000 K between 1 bar and 8e5 bar (80 GPa) :cite:p:`CD21`
+
+The fit is accurate to 1e6 bar, but its log fugacity coefficient reaches the maximum of
+:data:`MAX_LOG_FUGACITY_COEFFICIENT` at about 8.3e5 bar, above which it is capped.
+"""
 
 _H2_4000K_chabrier21: RealGasBase = ChabrierFunction(
-    coeffs=((0.001804443584257, 0.46694548641623, 0.49686883364686, -0.048233745656908))
+    coeffs=((0.00179360295945961, 0.467251813716831, 0.49726658673974, -0.0484259966686226))
 )
 """Function-fit version at 4000 K for H2 Chabrier EOS between 1 bar and 1e6 bar :cite:p:`CD21`"""
 
@@ -325,8 +355,10 @@ H2_4000K_chabrier21: RealGasBase = CombinedRealGasFugacity(
             temperature_min=4000, temperature_max=4000, pressure_min=1, pressure_max=1e6
         ),
     ),
+    min_log_fugacity_coefficient=MIN_LOG_FUGACITY_COEFFICIENT,
+    max_log_fugacity_coefficient=MAX_LOG_FUGACITY_COEFFICIENT,
 )
-"""H2 Chabrier EOS at 4000 K between 1 bar and 1e6 bar :cite:p:`CD21`"""
+"""H2 Chabrier EOS at 4000 K between 1 bar and 1e6 bar (100 GPa) :cite:p:`CD21`"""
 
 calibration_chabrier21: ExperimentalCalibration = ExperimentalCalibration(
     temperature_min=100, temperature_max=1.0e8, pressure_max=1.0e17

@@ -1,279 +1,244 @@
+# SPDX-FileCopyrightText: 2024-2026 Dan J. Bower <dbower@eaps.ethz.ch>
+# SPDX-FileCopyrightText: 2024-2026 Paolo A. Sossi
 #
-# Copyright 2024 Dan J. Bower
-#
-# This file is part of Atmodeller.
-#
-# Atmodeller is free software: you can redistribute it and/or modify it under the terms of the GNU
-# General Public License as published by the Free Software Foundation, either version 3 of the
-# License, or (at your option) any later version.
-#
-# Atmodeller is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
-# even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License along with Atmodeller. If not,
-# see <https://www.gnu.org/licenses/>.
-#
-"""Classes"""
+# SPDX-License-Identifier: Apache-2.0
+
+"""Equilibrium model API
+
+Provides :class:`EquilibriumModel`, the user-facing entry point for running thermodynamic
+equilibrium calculations from a prepared :class:`~atmodeller.parameters.Parameters` object.
+
+The module couples immutable model parameters to a compiled solver callable, then exposes small
+wrapper methods for solving and parameter updates while preserving Equinox tree semantics.
+
+Typical usage:
+
+.. code-block:: python
+
+    from atmodeller.classes import EquilibriumModel
+    from atmodeller.parameters import Parameters
+
+    # Create Parameters object (not shown)
+    parameters = Parameters(...)
+    model = EquilibriumModel(parameters)
+    output = model.solve_with_default()
+"""
 
 import logging
-import pprint
 from collections.abc import Callable, Mapping
-from typing import Literal, Optional
+from typing import Literal, Self, cast
 
+import equinox as eqx
 import jax
 import jax.numpy as jnp
 import numpy as np
-from jaxtyping import Array, ArrayLike, Bool, Float, PRNGKeyArray
+from jaxtyping import Array, ArrayLike, Float, PRNGKeyArray
 
-from atmodeller.constants import INITIAL_LOG_NUMBER_MOLES, INITIAL_LOG_STABILITY
-from atmodeller.containers import Parameters, SolverParameters, SpeciesNetwork
-from atmodeller.interfaces import FugacityConstraintProtocol, ThermodynamicStateProtocol
-from atmodeller.output import Output, OutputDisequilibrium, OutputSolution
-from atmodeller.solvers import MultiAttemptSolution, make_independent_solver, make_solver
-from atmodeller.type_aliases import NpFloat
+from atmodeller.containers import SolverParameters
+from atmodeller.initializer import ElementPotentialInitializer, InitializerProtocol
+from atmodeller.interfaces import ActivityConstraintProtocol
+from atmodeller.output import Output
+from atmodeller.parameters import Parameters
+from atmodeller.solvers import make_solver_with_jit
+from atmodeller.state import BaseThermodynamicState
 
 logger: logging.Logger = logging.getLogger(__name__)
 
+SolverCallable = Callable[
+    [Parameters, PRNGKeyArray, Float[Array, "n_batch twice_species"]], Output
+]
 
-class EquilibriumModel:
-    """An equilibrium model
 
-    This is the main class that the user interacts with to build equilibrium models, solve them,
-    and retrieve the results.
+class EquilibriumModel(eqx.Module):
+    """Main user-facing API to run equilibrium calculations
+
+    The model bundles immutable :class:`~atmodeller.parameters.Parameters`, an initializer for
+    the solver's initial guess, a compiled solver closure, and a random key used by stochastic
+    solver routines.
 
     Args:
-        species_network: Species network
+        parameters: Fully prepared model parameters, including state, constraints, and solver
+            settings.
+        initializer: Initializer for the cold initial guess, used for batch elements without an
+            initial guess. Defaults to
+            :class:`~atmodeller.initializer.element_potential.ElementPotentialInitializer`.
     """
 
-    _solver: Optional[Callable] = None
-    _output: Optional[Output] = None
-    _selected_solver: Literal["basic", "robust"] = "basic"
+    parameters: Parameters
+    initializer: InitializerProtocol = eqx.field(static=True)
+    solver: SolverCallable
+    key: PRNGKeyArray
 
-    def __init__(self, species_network: SpeciesNetwork):
-        self.species_network: SpeciesNetwork = species_network
-        logger.info("species_network = %s", str(self.species_network))
-        temperature_min, temperature_max = self.species_network.get_temperature_range()
-        logger.info(
-            "Thermodynamic data requires temperatures between %d K and %d K",
-            np.ceil(temperature_min),
-            np.floor(temperature_max),
-        )
-        logger.info(
-            "reactions = %s", pprint.pformat(self.species_network.get_reaction_dictionary())
-        )
+    def __init__(self, parameters: Parameters, initializer: InitializerProtocol | None = None):
+        self.parameters = parameters
+        self.initializer = ElementPotentialInitializer() if initializer is None else initializer
+        self.solver = make_solver_with_jit(parameters, self.initializer)
+        self.key = jax.random.PRNGKey(0)
 
-    @property
-    def output(self) -> Output:
-        if self._output is None:
-            raise AttributeError("Output has not been set.")
+    @classmethod
+    def from_state(
+        cls,
+        state: BaseThermodynamicState,
+        *,
+        activity_constraints: Mapping[str, ActivityConstraintProtocol] | None = None,
+        mass_constraints: Mapping[str, ArrayLike] | None = None,
+        mass_units: Literal["mass", "moles"] = "mass",
+        solver_parameters: SolverParameters | None = None,
+        initializer: InitializerProtocol | None = None,
+    ) -> Self:
+        """Builds a model by constructing :class:`~atmodeller.parameters.Parameters` internally.
 
-        return self._output
-
-    def calculate_disequilibrium(
-        self, *, state: ThermodynamicStateProtocol, log_number_moles: ArrayLike
-    ) -> None:
-        """Computes the Gibbs free energy disequilibrium.
-
-        This method calculates the Gibbs free energy difference (ΔG) for each considered reaction
-        relative to equilibrium, based on the current state of the system. A value of zero
-        indicates a reaction at equilibrium, while positive or negative values indicate departures
-        from equilibrium in terms of energetic favourability.
+        This is a convenience constructor equivalent to creating ``Parameters(...)`` first and
+        then passing that object to :class:`EquilibriumModel`.
 
         Args:
             state: Thermodynamic state
-            log_number_moles: Log number of moles
+            activity_constraints: Optional activity/fugacity constraint mapping. Defaults to
+                ``None``.
+            mass_constraints: Optional mass-constraint mapping. Defaults to ``None``.
+            mass_units: Units used for ``mass_constraints``. Defaults to ``"mass"``.
+            solver_parameters: Optional solver parameter object. Defaults to ``None``.
+            initializer: Optional initializer for the cold initial guess. Defaults to ``None``.
+
+        Returns:
+            A new :class:`EquilibriumModel` instance
         """
-        parameters: Parameters = Parameters.create(self.species_network, state)
-        solution_array: Array = broadcast_initial_solution(
-            log_number_moles, None, self.species_network.number_species, parameters.batch_size
+        parameters: Parameters = Parameters(
+            state=state,
+            activity_constraints=activity_constraints,
+            mass_constraints=mass_constraints,
+            mass_units=mass_units,
+            solver_parameters=solver_parameters,
         )
-        # jax.debug.print("solution_array = {out}", out=solution_array)
 
-        self._output = OutputDisequilibrium(parameters, solution_array)
+        return cls(parameters, initializer)
 
-    def solve(
-        self,
-        *,
-        initial_log_number_moles: Optional[ArrayLike] = None,
-        initial_log_stability: Optional[ArrayLike] = None,
-        state: Optional[ThermodynamicStateProtocol] = None,
-        fugacity_constraints: Optional[Mapping[str, FugacityConstraintProtocol]] = None,
-        mass_constraints: Optional[Mapping[str, ArrayLike]] = None,
-        solver_parameters: Optional[SolverParameters] = None,
-        solver: Literal["basic", "robust"] = "robust",
-        solver_recompile: bool = False,
-    ) -> None:
-        """Runs the nonlinear solver and initialises the output state.
+    def solve(self, base_solution_array: Float[Array, "n_batch twice_species"]) -> Output:
+        """Runs the solver and returns the output state.
 
-        This method executes the compiled equilibrium solver produced by :meth:`set_solver` and
-        stores the resulting solution for downstream processing. It optionally accepts updated
-        planetary/environmental constraints and initial guesses for the nonlinear system. After
-        successful convergence, an internal ``Output`` instance is created to expose number
-        densities, activities, stabilities, and post-processed diagnostic quantities.
-
-        If :meth:`set_solver` has not been called, a suitable solver will be constructed and
-        JIT-compiled automatically. Repeated calls to :meth:`solve` with compatible shapes will be
-        fast and will reuse cached compilation artifacts.
+        Note:
+            This method is intentionally a thin Python wrapper. The heavy numerical path is
+            compiled inside ``self.solver``
+            (created by :func:`~atmodeller.solvers.make_solver_with_jit`).
+            The same key is reused for repeat calls, so stochastic branches remain deterministic.
 
         Args:
-            initial_log_number_moles: Initial log number of moles. Defaults to ``None``.
-            initial_log_stability: Initial log stability. Defaults to ``None``.
-            state: Thermodynamic state. Defaults to ``None``.
-            fugacity_constraints: Fugacity constraints. Defaults to ``None``.
-            mass_constraints: Mass constraints. Defaults to ``None``.
-            solver_parameters: Solver parameters. Defaults to ``None``.
-            solver: Build a ``basic`` (faster compile time) or a ``robust`` (slower compile time)
-                solver. Defaults to ``robust``.
-            solver_recompile: Force recompilation of the solver. Defaults to ``False``.
+            base_solution_array: Initial guess for the solver, typically a broadcasted array of
+                log number moles and log stabilities. Rows are used as given, and rows that
+                contain ``NaN`` are replaced by the cold guess of the model's initializer.
+
+        Returns:
+            An :class:`~atmodeller.output.Output` instance
         """
-        parameters: Parameters = Parameters.create(
-            self.species_network, state, fugacity_constraints, mass_constraints, solver_parameters
-        )
-        base_solution_array: Array = broadcast_initial_solution(
-            initial_log_number_moles,
-            initial_log_stability,
-            self.species_network.number_species,
-            parameters.batch_size,
-        )
-        # jax.debug.print("base_solution_array = {out}", out=base_solution_array)
+        self._log_initial_guess(base_solution_array)
 
-        key: PRNGKeyArray = jax.random.PRNGKey(0)
-        key, subkey = jax.random.split(key)  # Split the key for use in this function
+        return self.solver(self.parameters, self.key, base_solution_array)
 
-        if self._solver is None or solver_recompile:
-            if solver == "basic":
-                self._solver = make_independent_solver(parameters)
-                # Alternatively, could use the batch solver
-                # self._solver = make_batch_solver(parameters)
-            elif solver == "robust":
-                self._solver = make_solver(parameters)
-            else:
-                raise ValueError(f"Unknown solver type: {solver}")
-            self._selected_solver = solver
+    def _log_initial_guess(self, base_solution_array: ArrayLike) -> None:
+        """Logs how many models start from the initializer's cold guess and how many from the
+        given initial guess. Nothing is logged if the initial guess is traced (inside JIT).
 
-        multi_sol: MultiAttemptSolution = self._solver(base_solution_array, parameters, subkey)
+        Args:
+            base_solution_array: Initial guess for the solver
+        """
+        try:
+            guess: np.ndarray = np.atleast_2d(np.asarray(base_solution_array))
+        except jax.errors.TracerArrayConversionError:
+            return
 
-        num_successful_models: int = jnp.count_nonzero(multi_sol.solver_success).item()
-        num_failed_models: int = jnp.count_nonzero(~multi_sol.solver_success).item()
-
+        batch_size: int = self.parameters.batch_size
+        cold: np.ndarray = np.broadcast_to(np.any(np.isnan(guess), axis=-1), (batch_size,))
         logger.info(
-            "Solve (%s) complete: %d (%0.2f%%) successful model(s)",
-            self._selected_solver,
-            num_successful_models,
-            num_successful_models * 100 / parameters.batch_size,
+            "Initial guess: %d model(s) from %s, %d model(s) from the given initial guess",
+            np.count_nonzero(cold),
+            type(self.initializer).__name__,
+            batch_size - np.count_nonzero(cold),
         )
-        if num_failed_models > 0:
-            logger.warning(
-                "%d (%0.2f%%) model(s) still failed",
-                num_failed_models,
-                num_failed_models * 100 / parameters.batch_size,
-            )
 
-        # Count unique values and their frequencies
-        unique_vals, counts = jnp.unique(multi_sol.attempts, return_counts=True)
-        for val, count in zip(unique_vals.tolist(), counts.tolist()):
-            logger.info(
-                "Multistart summary: %d (%0.2f%%) models(s) required %d attempt(s)",
-                count,
-                count * 100 / parameters.batch_size,
-                val,
-            )
+    def solve_with_default(self) -> Output:
+        """Runs the solver with a default initial guess.
 
-        # Want the maximum number of steps for cases that solved
-        mask_num_steps: Bool[Array, " batch"] = (
-            multi_sol.num_steps < parameters.solver_parameters.max_steps
+        Note:
+            Like :meth:`solve`, this method is a lightweight non-jitted wrapper around the
+            already-jitted ``self.solver`` callable.
+
+        Returns:
+            An :class:`~atmodeller.output.Output` instance
+        """
+        base_solution_array: Float[Array, "n_batch twice_species"] = jnp.full(
+            (
+                self.parameters.batch_size,
+                self.parameters.reaction_system.species.number_species * 2,
+            ),
+            jnp.nan,
         )
-        # Replace invalid values with -inf so they never win in the max
-        max_less_than_max: Array = jnp.where(mask_num_steps, multi_sol.num_steps, -jnp.inf).max()
-        logger.info("Solver steps (max) = %s", int(max_less_than_max.item()))
 
-        self._output = OutputSolution(parameters, multi_sol.value, multi_sol)
+        return self.solve(base_solution_array)
 
+    def rebuild_solver(self) -> Self:
+        """Rebuilds the compiled solver from the model's current parameters.
 
-def _broadcast_component(
-    component: Optional[ArrayLike], default_value: float, dim: int, batch_size: int, name: str
-) -> NpFloat:
-    """Broadcasts a scalar, 1D, or 2D input array to shape ``(batch_size, dim)``.
+        Use this after parameter updates that may have changed array-leaf shapes or batching in a
+        way that invalidates the vmapping axes captured by the existing solver closure, or that
+        invalidates the original leaf-shape broadcasting assumptions preserved by the
+        ``update`` methods on the parameter containers.
 
-    This function standardizes inputs that may be:
-        - ``None`` (in which case ``default_value`` is used),
-        - a scalar (promoted to a 1D array of length ``dim``),
-        - a 1D array of shape ``(dim,)`` (broadcast across the batch),
-        - or a 2D array of shape ``(batch_size``, dim)`` (used as-is).
+        Returns:
+            A new instance of :class:`EquilibriumModel` with a rebuilt solver
+        """
+        solver_rebuilt: SolverCallable = make_solver_with_jit(self.parameters, self.initializer)
+        model_rebuilt: EquilibriumModel = eqx.tree_at(lambda m: m.solver, self, solver_rebuilt)
 
-    Args:
-        component: The input data (or ``None``), representing either a scalar, 1D array, or 2D array
-        default_value: The default scalar value to use if ``component`` is ``None``
-        dim: The number of features or dimensions per batch item
-        batch_size: The number of batch items
-        name: Name of the component (used for error messages)
+        return cast(Self, model_rebuilt)
 
-    Returns:
-        A numpy array of shape ``(batch_size, dim)``, with values broadcast as needed
+    def update_constraints(
+        self,
+        *,
+        activity_constraints: Mapping[str, ActivityConstraintProtocol] | None = None,
+        mass_constraints: Mapping[str, ArrayLike] | None = None,
+        mass_units: Literal["mass", "moles"] = "mass",
+    ) -> Self:
+        """Returns a model with updated mass and activity/fugacity constraints.
 
-    Raises:
-        ValueError: If the input array has an unexpected shape or inconsistent dimensions
-    """
-    if component is None:
-        base: NpFloat = np.full((dim,), default_value, dtype=np.float64)
-    else:
-        component = np.asarray(component, dtype=np.float64)
-        if component.ndim == 0:
-            base = np.full((dim,), component.item(), dtype=np.float64)
-        elif component.ndim == 1:
-            if component.shape[0] != dim:
-                raise ValueError(f"{name} should have shape ({dim},), got {component.shape}")
-            base = component
-        elif component.ndim == 2:
-            if component.shape[0] != batch_size or component.shape[1] != dim:
-                raise ValueError(
-                    f"{name} should have shape ({batch_size}, {dim}), got {component.shape}"
-                )
-            # Replace NaNs with default_value
-            component = np.where(np.isnan(component), default_value, component)
-            return component
-        else:
-            raise ValueError(
-                f"{name} must be a scalar, 1D, or 2D array, got shape {component.shape}"
-            )
+        This is a convenience wrapper around
+        :meth:`atmodeller.parameters.Parameters.update_constraints` that preserves the immutable
+        Equinox tree semantics of the model.
 
-    # Promote 1D base to (batch_size, dim)
-    return np.broadcast_to(base[None, :], (batch_size, dim))
+        Args:
+            activity_constraints: New activity/fugacity constraint mapping. Defaults to ``None``.
+            mass_constraints: New mass-constraint mapping. Defaults to ``None``.
+            mass_units: Units used for ``mass_constraints``. Defaults to ``"mass"``.
 
+        Returns:
+            A new model instance with updated parameters
+        """
+        parameters_updated: Parameters = self.parameters.update_constraints(
+            activity_constraints=activity_constraints,
+            mass_constraints=mass_constraints,
+            mass_units=mass_units,
+        )
+        model_updated: EquilibriumModel = eqx.tree_at(
+            lambda m: m.parameters, self, parameters_updated
+        )
 
-def broadcast_initial_solution(
-    initial_log_number_moles: Optional[ArrayLike],
-    initial_log_stability: Optional[ArrayLike],
-    number_of_species: int,
-    batch_size: int,
-) -> Float[Array, " batch_size solution"]:
-    """Creates and broadcasts the initial solution to shape ``(batch_size, solution)``
+        return cast(Self, model_updated)
 
-    ``D = number_of_species + number_of_stability``, i.e. the total number of solution quantities
+    def update_state(self, *args: object, **kwargs: object) -> Self:
+        """Returns a model with an updated thermodynamic state.
 
-    Args:
-        initial_log_number_moles: Initial log number moles or ``None``
-        initial_log_stability: Initial log stability or ``None``
-        number_of_species: Number of species
-        batch_size: Batch size
+        Arguments are forwarded to ``self.parameters.update_state``, which in turn forwards them
+        to the underlying thermodynamic state's ``update`` implementation.
 
-    Returns:
-        Initial solution with shape ``(batch_size, solution)``
-    """
-    number_moles: NpFloat = _broadcast_component(
-        initial_log_number_moles,
-        INITIAL_LOG_NUMBER_MOLES,
-        number_of_species,
-        batch_size,
-        name="initial_log_number_moles",
-    )
-    stability: NpFloat = _broadcast_component(
-        initial_log_stability,
-        INITIAL_LOG_STABILITY,
-        number_of_species,
-        batch_size,
-        name="initial_log_stability",
-    )
+        Args:
+            *args: Positional arguments accepted by the state ``update`` method
+            **kwargs: Keyword arguments accepted by the state ``update`` method
 
-    return jnp.concatenate((number_moles, stability), axis=-1)
+        Returns:
+            A new model instance with updated parameters
+        """
+        parameters_updated: Parameters = self.parameters.update_state(*args, **kwargs)
+        model_updated: EquilibriumModel = eqx.tree_at(
+            lambda m: m.parameters, self, parameters_updated
+        )
+
+        return cast(Self, model_updated)

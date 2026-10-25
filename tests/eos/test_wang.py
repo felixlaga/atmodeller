@@ -1,23 +1,12 @@
+# SPDX-FileCopyrightText: 2024-2026 Dan J. Bower <dbower@eaps.ethz.ch>
+# SPDX-FileCopyrightText: 2024-2026 Paolo A. Sossi
 #
-# Copyright 2024 Dan J. Bower
-#
-# This file is part of Atmodeller.
-#
-# Atmodeller is free software: you can redistribute it and/or modify it under the terms of the GNU
-# General Public License as published by the Free Software Foundation, either version 3 of the
-# License, or (at your option) any later version.
-#
-# Atmodeller is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
-# even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License along with Atmodeller. If not,
-# see <https://www.gnu.org/licenses/>.
-#
+# SPDX-License-Identifier: Apache-2.0
+
 """Tests for the Viral Quadratic EOS models :cite:p:`WLL18`"""
 
 from atmodeller.eos import RealGas
-from atmodeller.eos._wang import H4Si_wang18_bounded
+from atmodeller.eos._wang import H4Si_wang18, H4Si_wang18_bounded
 
 
 def test_H4Si_fugacity_coefficient_300K_1bar(check_values) -> None:
@@ -46,3 +35,23 @@ def test_H4Si_volume_2540K_924e3bar(check_values) -> None:
     model: RealGas = H4Si_wang18_bounded
     expected: float = 1.41539090679e-05  # published value 1.401e-05 (+/- 0.007e-05) m3/mol
     check_values.volume(2540, 924e3, model, expected)  # 2540 (+/- 60) K, 924e3 (+/- 10e3) bar
+
+
+def test_broadcasting(check_values) -> None:
+    """Tests methods with broadcasting"""
+    model: RealGas = H4Si_wang18_bounded
+    check_values.check_broadcasting(model)
+
+
+def test_H4Si_raw_log_fugacity(check_values) -> None:
+    """Tests the raw (unbounded) VirialQuadratic class's log_fugacity override directly"""
+    model: RealGas = H4Si_wang18
+    expected: float = 104.81336782777828
+    check_values._check_property("log_fugacity", 1230, 515e3, model, expected)
+
+
+def test_H4Si_raw_log_fugacity_coefficient(check_values) -> None:
+    """Tests the raw (unbounded) VirialQuadratic class's log_fugacity_coefficient directly"""
+    model: RealGas = H4Si_wang18
+    expected: float = 91.6614456481324
+    check_values._check_property("log_fugacity_coefficient", 1230, 515e3, model, expected)

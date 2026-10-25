@@ -1,19 +1,24 @@
 <p align="center">
-<img src="https://raw.githubusercontent.com/ExPlanetology/atmodeller/main/docs/logo.png" alt="atmodeller logo" width="300"/>
+<img src="https://raw.githubusercontent.com/ExPlanetology/atmodeller/main/docs/logo/logo800x800.png" alt="atmodeller logo" width="300"/>
 </p>
 
 # Atmodeller
 
-[![Release 1.0.2](https://img.shields.io/badge/Release-1.0.2-blue.svg)](https://github.com/ExPlanetology/atmodeller/releases/tag/v1.0.2)
+[![Release 2.0.0](https://img.shields.io/badge/Release-2.0.0-blue.svg)](https://github.com/ExPlanetology/atmodeller/releases/tag/v2.0.0)
 [![Python 3.11+](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://www.python.org/downloads/release/python-3110/)
-[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-yellow.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 [![CI](https://github.com/ExPlanetology/atmodeller/actions/workflows/ci.yml/badge.svg)](https://github.com/ExPlanetology/atmodeller/actions/workflows/ci.yml)
 [![Checked with pyright](https://microsoft.github.io/pyright/img/pyright_badge.svg)](https://microsoft.github.io/pyright/)
 [![bear-ified](https://raw.githubusercontent.com/beartype/beartype-assets/main/badge/bear-ified.svg)](https://beartype.readthedocs.io)
-[![Test coverage](https://img.shields.io/badge/Coverage-93%25-brightgreen)](https://github.com/ExPlanetology/atmodeller)
+[![Claude assisted](https://img.shields.io/badge/Claude-assisted-D97757)](https://anthropic.com)
+[![Test coverage](https://codecov.io/gh/ExPlanetology/atmodeller/graph/badge.svg)](https://codecov.io/gh/ExPlanetology/atmodeller)
 
 ## About
-Atmodeller is a Python package that uses [JAX](https://jax.readthedocs.io/en/latest/index.html) to compute the partitioning of volatiles between a planetary atmosphere and its rocky interior. It is released under [The GNU General Public License v3.0 or later](https://www.gnu.org/licenses/gpl-3.0.en.html).
+Atmodeller is a Python package for thermochemical equilibrium modeling of planetary interiors and atmospheres, built on [JAX](https://docs.jax.dev/en/latest/index.html).
+
+Atmodeller computes the chemical equilibrium between a planet's interior and atmosphere, solving gas-phase speciation, condensate stability and volatile solubility in silicate melt together, with real-gas equations of state for high pressures. It is designed for researchers in planetary science, exoplanet science and geochemistry who need these calculations, either standalone or as one component of a larger model. Applications include magma oceans, volcanic outgassing, and the atmospheres of super-Earths and sub-Neptunes. Users assemble a model from the species, solubility laws and equations of state they need, so the effect of each modelling choice can be explored. Because it is built on JAX, a batch of conditions is solved in one call and derivatives of the solution with respect to its inputs are available, which supports parameter sweeps, Monte Carlo sampling and gradient-based Bayesian inference.
+
+It is released under the [Apache License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0).
 
 ## Documentation
 
@@ -27,7 +32,7 @@ Atmodeller is a Python package that can be installed on a variety of platforms (
 
 ```pip install atmodeller```
 
-Downloading the source code is also recommended if you'd like access to the example notebooks in `notebooks/`.
+Downloading the source code is also recommended if you'd like access to the example notebooks in `notebooks/examples/`.
 
 ## Citation
 
@@ -37,60 +42,82 @@ If you use Atmodeller, or data from Atmodeller, please cite:
 
 The data from the above study are also available for download at <https://doi.org/10.17605/OSF.IO/PC5TD>.
 
+## Logo
+
+You are welcome to use the Atmodeller logo in presentations, posters, and other materials. The logo is available to download here: [logo1200x1200.png](https://raw.githubusercontent.com/ExPlanetology/atmodeller/main/docs/logo/logo1200x1200.png).
+
+Unlike the source code, the logo is licensed under [Creative Commons Attribution 4.0 International (CC BY 4.0)](https://creativecommons.org/licenses/by/4.0/). Citing Atmodeller (see [Citation](#citation)) satisfies the attribution requirement, so no separate credit is needed for the logo.
+
 ## Basic usage
 
-Several Jupyter notebooks providing examples are in the `notebooks/` directory. A simple example of how to use Atmodeller is provided below:
+Several Jupyter notebooks providing examples are in the `notebooks/examples/` directory. A simple example of how to use Atmodeller is provided below:
 
-```
+```python
+import logging
+
 from atmodeller import (
-    EquilibriumModel,
-    Planet,
     ChemicalSpecies,
-    SpeciesNetwork,
-    earth_oceans_to_hydrogen_mass,
+    EquilibriumModel,
+    Parameters,
+    Planet,
+    ReservoirSpecies,
+    debug_logger,
+    earth,
+    get_solubility_models,
 )
-from atmodeller.solubility import get_solubility_models
 
-solubility_models = get_solubility_models()
+# Log to the console (use logging.DEBUG for more output)
+logger = debug_logger()
+logger.setLevel(logging.INFO)
+
 # Get the available solubility models
-print("solubility models = ", solubility_models.keys())
+solubility_models = get_solubility_models()
+print("solubility models =", solubility_models.keys())
 
+# Gas species
 H2_g = ChemicalSpecies.create_gas("H2")
-H2O_g = ChemicalSpecies.create_gas("H2O", solubility=solubility_models["H2O_peridotite_sossi23"])
+H2O_g = ChemicalSpecies.create_gas("H2O")
 O2_g = ChemicalSpecies.create_gas("O2")
 
-species = SpeciesNetwork((H2_g, H2O_g, O2_g))
-planet = Planet()
-interior_atmosphere = EquilibriumModel(species)
+# H2O dissolved in the silicate melt
+H2O_d = ReservoirSpecies.create_dissolved(
+    "H2O", solubility=solubility_models["H2O_peridotite_sossi23"]
+)
+
+planet = Planet.from_species((H2_g, H2O_g, O2_g), silicate_melt_species=(H2O_d,))
 
 oceans = 1
-h_kg = earth_oceans_to_hydrogen_mass(oceans)
+h_kg = earth.oceans_to_hydrogen_mass(oceans)
 o_kg = 6.25774e20
 mass_constraints = {"H": h_kg, "O": o_kg}
 
-# If you do not specify an initial solution guess then a default will be used
-# Initial solution guess number moles
-initial_log_number_moles = 50
+parameters = Parameters(planet, mass_constraints=mass_constraints)
+model = EquilibriumModel(parameters)
 
-interior_atmosphere.solve(
-    planet=planet,
-    initial_log_number_moles=initial_log_number_moles,
-    mass_constraints=mass_constraints,
-)
-output = interior_atmosphere.output
+# Solve with the default initial guess
+output = model.solve_with_default()
+
+# Check the solve was successful
+output.solver_stats_to_logger()
 
 # Quick look at the solution
-solution = output.quick_look()
+output.quick_look()
 
-# Get complete solution as a dictionary
-solution_asdict = output.asdict()
-print("solution_asdict =", solution_asdict)
+# Get the complete solution as a nested dictionary
+solution = output.to_dict(to_numpy=True)
+print("H2O partial pressure (bar) =", solution["gas"]["species"]["partial_pressure"]["H2O_g"])
 
 # Write the complete solution to Excel
 output.to_excel("example_single")
 ```
 
+## Contributing
+
+Community development of Atmodeller is strongly encouraged, and bug fixes and new features are welcome. Please open an [issue](https://github.com/ExPlanetology/atmodeller/issues) to report a bug, request a feature or ask for help. To submit changes, see [CONTRIBUTING.md](https://github.com/ExPlanetology/atmodeller/blob/main/CONTRIBUTING.md).
+
 ## Funding
 Atmodeller was created as part of a SERI-funded ERC Starting grant '2ATMO' granted to P. Sossi (Contract no. MB22.00033), with additional funding provided through a Swiss National Science Foundation (SNSF) Eccellenza Professorship (#203668).
+
+M. Thompson was supported by NASA through the NASA Hubble Fellowship grant #HST-HF2-51545 awarded by the Space Telescope Science Institute, United States, which is operated by the Association of Universities for Research in Astronomy, Inc., for NASA under contract NAS5-26555.
 
 K\. Hakim acknowledges the FED-tWIN research program STELLA (Prf-2021-022) funded by the Belgian Science Policy Office (BELSPO) and the research grant G014425N funded by the Research Foundation Flanders (FWO).

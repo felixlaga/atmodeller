@@ -1,19 +1,8 @@
+# SPDX-FileCopyrightText: 2024-2026 Dan J. Bower <dbower@eaps.ethz.ch>
+# SPDX-FileCopyrightText: 2024-2026 Paolo A. Sossi
 #
-# Copyright 2024 Dan J. Bower
-#
-# This file is part of Atmodeller.
-#
-# Atmodeller is free software: you can redistribute it and/or modify it under the terms of the GNU
-# General Public License as published by the Free Software Foundation, either version 3 of the
-# License, or (at your option) any later version.
-#
-# Atmodeller is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
-# even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License along with Atmodeller. If not,
-# see <https://www.gnu.org/licenses/>.
-#
+# SPDX-License-Identifier: Apache-2.0
+
 """EOS package"""
 
 import importlib.resources
@@ -33,5 +22,12 @@ r"""Small volume offset in :math:`\mathrm{m}^3\ \mathrm{mol}^{-1}`"""
 
 # Expose the public API
 from atmodeller.eos._aggregators import CombinedRealGas  # noqa: E402, F401
+from atmodeller.eos._zhang_duan_base import (  # noqa: E402, F401
+    K1_YU,
+    K1_ZHANG_DUAN,
+    K2_YU,
+    K2_ZHANG_DUAN,
+    ZhangDuanMixture,
+)
 from atmodeller.eos.core import IdealGas, RealGas  # noqa: E402, F401
 from atmodeller.eos.library import get_eos_models  # noqa: E402, F401

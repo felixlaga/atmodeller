@@ -1,130 +1,13 @@
+# SPDX-FileCopyrightText: 2024-2026 Dan J. Bower <dbower@eaps.ethz.ch>
+# SPDX-FileCopyrightText: 2024-2026 Paolo A. Sossi
 #
-# Copyright 2024 Dan J. Bower
-#
-# This file is part of Atmodeller.
-#
-# Atmodeller is free software: you can redistribute it and/or modify it under the terms of the GNU
-# General Public License as published by the Free Software Foundation, either version 3 of the
-# License, or (at your option) any later version.
-#
-# Atmodeller is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
-# even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License along with Atmodeller. If not,
-# see <https://www.gnu.org/licenses/>.
-#
+# SPDX-License-Identifier: Apache-2.0
+
 """Real gas EOS from :cite:t:`Lide2005`"""
 
-import equinox as eqx
-import jax.numpy as jnp
-import optimistix as optx
-from jaxmod.constants import GAS_CONSTANT_BAR
-from jaxtyping import Array, ArrayLike
-
-from atmodeller import override
-from atmodeller.constants import STANDARD_PRESSURE
-from atmodeller.eos import (
-    ABSOLUTE_TOLERANCE,
-    RELATIVE_TOLERANCE,
-    THROW,
-    VOLUME_EPSILON,
-)
 from atmodeller.eos._aggregators import CombinedRealGas
-from atmodeller.eos.core import RealGas
-from atmodeller.type_aliases import OptxSolver
-from atmodeller.utilities import ExperimentalCalibration
-
-
-class VanderWaals(RealGas):
-    r"""Van der Waals EOS
-
-    Args:
-        a: a constant in :math:`\mathrm{m}^6 \mathrm{bar} \mathrm{mol}^{-2}`
-        b: b constant in :math:`\mathrm{m}^3 \mathrm{mol}^{-1}`
-    """
-
-    a: float = eqx.field(converter=float)
-    r"""a constant in :math:`\mathrm{m}^6 \mathrm{bar} \mathrm{mol}^{-2}`"""
-    b: float = eqx.field(converter=float)
-    r"""b constant in :math:`\mathrm{m}^3 \mathrm{mol}^{-1}`"""
-
-    @eqx.filter_jit
-    def _objective_function(self, volume: ArrayLike, kwargs: dict[str, ArrayLike]) -> Array:
-        r"""Objective function to solve for the volume
-
-        Args:
-            volume: Volume in :math:`\mathrm{m}^3\ \mathrm{mol}^{-1}`
-            kwargs: Dictionary with other required parameters
-
-        Returns:
-            Residual of the objective function
-        """
-        temperature: ArrayLike = kwargs["temperature"]
-        pressure: ArrayLike = kwargs["pressure"]
-
-        coeff0: ArrayLike = -self.a * self.b / pressure
-        coeff1: ArrayLike = -self.a / pressure
-        coeff2: ArrayLike = -self.b - GAS_CONSTANT_BAR * temperature / pressure
-        coeff3: ArrayLike = 1
-
-        residual: Array = (
-            coeff3 * jnp.power(volume, 3)
-            + coeff2 * jnp.power(volume, 2)
-            + coeff1 * volume
-            + coeff0
-        )
-
-        return residual
-
-    @override
-    @eqx.filter_jit
-    def volume(self, temperature: ArrayLike, pressure: ArrayLike) -> ArrayLike:
-        r"""Computes the volume numerically.
-
-        Args:
-            temperature: Temperature in K
-            pressure: Pressure in bar
-
-        Returns:
-            Volume in :math:`\mathrm{m}^3 \mathrm{mol}^{-1}`
-        """
-        ideal_volume: ArrayLike = GAS_CONSTANT_BAR * temperature / pressure
-        # If the ideal volume is around the b constant value then the denominator becomes zero, so
-        # shift the volume and add a small epsilon to avoid this.
-        safe_volume: ArrayLike = ideal_volume + self.b + VOLUME_EPSILON
-        kwargs: dict[str, ArrayLike] = {"temperature": temperature, "pressure": pressure}
-
-        solver: OptxSolver = optx.Newton(rtol=RELATIVE_TOLERANCE, atol=ABSOLUTE_TOLERANCE)
-        sol = optx.root_find(
-            self._objective_function, solver, safe_volume, args=kwargs, throw=THROW
-        )
-        volume = sol.value
-        # jax.debug.print("volume = {out}", out=volume)
-
-        return volume
-
-    @override
-    @eqx.filter_jit
-    def volume_integral(self, temperature: ArrayLike, pressure: ArrayLike) -> Array:
-        r"""Volume integral
-
-        Args:
-            temperature: Temperature in K
-            pressure: Pressure in bar
-
-        Returns:
-            Volume integral in :math:`\mathrm{m}^3\ \mathrm{bar}\ \mathrm{mol}^{-1}`
-        """
-        vol: ArrayLike = self.volume(temperature, pressure)
-        vol0: ArrayLike = self.volume(temperature, STANDARD_PRESSURE)
-        volume_integral: Array = (
-            self.b * (vol0 - vol) / ((vol - self.b) * (vol0 - self.b))  # type: ignore
-            - jnp.log((vol - self.b) / (vol0 - self.b))
-        ) * GAS_CONSTANT_BAR * temperature - 2 * self.a * (1 / vol - 1 / vol0)  # type: ignore
-
-        return volume_integral
-
+from atmodeller.eos.core import RealGas, VanderWaals
+from atmodeller.sci_utils import ExperimentalCalibration
 
 experimental_calibration: ExperimentalCalibration = ExperimentalCalibration(pressure_min=1)
 
@@ -158,7 +41,7 @@ H3N_lide: RealGas = VanderWaals(4.225e-6, 3.71e-5)
 """NH3 van der Waals :cite:p:`Lide2005`"""
 H3N_lide_bounded: RealGas = CombinedRealGas.create([H3N_lide], [experimental_calibration])
 """NH3 bounded to data range"""
-CHN_lide: RealGas = VanderWaals(1.29e-5, 8.81e-5)
+CHN_lide: RealGas = VanderWaals(1.129e-5, 8.81e-5)
 """HCN van der Waals :cite:p:`Lide2005`"""
 CHN_lide_bounded: RealGas = CombinedRealGas.create([CHN_lide], [experimental_calibration])
 """HCN bounded to data range"""

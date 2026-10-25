@@ -1,19 +1,8 @@
+# SPDX-FileCopyrightText: 2024-2026 Dan J. Bower <dbower@eaps.ethz.ch>
+# SPDX-FileCopyrightText: 2024-2026 Paolo A. Sossi
 #
-# Copyright 2024 Dan J. Bower
-#
-# This file is part of Atmodeller.
-#
-# Atmodeller is free software: you can redistribute it and/or modify it under the terms of the GNU
-# General Public License as published by the Free Software Foundation, either version 3 of the
-# License, or (at your option) any later version.
-#
-# Atmodeller is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
-# even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License along with Atmodeller. If not,
-# see <https://www.gnu.org/licenses/>.
-#
+# SPDX-License-Identifier: Apache-2.0
+
 """Solubility laws for other species
 
 For every law there should be a test in the test suite.
@@ -21,16 +10,14 @@ For every law there should be a test in the test suite.
 
 import equinox as eqx
 import jax.numpy as jnp
-from jaxmod.constants import GAS_CONSTANT_BAR
-from jaxmod.units import unit_conversion
-from jaxmod.utils import power_law, safe_exp
 from jaxtyping import Array, ArrayLike
 
 from atmodeller import override
 from atmodeller.interfaces import RedoxBufferProtocol
+from atmodeller.jax_utils import Scalar, power_law, safe_exp
+from atmodeller.sci_utils import GAS_CONSTANT_BAR, unit_conversion
 from atmodeller.solubility.core import Solubility, SolubilityPowerLaw, fO2_temperature_correction
 from atmodeller.thermodata import IronWustiteBuffer
-from atmodeller.type_aliases import Scalar
 
 Cl2_ano_dio_for_thomas21: Solubility = SolubilityPowerLaw(
     140.52 * unit_conversion.percent_to_ppm, 0.5
@@ -160,6 +147,14 @@ class _N2_basalt_bernadou21(Solubility):
 
 
 N2_basalt_bernadou21: Solubility = _N2_basalt_bernadou21()
+"""N2 in basaltic silicate melt :cite:p:`BGF21`
+
+:cite:t:`BGF21{Equation 18}` and using :cite:t:`BGF21{Equations 19-20}` and the values for the
+thermodynamic constants from :cite:t:`BGF21{Table 6}`. Experiments on basaltic samples at fluid
+saturation in C-H-O-N system, pressure range: 0.8-10 kbar, temperature range: 1200-1300 C;
+fO2 range: IW+4.9 to IW-4.7. Using their experimental results and a database for N
+concentrations at fluid saturation from 1 bar to 10 kbar, calibrated their solubility law.
+"""
 
 
 class _N2_basalt_dasgupta22(Solubility):
@@ -227,14 +222,7 @@ class _N2_basalt_dasgupta22(Solubility):
 
 
 N2_basalt_dasgupta22: Solubility = _N2_basalt_dasgupta22()
-"""N2 in basaltic silicate melt :cite:p:`BGF21`
-
-:cite:t:`BGF21{Equation 18}` and using :cite:t:`BGF21{Equations 19-20}` and the values for the
-thermodynamic constants from :cite:t:`BGF21{Table 6}`. Experiments on basaltic samples at fluid
-saturation in C-H-O-N system, pressure range: 0.8-10 kbar, temperature range: 1200-1300 C;
-fO2 range: IW+4.9 to IW-4.7. Using their experimental results and a database for N
-concentrations at fluid saturation from 1 bar to 10 kbar, calibrated their solubility law.
-"""
+"""N2 in silicate melts :cite:p:`DFP22`"""
 
 
 class _N2_basalt_libourel03(Solubility):

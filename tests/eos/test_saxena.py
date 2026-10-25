@@ -1,135 +1,250 @@
+# SPDX-FileCopyrightText: 2024-2026 Dan J. Bower <dbower@eaps.ethz.ch>
+# SPDX-FileCopyrightText: 2024-2026 Paolo A. Sossi
 #
-# Copyright 2024 Dan J. Bower
-#
-# This file is part of Atmodeller.
-#
-# Atmodeller is free software: you can redistribute it and/or modify it under the terms of the GNU
-# General Public License as published by the Free Software Foundation, either version 3 of the
-# License, or (at your option) any later version.
-#
-# Atmodeller is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
-# even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License along with Atmodeller. If not,
-# see <https://www.gnu.org/licenses/>.
-#
+# SPDX-License-Identifier: Apache-2.0
+
 """Tests for the EOS models from :cite:t:`SF87,SF87a,SF88,SS92`"""
 
-from jaxmod.units import unit_conversion
+from typing import cast
+
+import equinox as eqx
+import numpy as np
+import pytest
 
 from atmodeller.eos import RealGas
-from atmodeller.eos._saxena import H2_SF87
+from atmodeller.eos._aggregators import CombinedRealGas
+from atmodeller.eos._saxena import (
+    SaxenaEightCoefficients,
+    _H2_high_pressure_SS92,
+    _H2_low_pressure_SS92,
+)
+from atmodeller.sci_utils import unit_conversion
+from atmodeller.thermodata import CriticalData
+
+# species, model suffix, temperature (K), pressure (bar), expected compressibility factor. All rows
+# are :cite:t:`SF87{Table 1}` reference values for the corresponding-states formulation; the model
+# suffix differs per species only because the calibration data differs, not the code path, so this
+# is one test parametrized over reference values rather than distinct branches of the
+# implementation. H2 is not included because corresponding states is superseded for H2 (see
+# :obj:`~atmodeller.eos._saxena.H2_SS92`).
+COMPRESSIBILITY_FACTOR_CASES = [
+    pytest.param("Ar", "cs_saxena87", 2510, 100e3, 7.41624600755374, id="Ar"),
+    pytest.param("CH4", "cs_shi92", 1912, 159e3, 17.77499804453072, id="CH4"),
+    pytest.param("CO2", "cs_shi92", 1167, 184e3, 33.886349109271734, id="CO2"),
+    pytest.param("N2", "cs_saxena87", 1573, 75e3, 10.293087737779091, id="N2"),
+    pytest.param("O2", "cs_shi92", 1823, 133e3, 12.409268281002012, id="O2"),
+]
 
 
-def test_Ar(check_values) -> None:
-    """:cite:t:`SF87{Table 1}`"""
-    model: RealGas = check_values.get_eos_model("Ar", "cs_saxena87")
-    expected: float = 7.41624600755374
-    check_values.compressibility(2510, 100e3, model, expected)
+@pytest.mark.parametrize(
+    "species, suffix, temperature, pressure, expected", COMPRESSIBILITY_FACTOR_CASES
+)
+def test_compressibility_factor(
+    check_values,
+    species: str,
+    suffix: str,
+    temperature: float,
+    pressure: float,
+    expected: float,
+) -> None:
+    """Tests compressibility factor against the reference value for each species"""
+    model: RealGas = cast(RealGas, check_values.get_eos_model(species, suffix))
+    check_values.compressibility_factor(temperature, pressure, model, expected)
 
 
-def test_CH4(check_values) -> None:
-    """:cite:t:`SF87{Table 1}`"""
-    model: RealGas = check_values.get_eos_model("CH4", "cs_shi92")
-    expected: float = 17.77499804453072
-    check_values.compressibility(1912, 159e3, model, expected)
+# species, model suffix, critical temperature (K) and pressure (bar) used by :cite:t:`SF87`, and
+# (temperature (K), pressure (kbar), compressibility factor calculated by
+# :cite:t:`SF87{Equation 11}`) from :cite:t:`SF87{Table 1}`. The O2 row at 749 K (15.379) is
+# omitted because it disagrees with the other rows by 1.7%, which is likely a misprint.
+SF87_TABLE1_CASES = [
+    pytest.param(
+        "Ar",
+        "cs_saxena87",
+        151.0,
+        48.6,
+        [
+            (374, 18, 11.409),
+            (860, 41, 9.937),
+            (2510, 100, 7.416),
+            (4570, 161, 6.124),
+            (8610, 266, 4.869),
+            (11960, 345, 4.254),
+            (16730, 450, 3.659),
+        ],
+        id="Ar",
+    ),
+    pytest.param(
+        "CH4",
+        "cs_shi92",
+        190.7,
+        46.4,
+        [
+            (384, 19, 15.354),
+            (728, 46, 16.763),
+            (1912, 159, 17.747),
+            (3268, 294, 16.788),
+            (6528, 600, 14.192),
+            (3626, 622, 23.638),
+            (3906, 844, 26.195),
+            (4438, 1196, 32.106),
+        ],
+        id="CH4",
+    ),
+    pytest.param(
+        "CO2",
+        "cs_shi92",
+        304.2,
+        73.9,
+        [(513, 98, 45.967), (1167, 184, 33.877), (2594, 349, 25.750), (6071, 686, 18.643)],
+        id="CO2",
+    ),
+    pytest.param(
+        "N2",
+        "cs_saxena87",
+        126.2,
+        33.9,
+        [(783, 39, 11.778), (1573, 75, 10.286), (3293, 147, 8.642), (7554, 305, 6.622)],
+        id="N2",
+    ),
+    pytest.param(
+        "O2",
+        "cs_shi92",
+        154.8,
+        50.8,
+        [
+            (330, 26, 17.429),
+            (1823, 133, 12.376),
+            (4883, 315, 9.376),
+            (14367, 806, 6.443),
+            (25601, 1341, 5.696),
+        ],
+        id="O2",
+    ),
+]
 
 
-def test_CO2(check_values) -> None:
-    """:cite:t:`SF87{Table 1}`"""
-    model: RealGas = check_values.get_eos_model("CO2", "cs_shi92")
-    expected: float = 33.886349109271734
-    check_values.compressibility(1167, 184e3, model, expected)
+@pytest.mark.parametrize(
+    "species, suffix, critical_temperature, critical_pressure, rows", SF87_TABLE1_CASES
+)
+def test_high_pressure_corresponding_states_SF87_table1(
+    check_values,
+    species: str,
+    suffix: str,
+    critical_temperature: float,
+    critical_pressure: float,
+    rows: list[tuple[float, float, float]],
+) -> None:
+    """Tests the >5 kbar branch against the published compressibility factors
+
+    The branch is evaluated with the critical data used by :cite:t:`SF87` rather than those in
+    the library, so the coefficients are checked against the values printed in
+    :cite:t:`SF87{Table 1}` (to three decimal places), rather than against regression values.
+    """
+    model: CombinedRealGas = cast(CombinedRealGas, check_values.get_eos_model(species, suffix))
+    high_pressure: RealGas = model.real_gases[-1]
+    assert isinstance(high_pressure, SaxenaEightCoefficients)
+    high_pressure = eqx.tree_at(
+        lambda m: m.critical_data,
+        high_pressure,
+        CriticalData(critical_temperature, critical_pressure),
+    )
+    temperature, pressure, expected = (np.array(column, dtype=float) for column in zip(*rows))
+    check_values.compressibility_factor(
+        temperature, pressure * 1e3, high_pressure, expected, rtol=5e-3, atol=0
+    )
 
 
-def test_H2_SF87(check_values) -> None:
-    """:cite:t:`SF87{Table 1}`"""
-    model: RealGas = H2_SF87
-    expected: float = 4.975497264839999
-    check_values.compressibility(1222, 41.66e3, model, expected)
+def test_H2_high_pressure_SS92_shock_data(check_values) -> None:
+    """Tests the H2 >1 kbar fit against shock-wave data :cite:p:`RRY83,SF87{Table 1}`
+
+    The observed compressibility factors lie along a path from 266 K at 9.67 kbar to 3462 K at
+    114.54 kbar. The fit is tested directly, since the two highest pressures exceed the 100 kbar
+    upper bound of the combined H2 EOS.
+    """
+    temperature = np.array([266, 431, 722, 1222, 2014, 3246, 3462], dtype=float)
+    pressure = np.array([9.67, 15.73, 25.63, 41.66, 66.88, 107.20, 114.54]) * 1e3
+    expected = np.array([6.122, 5.707, 5.124, 4.511, 3.994, 3.575, 3.526])
+    check_values.compressibility_factor(
+        temperature, pressure, _H2_high_pressure_SS92, expected, rtol=1.5e-2, atol=0
+    )
 
 
-def test_N2(check_values) -> None:
-    """:cite:t:`SF87{Table 1}`"""
-    model: RealGas = check_values.get_eos_model("N2", "cs_saxena87")
-    expected: float = 10.293087737779091
-    check_values.compressibility(1573, 75e3, model, expected)
+def test_medium_pressure_corresponding_states(check_values) -> None:
+    """Tests the 1-5 kbar branch :cite:p:`SF87a{Equation 21}`
 
-
-def test_O2(check_values) -> None:
-    """:cite:t:`SF87{Table 1}`"""
-    model: RealGas = check_values.get_eos_model("O2", "cs_shi92")
-    expected: float = 12.409268281002012
-    check_values.compressibility(1823, 133e3, model, expected)
+    Pins the sign of the `c` coefficient of :math:`T_r^{-2}` (-1.4164e-4). The expected value agrees
+    with the CORK model of :cite:t:`HP98` (Z = 2.0447), whereas the positive sign gives Z = 2.088.
+    """
+    model: RealGas = cast(RealGas, check_values.get_eos_model("CO2", "cs_shi92"))
+    check_values.compressibility_factor(1000, 3000, model, 2.0449062266331888)
 
 
 def test_H2_low_pressure_SS92(check_values) -> None:
     """:cite:t:`SS92{Figure 1}`"""
-    model: RealGas = check_values.get_eos_model("H2", "shi92")
+    model: RealGas = cast(RealGas, check_values.get_eos_model("H2", "shi92"))
     expected: float = 7279.356114821697 * unit_conversion.cm3_to_m3
     check_values.volume(873, 10, model, expected)
 
 
 def test_H2_medium_pressure_SS92(check_values) -> None:
     """:cite:t:`SS92{Figure 1}`"""
-    model: RealGas = check_values.get_eos_model("H2", "shi92")
+    model: RealGas = cast(RealGas, check_values.get_eos_model("H2", "shi92"))
     expected: float = 164.38851468757488 * unit_conversion.cm3_to_m3
     check_values.volume(873, 500, model, expected)
 
 
 def test_H2_high_pressure_SS92(check_values) -> None:
     """:cite:t:`SS92{Figure 1}`"""
-    model: RealGas = check_values.get_eos_model("H2", "shi92")
+    model: RealGas = cast(RealGas, check_values.get_eos_model("H2", "shi92"))
     expected: float = 41.97871061892679 * unit_conversion.cm3_to_m3
     check_values.volume(1473, 4000, model, expected)
 
 
 def test_H2_high_pressure2_SS92(check_values) -> None:
     """:cite:t:`SS92{Figure 1}`"""
-    model: RealGas = check_values.get_eos_model("H2", "shi92")
+    model: RealGas = cast(RealGas, check_values.get_eos_model("H2", "shi92"))
     expected: float = 20.806595067793276 * unit_conversion.cm3_to_m3
     check_values.volume(1073, 10000, model, expected)
 
 
 def test_H2_high_pressure3_SS92(check_values) -> None:
     """:cite:t:`SS92{Figure 1}`"""
-    model: RealGas = check_values.get_eos_model("H2", "shi92")
+    model: RealGas = cast(RealGas, check_values.get_eos_model("H2", "shi92"))
     expected: float = 71.50153474005484 * unit_conversion.cm3_to_m3
     check_values.volume(673, 1000, model, expected)
 
 
 def test_H2S_low_pressure_SS92(check_values) -> None:
     """:cite:t:`SS92{Figure 3}`"""
-    model: RealGas = check_values.get_eos_model("H2S", "shi92")
+    model: RealGas = cast(RealGas, check_values.get_eos_model("H2S", "shi92"))
     expected: float = 272.7266232763035 * unit_conversion.cm3_to_m3
     check_values.volume(673, 200, model, expected)
 
 
 def test_H2S_medium_pressure_SS92(check_values) -> None:
     """:cite:t:`SS92{Figure 3}`"""
-    model: RealGas = check_values.get_eos_model("H2S", "shi92")
+    model: RealGas = cast(RealGas, check_values.get_eos_model("H2S", "shi92"))
     expected: float = 116.55537998390933 * unit_conversion.cm3_to_m3
     check_values.volume(1873, 2000, model, expected)
 
 
 def test_SO2_low_pressure_SS92(check_values) -> None:
     """:cite:t:`SS92{Figure 2}`"""
-    model: RealGas = check_values.get_eos_model("SO2", "shi92")
+    model: RealGas = cast(RealGas, check_values.get_eos_model("O2S", "shi92"))
     expected: float = 8308.036738813245 * unit_conversion.cm3_to_m3
     check_values.volume(1073, 10, model, expected)
 
 
 def test_SO2_high_pressure_SS92(check_values) -> None:
     """:cite:t:`SS92{Figure 2}`"""
-    model: RealGas = check_values.get_eos_model("SO2", "shi92")
+    model: RealGas = cast(RealGas, check_values.get_eos_model("O2S", "shi92"))
     expected: float = 70.86864302460566 * unit_conversion.cm3_to_m3
     check_values.volume(1873, 4000, model, expected)
 
 
 def test_lower_extrapolation(check_values) -> None:
     """Tests the lower bound extrapolation"""
-    model: RealGas = check_values.get_eos_model("H2S", "shi92")
+    model: RealGas = cast(RealGas, check_values.get_eos_model("H2S", "shi92"))
     temperature: float = 1073
     pressure: float = 0.01
     expected: float = 0.01
@@ -138,22 +253,22 @@ def test_lower_extrapolation(check_values) -> None:
 
 def test_upper_extrapolation(check_values) -> None:
     """Tests the upper bound extrapolation"""
-    model: RealGas = check_values.get_eos_model("H2S", "shi92")
+    model: RealGas = cast(RealGas, check_values.get_eos_model("H2S", "shi92"))
     temperature: float = 1073
     pressure: float = 10e3  # Maximum pressure of the highest pressure EOS in this composite EOS
     pressure_above_max: float = 20e3  # To test pressure above the maximum
     # Expected compressibility factor at 3000 K and (the maximum calibrated pressure) 10000 bar
     expected: float = 4.472116811082408
-    check_values.compressibility(temperature, pressure, model, expected)
+    check_values.compressibility_factor(temperature, pressure, model, expected)
     # The upper bound extrapolation should maintain the same compressibility for higher pressures
     # for dz/dp if reinstated at some point
     # expected: float = 8.098866090720415
-    check_values.compressibility(temperature, pressure_above_max, model, expected)
+    check_values.compressibility_factor(temperature, pressure_above_max, model, expected)
 
 
 def test_volume_integral_standard_pressure(check_values) -> None:
     """Tests the volume integral"""
-    model: RealGas = check_values.get_eos_model("H2S", "shi92")
+    model: RealGas = cast(RealGas, check_values.get_eos_model("H2S", "shi92"))
     temperature: float = 1873
     pressure: float = 1.0
     # At the standard pressure the volume integral is zero by construction
@@ -163,7 +278,7 @@ def test_volume_integral_standard_pressure(check_values) -> None:
 
 def test_volume_integral_index0(check_values) -> None:
     """Tests the volume integral for the first EOS"""
-    model: RealGas = check_values.get_eos_model("H2S", "shi92")
+    model: RealGas = cast(RealGas, check_values.get_eos_model("H2S", "shi92"))
     # Within ranges of experimental data, otherwise the extrapolated behaviour might be unphysical
     temperature: float = 1073
     pressure: float = 1000.0
@@ -173,7 +288,7 @@ def test_volume_integral_index0(check_values) -> None:
 
 def test_volume_integral_index1(check_values) -> None:
     """Tests the volume integral for the first and second EOS"""
-    model: RealGas = check_values.get_eos_model("H2S", "shi92")
+    model: RealGas = cast(RealGas, check_values.get_eos_model("H2S", "shi92"))
     temperature: float = 1073
     pressure: float = 9999
     expected: float = 1.088570827561088
@@ -182,7 +297,7 @@ def test_volume_integral_index1(check_values) -> None:
 
 def test_volume_integral_index2(check_values) -> None:
     """Tests the volume integral in the extrapolated region above the maximum pressure"""
-    model: RealGas = check_values.get_eos_model("H2S", "shi92")
+    model: RealGas = cast(RealGas, check_values.get_eos_model("H2S", "shi92"))
     temperature: float = 1073
     pressure: float = 20000
     # for dz/dp if reinstated at some point
@@ -191,13 +306,35 @@ def test_volume_integral_index2(check_values) -> None:
     check_values.volume_integral(temperature, pressure, model, expected)
 
 
-# def test_volume_with_broadcasting(check_values) -> None:
-#     """Tests volume with broadcasting"""
-#     model: RealGas = check_values.get_eos_model("CO2", "cs_shi92")
-#     check_values.check_broadcasting("volume", model)
+def test_broadcasting(check_values) -> None:
+    """Tests methods with broadcasting"""
+    model: RealGas = cast(RealGas, check_values.get_eos_model("CO2", "cs_shi92"))
+    check_values.check_broadcasting(model)
 
 
-# def test_fugacity_with_broadcasting(check_values) -> None:
-#     """Tests volume with broadcasting"""
-#     model: RealGas = check_values.get_eos_model("CO2", "cs_shi92")
-#     check_values.check_broadcasting("fugacity", model)
+def test_five_coefficient_raw_log_fugacity(check_values) -> None:
+    """Tests the raw SaxenaFiveCoefficients class's log_fugacity override directly"""
+    model: RealGas = _H2_low_pressure_SS92
+    expected: float = 6.3353125137981205
+    check_values._check_property("log_fugacity", 1000, 500, model, expected)
+
+
+def test_five_coefficient_raw_log_fugacity_coefficient(check_values) -> None:
+    """Tests the raw SaxenaFiveCoefficients class's log_fugacity_coefficient directly"""
+    model: RealGas = _H2_low_pressure_SS92
+    expected: float = 0.12070441537592913
+    check_values._check_property("log_fugacity_coefficient", 1000, 500, model, expected)
+
+
+def test_eight_coefficient_raw_log_fugacity(check_values) -> None:
+    """Tests the raw SaxenaEightCoefficients class's log_fugacity override directly"""
+    model: RealGas = _H2_high_pressure_SS92
+    expected: float = 14.947216154643423
+    check_values._check_property("log_fugacity", 1222, 41.66e3, model, expected)
+
+
+def test_eight_coefficient_raw_log_fugacity_coefficient(check_values) -> None:
+    """Tests the raw SaxenaEightCoefficients class's log_fugacity_coefficient directly"""
+    model: RealGas = _H2_high_pressure_SS92
+    expected: float = 4.309919439828459
+    check_values._check_property("log_fugacity_coefficient", 1222, 41.66e3, model, expected)

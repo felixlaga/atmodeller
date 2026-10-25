@@ -1,0 +1,15 @@
+# Keeps the versions of the GitHub Actions used in .github/workflows up to date. Python dependencies
+# are covered by uv.lock and the weekly run with the latest releases (.github/workflows/weekly.yml).
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    # One pull request per month for all action updates
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+    commit-message:
+      prefix: "ci"

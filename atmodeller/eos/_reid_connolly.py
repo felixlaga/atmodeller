@@ -1,150 +1,44 @@
+# SPDX-FileCopyrightText: 2024-2026 Dan J. Bower <dbower@eaps.ethz.ch>
+# SPDX-FileCopyrightText: 2024-2026 Paolo A. Sossi
 #
-# Copyright 2024 Dan J. Bower
-#
-# This file is part of Atmodeller.
-#
-# Atmodeller is free software: you can redistribute it and/or modify it under the terms of the GNU
-# General Public License as published by the Free Software Foundation, either version 3 of the
-# License, or (at your option) any later version.
-#
-# Atmodeller is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
-# even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License along with Atmodeller. If not,
-# see <https://www.gnu.org/licenses/>.
-#
-"""Real gas EOSs from :cite:t:`RPS77,C16`"""
+# SPDX-License-Identifier: Apache-2.0
 
-import logging
+"""Real gas EOSs from :cite:t:`RPP87,C16`
 
-import equinox as eqx
-import jax.numpy as jnp
-from jaxmod.constants import GAS_CONSTANT_BAR
-from jaxtyping import ArrayLike
+The Redlich-Kwong models of H4Si, CHN and H3N use the critical data of :cite:t:`RPP87` (see also
+the current edition, :cite:t:`Poling2001`). They are not bounded, as in v1 and in
+:cite:t:`Hakim2026`, although corresponding states extrapolations are only expected to be accurate
+up to about 10 times the critical pressure and 2-3 times the critical temperature
+:cite:p:`RPP87`; :data:`experimental_calibration_reid87` records the validity range.
+"""
 
-from atmodeller import override
 from atmodeller.eos._aggregators import CombinedRealGas
-from atmodeller.eos.core import RealGas, RedlichKwongABC
-from atmodeller.thermodata import CriticalData, critical_data_dictionary
-from atmodeller.utilities import ExperimentalCalibration
-
-logger: logging.Logger = logging.getLogger(__name__)
-
-
-class RedlichKwong49(RedlichKwongABC):
-    """Redlich-Kwong 1949 model
-
-    Repulsive pressure term from van der Waals :cite:p:`RK49,C16{Equation 1}`
-    Attractive pressure term from Redlich-Kwong :cite:p:`RK49,C16{Equation 4}`
-
-    Args:
-        critical_data: Critical data
-    """
-
-    critical_data: CriticalData
-    _a: float = eqx.field(converter=float)
-    _b: float = eqx.field(converter=float)
-
-    def __init__(self, critical_data: CriticalData):
-        r"""Default a (in :math:`(\mathrm{m}^3\ \mathrm{mol}^{-1})^2\ \mathrm{K}^{1/2}\ \mathrm{bar}`)
-        and b (in :math:`\mathrm{m}^3\ \mathrm{mol}^{-1}`) for SiO calculated from  the critical
-        pressure and temperature from :cite:p:`C16{Table 2}`"""
-        self.critical_data = critical_data
-        self._a = 0.000448433
-        self._b = 0.00000543922
-
-    @property
-    def critical_pressure(self) -> float:
-        """Critical pressure in bar"""
-        return self.critical_data.pressure
-
-    @property
-    def critical_temperature(self) -> float:
-        """Critical temperature in K"""
-        return self.critical_data.temperature
-
-    @classmethod
-    def create(cls, hill_formula: str, suffix: str = "") -> "RedlichKwong49":
-        """Gets the Redlich-Kwong 1949 (RK49) model for a given species.
-
-        Args:
-            hill_formula: Hill formula
-            suffix: Suffix. Defaults to an empty string.
-
-        Returns:
-            An RK49 model for the species
-        """
-        critical_data: CriticalData = critical_data_dictionary[f"{hill_formula}{suffix}"]
-
-        return cls(critical_data)
-
-    @override
-    @eqx.filter_jit
-    def a(self, temperature: ArrayLike, pressure: ArrayLike) -> ArrayLike:
-        r"""RK49 `a` parameter :cite:p:`RK49{Equation 4}`.
-
-        Args:
-            temperature: Temperature in K
-            pressure: Pressure in bar
-
-        Returns:
-            RK49 `a` parameter in
-            :math:`(\mathrm{m}^3\ \mathrm{mol}^{-1})^2\ \mathrm{K}^{1/2}\ \mathrm{bar}`
-        """
-        del temperature
-        del pressure
-
-        a: ArrayLike = (
-            jnp.power(GAS_CONSTANT_BAR, (2.0))
-            * jnp.power(self.critical_temperature, (5.0 / 2))
-            / (9 * (jnp.power(2, (1.0 / 3)) - 1))
-        ) / self.critical_pressure
-
-        return a
-
-    @override
-    @eqx.filter_jit
-    def b(self) -> ArrayLike:
-        r"""RK49 `b` parameter :cite:p:`RK49{Equation 5}`.
-
-        Returns:
-            RK49 `b` parameter in :math:`\mathrm{m}^3\ \mathrm{mol}^{-1}`.
-        """
-        b: ArrayLike = (
-            (jnp.power(2, (1.0 / 3)) - 1)
-            * GAS_CONSTANT_BAR
-            * self.critical_temperature
-            / (3 * self.critical_pressure)
-        )
-
-        return b
-
+from atmodeller.eos.core import RealGas
+from atmodeller.eos.redlich_kwong import RedlichKwong49
+from atmodeller.sci_utils import ExperimentalCalibration
 
 experimental_calibration_connolly16: ExperimentalCalibration = ExperimentalCalibration(
-    temperature_min=1000,
-    temperature_max=10000,
-    pressure_min=1,
-    pressure_max=50e3,
+    temperature_min=1000, temperature_max=10000, pressure_min=1, pressure_max=50e3
 )
 """Experimental calibration for :cite:`C16` models"""
 
 experimental_calibration_reid87: ExperimentalCalibration = ExperimentalCalibration(
-    temperature_min=300,
-    temperature_max=500,
-    pressure_min=1,
-    pressure_max=100,
+    temperature_min=300, temperature_max=500, pressure_min=1, pressure_max=100
 )
-"""Experimental calibration for :cite:`RPS77` models"""
+"""Validity range of the :cite:t:`RPP87` models (300-500 K, up to 100 bar)
+
+Not applied: the models are registered unbounded, as in v1 and :cite:t:`Hakim2026`. To bound a
+model, combine it with this calibration using ``CombinedRealGas.create``.
+"""
 
 OSi_rk49_connolly16: RealGas = RedlichKwong49.create("OSi")
 """OSi Redlich-Kwong :cite:p:`C16`"""
 H4Si_rk49_reid87: RealGas = RedlichKwong49.create("H4Si")
-"""H4Si Redlich-Kwong :cite:p:`RPS77`"""
+"""H4Si Redlich-Kwong with the critical data of :cite:t:`RPP87` (unbounded)"""
 CHN_rk49_reid87: RealGas = RedlichKwong49.create("CHN")
-"""CHN Redlich-Kwong :cite:p:`RPS77`"""
+"""CHN Redlich-Kwong with the critical data of :cite:t:`RPP87` (unbounded)"""
 H3N_rk49_reid87: RealGas = RedlichKwong49.create("H3N")
-"""H3N Redlich-Kwong :cite:p:`RPS77`"""
+"""H3N Redlich-Kwong with the critical data of :cite:t:`RPP87` (unbounded)"""
 
 OSi_rk49_connolly16_bounded: RealGas = CombinedRealGas.create(
     [OSi_rk49_connolly16], [experimental_calibration_connolly16]

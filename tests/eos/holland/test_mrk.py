@@ -1,29 +1,20 @@
+# SPDX-FileCopyrightText: 2024-2026 Dan J. Bower <dbower@eaps.ethz.ch>
+# SPDX-FileCopyrightText: 2024-2026 Paolo A. Sossi
 #
-# Copyright 2024 Dan J. Bower
-#
-# This file is part of Atmodeller.
-#
-# Atmodeller is free software: you can redistribute it and/or modify it under the terms of the GNU
-# General Public License as published by the Free Software Foundation, either version 3 of the
-# License, or (at your option) any later version.
-#
-# Atmodeller is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
-# even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License along with Atmodeller. If not,
-# see <https://www.gnu.org/licenses/>.
-#
+# SPDX-License-Identifier: Apache-2.0
+
 """Tests for the MRK EOS models from :cite:t:`HP91,HP98`
 
 These are not intended to be used directly, but rather as a building block of the CORK models they
-serve as convenient tests in the absence of a virial correction term."""
+serve as convenient tests in the absence of a virial correction term.
+"""
 
 from atmodeller.eos import RealGas
 from atmodeller.eos._holland_powell import (
     CO2_mrk_cs_holland91,
     CO2MrkHolland91,
     H2O_mrk_fluid_holland91,
+    H2O_mrk_gas_fluid_holland91,
     H2O_mrk_gas_holland91,
     H2OMrkHolland91,
 )
@@ -65,13 +56,24 @@ def test_H2O_below_Tc_above_Psat(check_values) -> None:
     check_values.fugacity_coefficient(600, 1e3, H2OMrkHolland91, expected)
 
 
-# def test_volume_with_broadcasting(check_values) -> None:
-#     """Tests volume with broadcasting"""
-#     model: RealGas = CO2MrkHolland91
-#     check_values.check_broadcasting("volume", model)
+def test_broadcasting_CO2(check_values) -> None:
+    """Tests CO2 properties with broadcasting"""
+    model: RealGas = CO2MrkHolland91
+    check_values.check_broadcasting(model)
 
 
-# def test_fugacity_with_broadcasting(check_values) -> None:
-#     """Tests volume with broadcasting"""
-#     model: RealGas = CO2MrkHolland91
-#     check_values.check_broadcasting("fugacity", model)
+def test_broadcasting_H2O(check_values) -> None:
+    """Tests H2O properties with broadcasting"""
+    model: RealGas = H2OMrkHolland91
+    check_values.check_broadcasting(model)
+
+
+def test_H2O_gas_fluid_log_fugacity(check_values) -> None:
+    """Tests H2OMrkGasFluid91.log_fugacity called directly
+
+    This method is never called by :class:`~atmodeller.eos.core.CORK`, which only uses
+    ``volume`` and ``volume_integral`` on its wrapped MRK model, so it is otherwise uncovered.
+    """
+    model: RealGas = H2O_mrk_gas_fluid_holland91
+    expected: float = 4.370827630613034
+    check_values._check_property("log_fugacity", 600, 100, model, expected)

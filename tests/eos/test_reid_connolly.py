@@ -1,19 +1,8 @@
+# SPDX-FileCopyrightText: 2024-2026 Dan J. Bower <dbower@eaps.ethz.ch>
+# SPDX-FileCopyrightText: 2024-2026 Paolo A. Sossi
 #
-# Copyright 2024 Dan J. Bower
-#
-# This file is part of Atmodeller.
-#
-# Atmodeller is free software: you can redistribute it and/or modify it under the terms of the GNU
-# General Public License as published by the Free Software Foundation, either version 3 of the
-# License, or (at your option) any later version.
-#
-# Atmodeller is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
-# even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License along with Atmodeller. If not,
-# see <https://www.gnu.org/licenses/>.
-#
+# SPDX-License-Identifier: Apache-2.0
+
 """Tests for the RK49 EOS models :cite:p:`RPP77,C16`"""
 
 from atmodeller.eos import RealGas
@@ -50,3 +39,9 @@ def test_H3N_fugacity_coefficient(check_values) -> None:
     model: RealGas = H3N_rk49_reid87
     expected: float = 0.867380982251227
     check_values.fugacity_coefficient(500, 100, model, expected)
+
+
+def test_broadcasting(check_values) -> None:
+    """Tests methods with broadcasting"""
+    model: RealGas = OSi_rk49_connolly16_bounded
+    check_values.check_broadcasting(model)

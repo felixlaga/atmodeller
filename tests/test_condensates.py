@@ -1,221 +1,221 @@
+# SPDX-FileCopyrightText: 2024-2026 Dan J. Bower <dbower@eaps.ethz.ch>
+# SPDX-FileCopyrightText: 2024-2026 Paolo A. Sossi
 #
-# Copyright 2024 Dan J. Bower
-#
-# This file is part of Atmodeller.
-#
-# Atmodeller is free software: you can redistribute it and/or modify it under the terms of the GNU
-# General Public License as published by the Free Software Foundation, either version 3 of the
-# License, or (at your option) any later version.
-#
-# Atmodeller is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
-# even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License along with Atmodeller. If not,
-# see <https://www.gnu.org/licenses/>.
-#
-"""Tests for C-H-O systems with stable or unstable condensates"""
+# SPDX-License-Identifier: Apache-2.0
+
+"""Tests for systems with stable or unstable condensates
+
+C-H-O gas with graphite is tested with the C-H-O comparisons in ``test_CHO.py``.
+"""
 
 import logging
+from typing import Any
 
 import numpy as np
 from jaxtyping import ArrayLike
-from molmass import Formula
 
 from atmodeller import debug_logger
 from atmodeller.classes import EquilibriumModel
-from atmodeller.containers import ChemicalSpecies, Planet, SpeciesNetwork, ThermodynamicState
-from atmodeller.interfaces import FugacityConstraintProtocol
+from atmodeller.containers import ChemicalSpecies
 from atmodeller.output import Output
-from atmodeller.thermodata import IronWustiteBuffer
-from atmodeller.utilities import earth_oceans_to_hydrogen_mass
+from atmodeller.parameters import Parameters
+from atmodeller.phases import PurePhase
+from atmodeller.sci_utils import earth
+from atmodeller.state import BaseThermodynamicState, Planet, ThermodynamicState
 
 logger: logging.Logger = debug_logger()
-logger.setLevel(logging.WARNING)
+logger.setLevel(logging.DEBUG)
 
-RTOL: float = 1.0e-8
-"""Relative tolerance"""
-ATOL: float = 1.0e-8
-"""Absolute tolerance"""
 TOLERANCE: float = 5.0e-2
 """Tolerance of log output to satisfy comparison with FactSage and FastChem"""
 
-species: SpeciesNetwork = SpeciesNetwork.create(
-    ("H2_g", "H2O_g", "CO_g", "CO2_g", "CH4_g", "O2_g", "C_cd")
-)
-CHO_model: EquilibriumModel = EquilibriumModel(species)
+# Gas species
+H2O_g: ChemicalSpecies = ChemicalSpecies.create_gas("H2O")
+H2_g: ChemicalSpecies = ChemicalSpecies.create_gas("H2")
+O2_g: ChemicalSpecies = ChemicalSpecies.create_gas("O2")
+CO_g: ChemicalSpecies = ChemicalSpecies.create_gas("CO")
+CO2_g: ChemicalSpecies = ChemicalSpecies.create_gas("CO2")
+CH4_g: ChemicalSpecies = ChemicalSpecies.create_gas("CH4")
+N2_g: ChemicalSpecies = ChemicalSpecies.create_gas("N2")
+CHN_g: ChemicalSpecies = ChemicalSpecies.create_gas("CHN")
+H_g: ChemicalSpecies = ChemicalSpecies.create_gas("H")
+
+# Condensates
+graphite: PurePhase = PurePhase.from_species("C", state="s")
+diamond: PurePhase = PurePhase.from_species("C", state="diamond")
+water: PurePhase = PurePhase.from_species("H2O", state="l")
 
 
-def test_graphite_stable(helper) -> None:
-    """Tests graphite stable with around 50% condensed C mass fraction"""
-
-    planet: Planet = Planet(temperature=873)
-    fugacity_constraints: dict[str, FugacityConstraintProtocol] = {
-        "O2_g": IronWustiteBuffer(np.nan)
-    }
-    oceans: ArrayLike = 1
-    h_kg: ArrayLike = earth_oceans_to_hydrogen_mass(oceans)
-    c_kg: ArrayLike = 5 * h_kg
-    o_kg: ArrayLike = 2.73159e19
-    mass_constraints = {"C": c_kg, "H": h_kg, "O": o_kg}
-
-    CHO_model.solve(
-        state=planet,
-        fugacity_constraints=fugacity_constraints,
-        mass_constraints=mass_constraints,
-        solver="basic",
-    )
-    output: Output = CHO_model.output
-    solution: dict[str, ArrayLike] = output.quick_look()
-
-    factsage_result: dict[str, float] = {
-        "O2_g": 1.27e-25,
-        "H2_g": 14.564,
-        "CO_g": 0.07276,
-        "H2O_g": 4.527,
-        "CO2_g": 0.061195,
-        "CH4_g": 96.74,
-        "C_cd_activity": 1.0,
-        "mass_C_cd": 3.54162e20,
-    }
-
-    assert helper.isclose(solution, factsage_result, log=True, rtol=TOLERANCE, atol=TOLERANCE)
-
-
-def test_graphite_unstable(helper) -> None:
-    """Tests C-H-O system at IW+0.5 with graphite unstable
-
-    Similar to :cite:p:`BHS22{Table E, row 2}`
-    """
-
-    planet: Planet = Planet(temperature=1400)
-    fugacity_constraints: dict[str, FugacityConstraintProtocol] = {"O2_g": IronWustiteBuffer(0.5)}
-    oceans: ArrayLike = 3
-    h_kg: ArrayLike = earth_oceans_to_hydrogen_mass(oceans)
-    c_kg: ArrayLike = 1 * h_kg
-    mass_constraints = {"C": c_kg, "H": h_kg}
-
-    CHO_model.solve(
-        state=planet, fugacity_constraints=fugacity_constraints, mass_constraints=mass_constraints
-    )
-    output: Output = CHO_model.output
-    solution: dict[str, ArrayLike] = output.quick_look()
-
-    factsage_result: dict[str, float] = {
-        "O2_g": 4.11e-13,
-        "H2_g": 236.98,
-        "CO_g": 46.42,
-        "H2O_g": 337.16,
-        "CO2_g": 30.88,
-        "CH4_g": 28.66,
-        "C_cd_activity": 0.12202,
-        "mass_C_cd": 0.0,
-    }
-
-    assert helper.isclose(solution, factsage_result, log=True, rtol=TOLERANCE, atol=TOLERANCE)
-
-
-def test_water_stable(helper) -> None:
+def test_water_stable() -> None:
     """Condensed water at 10 bar"""
+    gas_species: tuple[ChemicalSpecies, ...] = (H2O_g, H2_g, O2_g)
+    condensates: tuple[PurePhase, ...] = (water,)
 
-    species: SpeciesNetwork = SpeciesNetwork.create(("H2_g", "H2O_g", "O2_g", "H2O_cd"))
-    planet: Planet = Planet(temperature=411.75)
-    model: EquilibriumModel = EquilibriumModel(species)
-
-    oceans: float = 1
-    h_kg: ArrayLike = earth_oceans_to_hydrogen_mass(oceans)
-    o_kg: float = 1.14375e21
-    mass_constraints = {"H": h_kg, "O": o_kg}
-
-    model.solve(state=planet, mass_constraints=mass_constraints, solver="robust")
-    output: Output = model.output
-    solution: dict[str, ArrayLike] = output.quick_look()
-
-    factsage_result: dict[str, float] = {
-        "H2O_g": 3.3596,
-        "H2_g": 6.5604,
-        "O2_g": 5.6433e-58,
-        "H2O_cd_activity": 1.0,
-        "mass_H2O_cd": 1.247201e21,
-    }
-
-    assert helper.isclose(solution, factsage_result, log=True, rtol=TOLERANCE, atol=TOLERANCE)
-
-
-def test_graphite_water_stable(helper) -> None:
-    """Tests C and water in equilibrium at 430 K and 10 bar"""
-
-    species: SpeciesNetwork = SpeciesNetwork.create(
-        ("H2O_g", "H2_g", "O2_g", "CO_g", "CO2_g", "CH4_g", "H2O_cd", "C_cd")
+    planet: BaseThermodynamicState = Planet.from_species(
+        gas_species, temperature=411.75, condensates=condensates
     )
-    planet: Planet = Planet(temperature=430)
-    model: EquilibriumModel = EquilibriumModel(species)
 
-    h_kg: float = 3.10e20
-    c_kg: float = 1.08e20
-    o_kg: float = 2.48298883581636e21
-    mass_constraints = {"C": c_kg, "H": h_kg, "O": o_kg}
+    h_kg: ArrayLike = earth.oceans_to_hydrogen_mass(1)
+    mass_constraints: dict[str, ArrayLike] = {"H": h_kg, "O": 1.14375e21}
 
-    model.solve(state=planet, mass_constraints=mass_constraints, solver="basic")
-    output: Output = model.output
-    solution: dict[str, ArrayLike] = output.quick_look()
+    parameters: Parameters = Parameters(planet, mass_constraints=mass_constraints)
 
-    factsage_result: dict[str, float] = {
-        "CH4_g": 0.3241,
-        "CO2_g": 4.3064,
-        "CO_g": 2.77e-6,
-        "C_cd_activity": 1.0,
-        "H2O_g": 5.3672,
-        "H2O_cd_activity": 1.0,
-        "H2_g": 0.0023,
-        "O2_g": 4.74e-48,
-        "mass_C_cd": 8.75101e19,
-        "mass_H2O_cd": 2.74821e21,
+    output: Output = EquilibriumModel(parameters).solve_with_default()
+
+    factsage_result: dict[str, Any] = {
+        "gas": {
+            "species": {"partial_pressure": {"H2O_g": 3.3596, "H2_g": 6.5604, "O2_g": 5.6433e-58}}
+        },
+        "H2O_l": {"species": {"activity": {"H2O_l": 1.0}, "mass": {"H2O_l": 1.247201e21}}},
     }
 
-    assert helper.isclose(solution, factsage_result, log=True, rtol=TOLERANCE, atol=TOLERANCE)
+    assert output.compare(factsage_result, log=True, rtol=TOLERANCE, atol=TOLERANCE)
 
 
-def test_impose_stable(helper) -> None:
+def test_graphite_water_stable() -> None:
+    """Tests C and water in equilibrium at 430 K and 10 bar"""
+    gas_species: tuple[ChemicalSpecies, ...] = (H2O_g, H2_g, O2_g, CO_g, CO2_g, CH4_g)
+    condensates: tuple[PurePhase, ...] = (water, graphite)
+
+    planet: BaseThermodynamicState = Planet.from_species(
+        gas_species, temperature=430, condensates=condensates
+    )
+
+    mass_constraints: dict[str, ArrayLike] = {"C": 1.08e20, "H": 3.10e20, "O": 2.48298883581636e21}
+
+    parameters: Parameters = Parameters(planet, mass_constraints=mass_constraints)
+
+    output: Output = EquilibriumModel(parameters).solve_with_default()
+
+    factsage_result: dict[str, Any] = {
+        "gas": {
+            "species": {
+                "partial_pressure": {
+                    "CH4_g": 0.3241,
+                    "CO2_g": 4.3064,
+                    "CO_g": 2.77e-6,
+                    "H2_g": 0.0023,
+                    "O2_g": 4.74e-48,
+                    "H2O_g": 5.3672,
+                }
+            }
+        },
+        "C_s": {"species": {"activity": {"C_s": 1.0}, "mass": {"C_s": 8.75101e19}}},
+        "H2O_l": {"species": {"activity": {"H2O_l": 1.0}, "mass": {"H2O_l": 2.74821e21}}},
+    }
+
+    assert output.compare(factsage_result, log=True, rtol=TOLERANCE, atol=TOLERANCE)
+
+
+def test_graphite_water_oxidised() -> None:
+    """Tests water and unstable graphite under an O2-rich atmosphere at 368 K
+
+    O exceeds what H2O and CO2 can hold, so the excess is O2 gas and CH4 is about 1e-117 bar, far
+    below the former default lower bound on the log number of moles (-200). Atmodeller result.
+    """
+    gas_species: tuple[ChemicalSpecies, ...] = (H2O_g, H2_g, O2_g, CO_g, CO2_g, CH4_g)
+    condensates: tuple[PurePhase, ...] = (water, graphite)
+
+    planet: BaseThermodynamicState = Planet.from_species(
+        gas_species, temperature=367.8167944988913, condensates=condensates
+    )
+
+    mass_constraints: dict[str, ArrayLike] = {
+        "C": 1.5630593225639497e20,
+        "H": 4.694481522139993e20,
+        "O": 5.571195263063157e21,
+    }
+
+    parameters: Parameters = Parameters(planet, mass_constraints=mass_constraints)
+
+    output: Output = EquilibriumModel(parameters).solve_with_default()
+
+    target: dict[str, Any] = {
+        "gas": {
+            "species": {
+                "partial_pressure": {
+                    "CH4_g": 1.2986814831972477e-117,
+                    "CO2_g": 86.87677822347462,
+                    "CO_g": 1.0923958934052829e-35,
+                    "H2_g": 4.663683521768718e-34,
+                    "O2_g": 298.1046811843703,
+                    "H2O_g": 0.8243073846580263,
+                }
+            }
+        },
+        "H2O_l": {
+            "species": {"activity": {"H2O_l": 1.0}, "mass": {"H2O_l": 4.1930821668734045e21}}
+        },
+    }
+
+    assert bool(np.all(output.multi_attempt_solution.success))
+    assert output.compare(target, log=True, rtol=TOLERANCE, atol=TOLERANCE)
+
+
+def test_impose_stable() -> None:
     """Tests a user-imposed stable condensate"""
+    gas_species: tuple[ChemicalSpecies, ...] = (H2_g, N2_g, CH4_g, CHN_g, H_g)
 
     # Since in this example we do not provide carbon in the injected gas stream, we cannot solve
     # for the stability of any carbon-bearing products because in order to do so requires
     # specification of the mass of carbon in the system.
-    C_cr = ChemicalSpecies.create_condensed("C", solve_for_stability=False)
+    imposed_graphite: PurePhase = PurePhase.from_species("C", state="s", solve_for_stability=False)
+    condensates: tuple[PurePhase, ...] = (imposed_graphite,)
 
-    # Define allowable gas species at equilibrium
-    H2_g = ChemicalSpecies.create_gas("H2")
-    N2_g = ChemicalSpecies.create_gas("N2")
-    CH4_g = ChemicalSpecies.create_gas("CH4")
-    CHN_g = ChemicalSpecies.create_gas("CHN")
-    H_g = ChemicalSpecies.create_gas("H")
+    state: ThermodynamicState = ThermodynamicState.from_species(
+        gas_species, pressure=1, temperature=1773.15, condensates=condensates
+    )
 
-    species = SpeciesNetwork((C_cr, H2_g, N2_g, CH4_g, CHN_g, H_g))
+    # Mole fractions of the input gases
+    mole_fractions: dict[str, ArrayLike] = {"H2": 0.5, "N2": 0.5}
 
-    model = EquilibriumModel(species)
+    parameters: Parameters = Parameters(state, mass_constraints=mole_fractions, mass_units="moles")
 
-    # Set the temperature and pressure
-    state = ThermodynamicState(temperature=1773.15, melt_fraction=0, pressure=1)
+    output: Output = EquilibriumModel(parameters).solve_with_default()
 
-    # Define the mole fractions of input gases
-    mole_fractions = {"H2": 0.5, "N2": 0.5}
-
-    # Define the composition of the input gas mixture by mass
-    mass_constraints = {key: value * Formula(key).mass for key, value in mole_fractions.items()}
-
-    # Solve
-    model.solve(state=state, mass_constraints=mass_constraints, solver="basic")
-
-    output: Output = model.output
-    solution: dict[str, ArrayLike] = output.quick_look()
-
-    factsage_result: dict[str, float] = {
-        "CH4_g": 0.000194708,
-        "C_cd_activity": 1.0,
-        "H_g": 0.000201266,
-        "H2_g": 0.49807992,
-        "N2_g": 0.49866269,
+    factsage_result: dict[str, Any] = {
+        "gas": {
+            "species": {
+                "partial_pressure": {
+                    "CH4_g": 0.000194708,
+                    "H_g": 0.000201266,
+                    "H2_g": 0.49807992,
+                    "N2_g": 0.49866269,
+                }
+            }
+        },
+        "C_s": {"species": {"activity": {"C_s": 1.0}}},
     }
 
-    assert helper.isclose(solution, factsage_result, log=True, rtol=TOLERANCE, atol=TOLERANCE)
+    assert output.compare(factsage_result, log=True, rtol=TOLERANCE, atol=TOLERANCE)
+
+
+def test_graphite_diamond() -> None:
+    """Tests that the solver selects graphite at low pressure and diamond at high pressure
+
+    At 1500 K the graphite-diamond transition is around 45 kbar. Both pressures are solved in one
+    batch. The unstable polymorph has a negligible amount and an activity less than unity.
+    """
+    gas_species: tuple[ChemicalSpecies, ...] = (H2_g, CH4_g)
+    condensates: tuple[PurePhase, ...] = (graphite, diamond)
+
+    state: ThermodynamicState = ThermodynamicState.from_species(
+        gas_species, pressure=np.array([1.0, 1.0e5]), temperature=1500, condensates=condensates
+    )
+
+    parameters: Parameters = Parameters(
+        state, mass_constraints={"C": 1.0, "H": 1.0}, mass_units="moles"
+    )
+
+    output: Output = EquilibriumModel(parameters).solve_with_default()
+    out: dict[str, Any] = output.to_dict(to_numpy=True)
+
+    # Graphite stable at 1 bar (row 0) and diamond stable at 1e5 bar (row 1)
+    for row, (stable, unstable) in enumerate((("C_s", "C_diamond"), ("C_diamond", "C_s"))):
+        stable_species: dict[str, Any] = out[stable]["species"]
+        unstable_species: dict[str, Any] = out[unstable]["species"]
+
+        assert np.isclose(stable_species["activity"][stable][row], 1.0)
+        assert stable_species["number_moles"][stable][row] > 0.1
+        assert unstable_species["activity"][unstable][row] < 1.0
+        assert unstable_species["number_moles"][unstable][row] < 1.0e-20

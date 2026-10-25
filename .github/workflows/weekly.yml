@@ -1,0 +1,139 @@
+name: Weekly
+
+# Checks that are too slow or too rarely affected to run on every PR:
+# - latest-deps: the newest dependency releases that pyproject.toml allows, which is what users
+#   get from PyPI (CI tests the versions locked in uv.lock), to catch upstream breakage, e.g. a
+#   new JAX or Equinox release, within a week
+# - lowest-deps: the lowest versions that pyproject.toml allows, to check the minimum versions
+# - intel-macos: Intel macOS, whose jax/lineax pins in pyproject.toml are untested elsewhere
+# - performance: the performance tests (TRAPPIST-1e at batch sizes 1, 100 and 1000)
+
+on:
+  schedule:
+    - cron: "0 4 * * 1"  # Mondays at 04:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  latest-deps:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      UV_PYTHON: "3.13"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.12.3"
+
+      # --upgrade resolves the newest allowed versions instead of those in uv.lock
+      - name: Install the project with the latest dependencies
+        run: uv sync --upgrade --all-extras --dev
+
+      - name: Show the versions tested
+        run: uv pip list | grep -iE "^(jax|jaxlib|equinox|optimistix|lineax|numpy|scipy) "
+
+      - name: Run tests
+        run: uv run pytest -m "not performance" --durations=20
+
+  lowest-deps:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      UV_PYTHON: "3.11"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.12.3"
+
+      # lowest-direct resolves the lowest allowed versions of the direct dependencies
+      - name: Install the project with the lowest dependencies
+        run: uv sync --resolution lowest-direct --all-extras --dev
+
+      - name: Show the versions tested
+        run: uv pip list | grep -iE "^(jax|jaxlib|equinox|optimistix|lineax|numpy|scipy) "
+
+      - name: Run tests
+        run: uv run pytest -m "not performance" --durations=20
+
+  intel-macos:
+    # GitHub's last Intel macOS image, supported until autumn 2027
+    runs-on: macos-15-intel
+    timeout-minutes: 60
+    env:
+      UV_PYTHON: "3.11"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.12.3"
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+
+      # The locked versions for Intel macOS (jax 0.4.38, lineax 0.0.8)
+      - name: Install the project
+        run: uv sync --locked --all-extras --dev
+
+      - name: Show the versions tested
+        run: uv pip list | grep -iE "^(jax|jaxlib|equinox|optimistix|lineax|numpy|scipy|ml-dtypes) "
+
+      - name: Run tests
+        run: uv run pytest -m "not performance" --durations=20
+
+  performance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      UV_PYTHON: "3.13"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.12.3"
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+
+      - name: Install the project
+        run: uv sync --locked --all-extras --dev
+
+      - name: Run performance tests
+        run: uv run pytest -m performance --durations=20

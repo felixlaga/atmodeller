@@ -14,7 +14,7 @@ The solver fails
 
 *Atmodeller* assembles and solves systems of non-linear equations, and is therefore subject to all the usual considerations that arise when dealing with such systems. Under the hood, it uses the JAX-based solver library `optimistix <https://github.com/patrick-kidger/optimistix>`_, whose documentation is available `here <https://docs.kidger.site/optimistix>`_. Pay particular attention to the FAQ section. 
 
-Because the solution process is compiled and optimized by JAX, it can be challenging to inspect the solver's internal workings without using `JAX debugging tools <https://jax.readthedocs.io/en/latest/debugging.html>`_. However, the nature of the failure can often provide insight into the underlying issue:
+Because the solution process is compiled and optimized by JAX, it can be challenging to inspect the solver's internal workings without using `JAX debugging tools <https://docs.jax.dev/en/latest/debugging.html>`_. However, the nature of the failure can often provide insight into the underlying issue:
 
 - A solution cannot be found
 - The solver detects an nan (not a number) or infinity in a function
@@ -26,7 +26,7 @@ A solution cannot be found
   
 - Ensure that a solution physically exists for the system you've constructed. While *Atmodeller* allows arbitrary user-defined constraints (e.g., fugacity, mass balance), this does not guarantee a valid solution. If no solution is found, it may be due to over-constraining or conflicting conditions. To diagnose this, simplify the system by reducing the number of species and/or constraints. If a solution can be found for a simpler case, gradually reintroduce complexity to identify when the system becomes unsolvable.
 
-- *Atmodeller* uses a bounded solver, with upper and lower limits specified in the package's `__init__`. These bounds are generally generous, but it is still possible that a solution lies outside them---particularly when modelling large atmospheres in the absence of solubility. Consider adjusting or inspecting the bounds if appropriate.
+- *Atmodeller* uses a bounded solver, with upper and lower limits on the log number of moles and log stability set by ``SolverParameters`` (``log_number_moles_lower``, ``log_number_moles_upper``, ``log_stability_lower``, ``log_stability_upper``), whose defaults are in ``atmodeller.constants``. These bounds are generally generous, but it is still possible that a solution lies outside them---particularly when modeling large atmospheres in the absence of solubility, or trace species in strongly oxidised or reduced systems. If a species sits at a bound in an unconverged solution, widen that bound, e.g. ``SolverParameters(log_number_moles_lower=-600.0)``, and pass it to the model as ``solver_parameters``.
 
 The solver detects an nan
 ~~~~~~~~~~~~~~~~~~~~~~~~~

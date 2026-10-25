@@ -1,0 +1,17 @@
+# Codecov settings (https://docs.codecov.com/docs/codecov-yaml). Coverage is uploaded by the
+# Ubuntu Python 3.13 leg of the CI workflow.
+coverage:
+  status:
+    # Overall coverage may not fall by more than 1 percentage point relative to the base
+    project:
+      default:
+        target: auto
+        threshold: 1%
+    # At least 80% of the lines changed in a PR must be covered (also checked in CI by diff-cover)
+    patch:
+      default:
+        target: 80%
+
+comment:
+  layout: "diff, files"
+  require_changes: true

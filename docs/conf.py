@@ -11,25 +11,24 @@ https://www.sphinx-doc.org/en/master/usage/configuration.html
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
+import importlib.metadata
 import os
+import shutil
 import sys
-from pathlib import Path
 
 sys.path.insert(0, os.path.abspath("."))
 
+import pypandoc
 import sphinx.builders.latex.transforms
-
-# Get path to directory containing this file, conf.py.
-DOCS_DIRECTORY: Path = Path(__file__).resolve().parent
 
 # -- Project information -----------------------------------------------------
 
 project = "Atmodeller"
-copyright = "2024, Dan J. Bower"
+copyright = "2024-2026, Dan J. Bower and Paolo A. Sossi"
 author = "Dan J. Bower"
 
-# The full version, including alpha/beta/rc tags
-release = "1.0.2"
+# The full version, including alpha/beta/rc tags, from the installed package (pyproject.toml)
+release = importlib.metadata.version("atmodeller")
 
 
 # -- General configuration ---------------------------------------------------
@@ -45,12 +44,14 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.autodoc",
     "sphinx.ext.intersphinx",
+    "myst_parser",
 ]
 
 intersphinx_mapping = {
     "jax": ("https://docs.jax.dev/en/latest/", None),
+    "numpy": ("https://numpy.org/doc/stable/", None),
     "equinox": ("https://docs.kidger.site/equinox/", None),
-    "jaxmod": ("https://jaxmod.readthedocs.io/en/latest/", None),
+    "optimistix": ("https://docs.kidger.site/optimistix/", None),
 }
 
 bibtex_bibfiles = ["refs.bib"]
@@ -71,7 +72,7 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 #
 # html_theme = "alabaster"
 html_theme = "sphinx_rtd_theme"
-html_logo = "logo200x200.png"
+html_logo = "logo/logo200x200.png"
 html_context = {
     "display_github": True,
     "github_user": "ExPlanetology",
@@ -99,10 +100,10 @@ autodoc_default_options = {
     "show-inheritance": False,
     "inherited-members": True,
     "undoc-members": False,
-    "private-members": True,
+    "private-members": False,
 }
 
-latex_logo = "logo.png"
+latex_logo = "logo/logo800x800.png"
 # Disable the automatic inclusion of the Python module index in the LaTeX PDF output
 latex_domain_indices = False
 
@@ -122,6 +123,9 @@ napoleon_preprocess_types = False
 napoleon_type_aliases = None
 napoleon_attr_annotations = True
 
+# For development where the notebooks may (temporarily) break, set to True
+nbsphinx_allow_errors = False
+
 # https://sphinxcontrib-bibtex.readthedocs.io/en/latest/usage.html#known-issues-and-workarounds
 
 
@@ -132,33 +136,16 @@ class DummyTransform(sphinx.builders.latex.transforms.BibliographyTransform):
 
 sphinx.builders.latex.transforms.BibliographyTransform = DummyTransform
 
-
-# https://stackoverflow.com/questions/62398231/building-docs-fails-due-to-missing-pandoc
-def ensure_pandoc_installed(_):
-    import pypandoc
-
-    # Download pandoc if necessary. If pandoc is already installed and on the PATH, the installed
-    # version will be used. Otherwise, we will download a copy of pandoc into docs/bin/ and add
-    # that to our PATH.
-    pandoc_dir: Path = DOCS_DIRECTORY / "bin"
-
-    # Add dir containing pandoc binary to the PATH environment variable, if not already included
-    if str(pandoc_dir) not in os.environ["PATH"].split(os.pathsep):
-        os.environ["PATH"] += os.pathsep + str(pandoc_dir)
-    pypandoc.ensure_pandoc_installed(
-        targetfolder=str(pandoc_dir),
-        delete_installer=True,
-    )
-
-
-def setup(app):
-    app.connect("builder-inited", ensure_pandoc_installed)
-
-
-# This avoids a warning about unable to copy the examples notebook
-# Path to the existing file in the build output
-destination_path = Path("_build/html/examples.ipynb")
-
-# Remove the file if it already exists
-if destination_path.exists():
-    destination_path.unlink()
+# nbsphinx requires pandoc on the PATH. Prefer a system pandoc if one is available, otherwise use
+# the copy bundled with pypandoc-binary (docs extra). Note that pypandoc-binary's macOS arm64 wheels
+# currently bundle an x86_64 pandoc, which only runs on Apple Silicon if Rosetta is installed.
+if shutil.which("pandoc") is None:
+    try:
+        pandoc_path: str = pypandoc.get_pandoc_path()
+    except OSError as exc:
+        raise RuntimeError(
+            "No working pandoc found. Install pandoc (e.g. `brew install pandoc` on macOS), or on "
+            "Apple Silicon install Rosetta (`softwareupdate --install-rosetta`) to run the copy "
+            "bundled with pypandoc-binary."
+        ) from exc
+    os.environ["PATH"] = os.path.dirname(pandoc_path) + os.pathsep + os.environ["PATH"]

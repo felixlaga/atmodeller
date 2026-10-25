@@ -1,10 +1,10 @@
 [project]
 name = "atmodeller"
-version = "1.0.2"
-description = "Volatile partitioning between a rocky interior and atmosphere"
+version = "2.0.0"
+description = "Thermochemical equilibrium modeling for planetary interiors and atmospheres"
 readme = "README.md"
-requires-python = ">=3.11,<=4.0"
-license = "GPL-3.0-or-later"
+requires-python = ">=3.11"
+license = "Apache-2.0"
 authors = [
     {name = "Dan J Bower", email = "dbower@eaps.ethz.ch"},
 ]
@@ -28,7 +28,7 @@ classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
     "Intended Audience :: Science/Research",
-    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+    "License :: OSI Approved :: Apache Software License",
     "Natural Language :: English",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.11",
@@ -44,27 +44,23 @@ dependencies = [
     "jax==0.4.38; sys_platform == 'darwin' and platform_machine == 'x86_64'",
     # JAX requirements for all other platforms
     "jax>0.4.38,!=0.7.0,!=0.7.1; sys_platform != 'darwin' or platform_machine != 'x86_64'",
-    # SciPy and NumPy minimum requirements for jax 0.4.31
+    # SciPy and NumPy minimum requirements for jax 0.4.38
     "scipy>=1.10.0",
     "numpy>=1.24.0",
     "pandas>=2.3.0",
     "openpyxl>=3.1.2",
-    "molmass>=2025.9.4",
+    "molmass>=2026.1.8",
     "ipykernel>=6.29.5",
     "matplotlib>=3.9.0",
     "jupyter>=1.0.0",
     "typing-extensions>=4.12.2; python_version < '3.12'",
-    # Optax pinned for Intel macOS
-    "optax==0.2.5; sys_platform == 'darwin' and platform_machine == 'x86_64'",
-    "optax>0.2.5; sys_platform != 'darwin' or platform_machine != 'x86_64'",
-    "xmmutablemap>=0.2.1",
     "optimistix>=0.1.0",
-    "equinox>=0.13.8,!=0.13.3",
-    "jaxmod>=0.4.0",
+    # Linear solves in the element-potential initial guess (also an optimistix dependency).
+    # lineax 0.1.x requires jax>=0.10, so Intel macOS (jax pinned above) stays on 0.0.8
+    "lineax==0.0.8; sys_platform == 'darwin' and platform_machine == 'x86_64'",
+    "lineax>=0.1.1; sys_platform != 'darwin' or platform_machine != 'x86_64'",
+    "equinox>=0.13.8",
 ]
-
-# [tool.uv.sources]
-# jaxmod = { path = "../jaxmod", editable = true }
 
 [project.urls]
 homepage = "https://planetology.ethz.ch"
@@ -78,24 +74,31 @@ docs = [
     "sphinx>=8.2.3",
     "sphinxcontrib-bibtex>=2.6.5",
     "setuptools>=80.9.0",
+    "myst-parser>=5.0.0",
     "doc8>=2.0.0",
     "nbsphinx>=0.9.6",
-    "pypandoc>=1.15",
+    "pypandoc-binary>=1.15",
     "nbsphinx-link>=1.3.1",
 ]
 
 [dependency-groups]
 dev = [
-    "beartype>=0.21.0,<0.22.0",
+    "beartype>=0.22.0,<0.23.0",
+    "diff-cover>=10.6.0",
     "jaxtyping>=0.3.2,<0.4.0",
     "pre-commit>=4.2.0",
-    "pytest>=8.4.1",
+    "pytest>=9.0.2",
     "pytest-beartype>=0.2.0,<0.3.0",
-    "pytest-cov>=6.2.1",
+    "pytest-cov>=7.0.0",
 ]
 
 [tool.pytest.ini_options]
 beartype_packages = "atmodeller"
+# Performance tests are slow and only run on request: pytest -m performance
+addopts = "-m 'not performance'"
+markers = [
+    "performance: marks tests as performance (run with '-m performance')"
+]
 
 [build-system]
 requires = ["hatchling"]

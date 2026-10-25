@@ -1,30 +1,19 @@
+# SPDX-FileCopyrightText: 2024-2026 Dan J. Bower <dbower@eaps.ethz.ch>
+# SPDX-FileCopyrightText: 2024-2026 Paolo A. Sossi
 #
-# Copyright 2024 Dan J. Bower
-#
-# This file is part of Atmodeller.
-#
-# Atmodeller is free software: you can redistribute it and/or modify it under the terms of the GNU
-# General Public License as published by the Free Software Foundation, either version 3 of the
-# License, or (at your option) any later version.
-#
-# Atmodeller is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
-# even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License along with Atmodeller. If not,
-# see <https://www.gnu.org/licenses/>.
-#
+# SPDX-License-Identifier: Apache-2.0
+
 """Solubility laws for carbon species
 
 For every law there should be a test in the test suite.
 """
 
 import jax.numpy as jnp
-from jaxmod.units import unit_conversion
-from jaxmod.utils import safe_exp
 from jaxtyping import Array, ArrayLike
 
 from atmodeller import override
+from atmodeller.jax_utils import safe_exp
+from atmodeller.sci_utils import unit_conversion
 from atmodeller.solubility.core import Solubility
 
 
@@ -135,11 +124,12 @@ rhyolite in the abstract.
 
 
 class _CO2_basalt_dixon95(Solubility):
-    """CO2 in MORB liquids :cite:p:`DSH95`
+    r"""CO2 in MORB liquids :cite:p:`DSH95`
 
-    :cite:t:`DSH95{Equation 6}` for mole fraction of dissolved carbonate (CO3^2-) and then
-    converting to ppmw for CO2 experiments conducted at 1200 C, 210-980 bars with mixed H2O-CO2
-    vapor phase (CO2 vapor mole fraction varied from 0.42-0.97).
+    :cite:t:`DSH95{Equation 6}` for mole fraction of dissolved carbonate
+    (:math:`\mathrm{CO_3^{2-}}`) and then converting to ppmw for CO2 experiments conducted at
+    1200 C, 210-980 bars with mixed H2O-CO2 vapor phase (CO2 vapor mole fraction varied from
+    0.42-0.97).
     """
 
     @override
@@ -154,9 +144,9 @@ class _CO2_basalt_dixon95(Solubility):
 
 
 CO2_basalt_dixon95: Solubility = _CO2_basalt_dixon95()
-"""CO2 in MORB liquids :cite:p:`DSH95`
+r"""CO2 in MORB liquids :cite:p:`DSH95`
 
-:cite:t:`DSH95{Equation 6}` for mole fraction of dissolved carbonate (CO3^2-) and then
-converting to ppmw for CO2 experiments conducted at 1200 C, 210-980 bars with mixed H2O-CO2
-vapor phase (CO2 vapor mole fraction varied from 0.42-0.97).
+:cite:t:`DSH95{Equation 6}` for mole fraction of dissolved carbonate (:math:`\mathrm{CO_3^{2-}}`)
+and then converting to ppmw for CO2 experiments conducted at 1200 C, 210-980 bars with mixed
+H2O-CO2 vapor phase (CO2 vapor mole fraction varied from 0.42-0.97).
 """

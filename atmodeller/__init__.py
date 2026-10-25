@@ -1,22 +1,11 @@
+# SPDX-FileCopyrightText: 2024-2026 Dan J. Bower <dbower@eaps.ethz.ch>
+# SPDX-FileCopyrightText: 2024-2026 Paolo A. Sossi
 #
-# Copyright 2024 Dan J. Bower
-#
-# This file is part of Atmodeller.
-#
-# Atmodeller is free software: you can redistribute it and/or modify it under the terms of the GNU
-# General Public License as published by the Free Software Foundation, either version 3 of the
-# License, or (at your option) any later version.
-#
-# Atmodeller is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
-# even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License along with Atmodeller. If not,
-# see <https://www.gnu.org/licenses/>.
-#
-"""Package level variables and initialises the package logger"""
+# SPDX-License-Identifier: Apache-2.0
 
-__version__: str = "1.0.2"
+"""Package-level exports and logger initialization."""
+
+__version__: str = "2.0.0"
 
 import logging
 import os
@@ -36,7 +25,6 @@ override = _override
 
 jax.config.update("jax_enable_x64", True)
 jnp.set_printoptions(precision=15)  # For better clarity in printed output
-print("Atmodeller initialized with double precision (float64)")
 
 # For debugging
 # jax.config.update("jax_debug_nans", True)
@@ -47,7 +35,7 @@ print("Atmodeller initialized with double precision (float64)")
 # This prevents error_if from throwing an error when encountering nan or inf values. To actually
 # find the root cause of nan or inf values, you should set this to "raise" or "breakpoint" as per
 # https://docs.kidger.site/equinox/api/errors/
-os.environ["EQX_ON_ERROR"] = "nan"
+os.environ["EQX_ON_ERROR"] = "off"
 
 # Suppress warnings (notably from Equinox about static JAX arrays)
 # if not sys.warnoptions:
@@ -60,6 +48,7 @@ os.environ["EQX_ON_ERROR"] = "nan"
 # https://docs.python.org/3/howto/logging.html#library-config
 logger: logging.Logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
+logger.debug("Initialized with double precision (float64)")
 
 
 def complex_formatter() -> logging.Formatter:
@@ -97,7 +86,7 @@ def debug_logger() -> logging.Logger:
     console_handler: logging.Handler = logging.StreamHandler()
     console_formatter: logging.Formatter = simple_formatter()
     console_handler.setFormatter(console_formatter)
-    logger.addHandler(console_handler)
+    package_logger.addHandler(console_handler)
 
     return package_logger
 
@@ -130,13 +119,35 @@ def debug_file_logger() -> logging.Logger:
 from atmodeller.classes import EquilibriumModel  # noqa: E402, F401
 from atmodeller.containers import (  # noqa: E402, F401
     ChemicalSpecies,
-    FixedFugacityConstraint,
-    Planet,
+    ReservoirSpecies,
     SolverParameters,
-    SpeciesNetwork,
-    ThermodynamicState,
 )
-from atmodeller.utilities import (  # noqa: E402, F401
+from atmodeller.database import (  # noqa: E402, F401
+    DataBase,
+    GlennDataBase,
+    get_default_database,
+)
+from atmodeller.output import Output  # noqa: E402, F401
+from atmodeller.parameters import FixedActivityConstraint, Parameters  # noqa: E402, F401
+from atmodeller.phases import CondensedPhase, GasPhase, PurePhase  # noqa: E402, F401
+from atmodeller.sci_utils import (  # noqa: E402, F401
     bulk_silicate_earth_abundances,
-    earth_oceans_to_hydrogen_mass,
+    earth,
+    unit_conversion,
 )
+from atmodeller.solubility import get_solubility_models  # noqa: E402, F401
+from atmodeller.solvers import (  # noqa: E402, F401
+    make_solver,
+    make_solver_with_jit,  # Alias for the default solver
+    make_solver_with_jit_batch_only,
+    make_solver_with_jit_dual_path,
+    make_solver_with_jit_single_path,
+)
+from atmodeller.state import (  # noqa: E402, F401
+    Planet,
+    PressureScalingLawPlanet,
+    ThermodynamicState,
+    ThinAtmospherePlanet,
+)
+from atmodeller.thermodata._redox_buffers import IronWustiteBuffer  # noqa: E402, F401
+from atmodeller.thermodata.core import ActivityCoefficient  # noqa: E402, F401
