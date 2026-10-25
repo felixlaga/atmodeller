@@ -10,6 +10,8 @@ on:
     paths-ignore:
       - 'docs/**'
   workflow_dispatch:
+  # Reused by publish.yaml to test before publishing
+  workflow_call:
 
 # A newer push to the same branch or PR cancels the run in progress
 concurrency:

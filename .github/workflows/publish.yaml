@@ -6,9 +6,16 @@ on:
   workflow_dispatch:
 
 jobs:
+  # The full CI (pre-commit and tests on every platform) must pass before publishing
+  tests:
+    uses: ./.github/workflows/ci.yml
+
   deploy:
+    needs: tests
     if: github.event.release.prerelease == false
     runs-on: ubuntu-latest
+    # Settings > Environments > release can require a manual approval before publishing
+    environment: release
     permissions:
       # IMPORTANT: this permission is mandatory for trusted publishing
       id-token: write
@@ -20,8 +27,8 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v6
         with:
-          # Install a specific version of uv.
-          version: "0.7.20"
+          # The same uv version as used to write uv.lock
+          version: "0.12.3"
           enable-cache: true
 
       - name: Set up Python
@@ -31,6 +38,9 @@ jobs:
 
       - name: Build
         run: uv build
+
+      - name: Check the package metadata
+        run: uvx twine check --strict dist/*
 
       - name: Publish
         run: uv publish
