@@ -24,15 +24,6 @@ affiliations:
     ror: 057rvn534
 date: 18 October 2026
 bibliography: paper.bib
-
-# Optional fields for papers that are part of a joint submission.
-# For example, submitting to a AAS journal too, see this blog post:
-# https://blog.joss.theoj.org/2018/12/a-new-collaboration-with-aas-publishing
-#
-# If you are not making a joint submission you should remove these lines.
-#
-# aas-doi: 10.3847/xxxxx <- update this with the DOI from AAS once you know it.
-# aas-journal: Astrophysical Journal <- The name of the AAS journal.
 ---
 
 # Summary
@@ -54,21 +45,6 @@ sub-Neptunes [@Bower2025]. Because its engine is a general thermodynamic solver,
 equilibrium between gas and pure condensed phases in a gas-mixing furnace.
 
 # Statement of need
-
-% The paper must have a clearly labeled “Statement of need” section that:
-
-% Clearly states what problems the software is designed to solve
-% Identifies who the target audience is
-% Explains the software’s relation to other work in the field
-% This section should make a compelling case for why the software is needed and
-% what gap it fills in the research ecosystem.
-
-% Good: Clear problem statement, well-defined target audience, and context
-% within the broader field
-% OK: Addresses the key elements but could be more specific about audience or
-% context
-% Bad (not acceptable): Vague about the problem being solved, unclear target
-% audience, or missing context
 
 Calculating how volatiles partition between a planet's interior and atmosphere
 requires solving gas-phase speciation, condensate stability, and volatile
@@ -102,18 +78,6 @@ solver. Automatic differentiation provides derivatives of the equilibrium
 solution with respect to its inputs.
 
 # State of the field
-% Authors must describe how their software compares to other commonly-used
-% packages in the research area. When related tools exist, authors must provide
-% a clear “build vs. contribute” justification explaining:
-
-% Their unique scholarly contribution
-% Why existing alternatives are insufficient for their research needs
-% What gap their software fills
-% Good: Thorough comparison with existing tools and clear explanation of why a
-% new tool was necessary
-% OK: Identifies related work and explains key differences
-% Bad (not acceptable): Ignores existing similar tools or fails to justify why
-% contributing to existing projects wasn’t appropriate
 
 Codes developed for stellar and planetary atmospheres, such as `TEA`
 [@Blecic2016], `GGchem` [@Woitke2018], and `FastChem Cond` [@Kitzmann2024],
@@ -190,7 +154,7 @@ tables.
    conditions. Other relationships can be easily added.
 7. **End-to-end compilation and differentiation.** The whole workflow, from
    initial guess to solution, can be JIT-compiled, with the root finding
-   performed by Optimistix [@optimistix2024]. Batches of conditions are solved
+   performed by `Optimistix` [@optimistix2024]. Batches of conditions are solved
    in a single vectorised call, and an automatic retry strategy improves
    robustness across wide parameter ranges. The equilibrium solution is
    differentiable with respect to the model inputs, such as temperature, element
@@ -198,7 +162,7 @@ tables.
 8. **Initial guess.** A new initialiser solves an ideal-gas equilibrium for the
    element potentials [@Gordon1994], including stable condensates and
    dissolution in the melt, with each element first solved separately as in
-   FastChem [@Stock2018]. Fewer solver iterations and retries are then needed,
+   `FastChem` [@Stock2018]. Fewer solver iterations and retries are then needed,
    which lowers the total run time. A previous solution can also be supplied as
    a warm start, for example when coupling to a time-stepping code.
 9. **Performance.** Species-specific models are evaluated directly for each
@@ -216,19 +180,6 @@ tables.
     software without imposing copyleft obligations.
 
 # Software design
-
-% The paper must include a section explaining the architectural choices made:
-
-% Trade-offs considered during design
-% The design/architecture chosen and why
-% Why these choices matter for the research application
-% The content should be compelling and demonstrate meaningful design thinking,
-% not just a superficial description of the code structure.
-
-% Good: Thoughtful discussion of design decisions and their implications
-% OK: Clear explanation of architecture with some rationale
-% Bad (not acceptable): Generic code structure description without explaining
-% design reasoning
 
 `Atmodeller` separates the physical and chemical components from the numerical
 engine that solves for equilibrium. Components interact with the engine only
@@ -278,27 +229,6 @@ pure Python, installs with `pip`, and runs on Linux, macOS, and Windows.
 
 # Research impact statement
 
-% The paper must provide evidence of either:
-
-% Realized impact:
-
-% Publications using the software
-% Evidence of external use and adoption
-% Integration with other research tools or workflows
-% OR credible near-term significance:
-
-% Benchmark results demonstrating improvements
-% Reproducible research materials showing capabilities
-% Community-readiness signals (e.g., requests from other groups, presentations
-% at relevant venues)
-% The evidence should be compelling and specific, not aspirational.
-
-% Good: Multiple citations, documented external users, or strong benchmark
-% results with reproducible materials
-% OK: Some evidence of use beyond the authors’ group or solid benchmarks
-% Bad (not acceptable): Only statements about potential future use without
-% concrete evidence
-
 `Atmodeller` has already been used to study the atmospheres of rocky planets
 [@Bower2025; @Seidler2026] and sub-Neptunes [@Bower2025; @Hakim2026], to
 post-process the outcomes of planet formation models [@Polman2026], and has been
@@ -322,67 +252,7 @@ component that such models can adopt directly, and its design offers a template
 for new codes, supporting the move towards a new generation of differentiable
 and high performance models in Earth and planetary sciences.
 
-% [TODO: benchmark, e.g. "A batch of N conditions solves
-% in X s on a single CPU/GPU, compared with Y s for a Python loop over the same
-% solver", with a pointer to the reproducible notebook.]
-
-%# Mathematics
-
-%Single dollars ($) are required for inline mathematics e.g. $f(x) = e^{\pi/x}$
-
-%Double dollars make self-standing equations:
-
-%$$\Theta(x) = \left\{\begin{array}{l}
-%0\textrm{ if } x < 0\cr
-%1\textrm{ else}
-%\end{array}\right.$$
-
-%You can also use plain \LaTeX for equations
-%\begin{equation}\label{eq:fourier}
-%\hat f(\omega) = \int_{-\infty}^{\infty} f(x) e^{i\omega x} dx
-%\end{equation}
-%and refer to \autoref{eq:fourier} from text.
-
-% # Citations
-
-% Citations to entries in paper.bib should be in
-% [rMarkdown](http://rmarkdown.rstudio.com/authoring_bibliographies_and_citations.html)
-% format.
-
-% If you want to cite a software repository URL (e.g. something on GitHub without
-% a preferred citation) then you can do it with the example BibTeX entry below for
-% @fidgit.
-
-% For a quick reference, the following citation commands can be used: -
-% `@author:2001`  ->  "Author et al. (2001)" - `[@author:2001]` -> "(Author et
-% al., 2001)" - `[@author1:2001; @author2:2001]` -> "(Author1 et al., 2001;
-% Author2 et al., 2002)"
-
-% # Figures
-
-% Figures can be included like this:
-% ![Caption for example figure.\label{fig:example}](figure.png)
-% and referenced from text using \autoref{fig:example}.
-
-% Figure sizes can be customized by adding an optional second parameter:
-% ![Caption for example figure.](figure.png){ width=20% }
-
 # AI usage disclosure
-
-% The paper must include a section that transparently discloses any use of
-% generative AI in:
-
-% Software creation or development
-% Documentation writing
-% Paper authoring
-% If no AI tools were used, this should be explicitly stated. If AI tools were
-% used, authors should describe how they were used and how the quality and
-% correctness of AI-generated content was verified.
-
-% Good: Clear, specific disclosure of AI tool usage and verification methods
-% OK: Statement that no AI tools were used, or general disclosure of AI
-% assistance
-% Bad (not acceptable): Missing section or vague/evasive language about AI usage
 
 Version 1 of `Atmodeller` was developed with limited, targeted use of ChatGPT
 (OpenAI; GPT-4 and GPT-5 models) for specific parts of the codebase. With that
@@ -400,7 +270,7 @@ the authors reviewed in full.
 
 # Acknowledgements
 
-Atmodeller was created as part of a SERI-funded ERC Starting grant '2ATMO'
+`Atmodeller` was created as part of a SERI-funded ERC Starting grant '2ATMO'
 granted to P. Sossi (Contract no. MB22.00033), with additional funding provided
 through a Swiss National Science Foundation (SNSF) Eccellenza Professorship
 (#203668).
