@@ -6,7 +6,21 @@ Developer's Guide
 Introduction
 ------------
 
-Community development of the code is strongly encouraged so please contact the lead developer if you or your team would like to contribute. *Atmodeller* uses JAX so familiarise yourself with `How to think in JAX <https://jax.readthedocs.io/en/latest/notebooks/thinking_in_jax.html>`_ and `JAX - The Sharp Bits <https://jax.readthedocs.io/en/latest/notebooks/Common_Gotchas_in_JAX.html>`_, as well as other resources offered on the JAX site and the web in general. You are welcome to enquire about the reasoning behind the structure and design of the code with the development team.
+Community development of *Atmodeller* is strongly encouraged, and bug fixes and new features are welcome. *Atmodeller* uses JAX so familiarise yourself with `How to think in JAX <https://jax.readthedocs.io/en/latest/notebooks/thinking_in_jax.html>`_ and `JAX - The Sharp Bits <https://jax.readthedocs.io/en/latest/notebooks/Common_Gotchas_in_JAX.html>`_, as well as other resources offered on the JAX site and the web in general. You are welcome to enquire about the reasoning behind the structure and design of the code with the development team.
+
+Contributing
+------------
+
+Contributions follow the usual GitHub workflow:
+
+1. For larger changes, open an `issue <https://github.com/ExPlanetology/atmodeller/issues>`__ first so the approach can be discussed.
+2. Fork the repository to your own account (personal or organisational).
+3. Make your changes on a branch, including tests and documentation where required (see below).
+4. Run the tests and pre-commit, then open a pull request against the upstream repository and complete the pull request template.
+
+To report a bug, request a feature or ask for help, please open an `issue <https://github.com/ExPlanetology/atmodeller/issues>`__. For bugs, include a minimal example that reproduces the problem, the versions of *Atmodeller* and JAX you are using, and any error message.
+
+Under the Apache License 2.0 you are not required to make your changes public, but we encourage you to contribute them back so the whole community benefits. Contributions submitted by pull request are licensed under the same terms as the project.
 
 Installation
 ------------

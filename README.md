@@ -109,11 +109,7 @@ output.to_excel("example_single")
 
 ## Contributing
 
-Community development of Atmodeller is strongly encouraged, and bug fixes and new features are welcome. Contributions follow the usual GitHub workflow: fork the repository to your own account (personal or organisational), make your changes on a branch, and open a pull request against the upstream repository. For larger changes, please open an [issue](https://github.com/ExPlanetology/atmodeller/issues) first so the approach can be discussed. The [Developer's Guide](https://atmodeller.readthedocs.io/en/latest/development.html) explains how to set up a development install and run the tests, pre-commit checks and documentation build.
-
-To report a bug, request a feature or ask for help, please open an [issue](https://github.com/ExPlanetology/atmodeller/issues).
-
-Under the Apache License 2.0 you are not required to make your changes public, but we encourage you to contribute them back so the whole community benefits. Contributions submitted by pull request are licensed under the same terms as the project.
+Community development of Atmodeller is strongly encouraged, and bug fixes and new features are welcome. Please open an [issue](https://github.com/ExPlanetology/atmodeller/issues) to report a bug, request a feature or ask for help. To submit changes, see [CONTRIBUTING.md](https://github.com/ExPlanetology/atmodeller/blob/main/CONTRIBUTING.md).
 
 ## Funding
 Atmodeller was created as part of a SERI-funded ERC Starting grant '2ATMO' granted to P. Sossi (Contract no. MB22.00033), with additional funding provided through a Swiss National Science Foundation (SNSF) Eccellenza Professorship (#203668).
