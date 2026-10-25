@@ -17,6 +17,7 @@ with a stub retry solver.
 
 import logging
 from collections.abc import Callable
+from typing import cast
 
 import jax
 import jax.numpy as jnp
@@ -177,10 +178,14 @@ def _stub_solution(
 ) -> MultiAttemptSolution:
     """Stub solution that reports more steps and attempts for a solve at a larger tau and, as the
     batch retry solver, zero steps and attempts for a model that did not converge"""
-    result: optx.RESULTS = EnumerationItem(
-        jnp.full(converged.shape, optx.RESULTS.successful._value),  # pyright: ignore
+    result_value: Array = jnp.full(
+        converged.shape,
+        optx.RESULTS.successful._value,  # pyright: ignore
+    )
+    result: optx.RESULTS = cast(
         optx.RESULTS,
-    )  # pyright: ignore
+        EnumerationItem(result_value, optx.RESULTS),  # pyright: ignore
+    )
     num_steps: Array = jnp.where(converged, jnp.where(larger_tau, 5, 3), 0)
     attempts: Array = jnp.where(converged, jnp.where(larger_tau, 2, 1), 0)
 
