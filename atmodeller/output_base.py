@@ -508,7 +508,7 @@ class BaseOutputDict(eqx.Module):
 
     def state_to_dict(self) -> dict[str, Any]:
         """Thermodynamic state of the system"""
-        return self.parameters.state.asdict(self.solution)
+        return self.parameters.state.asdict(self.log_number_moles)
 
 
 class OutputNaturalDict(BaseOutputDict):
