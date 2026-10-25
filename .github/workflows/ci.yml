@@ -26,19 +26,23 @@ jobs:
     strategy:
       matrix:
         include:
-          # Lowest and highest supported Python on Linux, and Apple-silicon macOS
-          - { os: "ubuntu-latest", python-version: "3.11" }
-          - { os: "ubuntu-latest", python-version: "3.13" }
-          - { os: "macos-latest", python-version: "3.13" }
+          # Lowest and highest supported Python on Linux, and Apple-silicon macOS. Coverage is
+          # measured on one leg only, since it roughly doubles the test time.
+          - { os: "ubuntu-latest", python-version: "3.11", coverage: false }
+          - { os: "ubuntu-latest", python-version: "3.13", coverage: true }
+          - { os: "macos-latest", python-version: "3.13", coverage: false }
       fail-fast: false
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 30
+    timeout-minutes: ${{ matrix.coverage && 45 || 30 }}
     env:
       UV_PYTHON: ${{ matrix.python-version }}
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          # The coverage leg needs the history of the base branch for the changed-lines check
+          fetch-depth: ${{ matrix.coverage && 0 || 1 }}
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
@@ -59,8 +63,36 @@ jobs:
         run: uv sync --locked --all-extras --dev
 
       - name: Checks with pre-commit
-        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.13'
+        if: matrix.coverage
         run: uv run pre-commit run --all-files
 
       - name: Run tests
+        if: ${{ !matrix.coverage }}
         run: uv run pytest -m "not performance" --durations=20
+
+      # Line coverage with sys.monitoring (COVERAGE_CORE=sysmon) is the fastest option on Python
+      # 3.13; branch coverage would fall back to the slower tracer
+      - name: Run tests with coverage
+        if: matrix.coverage
+        env:
+          COVERAGE_CORE: sysmon
+        run: >-
+          uv run pytest -m "not performance" --durations=20
+          --cov=atmodeller --cov-report=xml --cov-report=term
+
+      # The organisation allows uploads without a token, so a missing secret is not an error
+      - name: Upload coverage to Codecov
+        if: matrix.coverage
+        uses: codecov/codecov-action@v5
+        with:
+          files: coverage.xml
+          flags: unit
+          disable_search: true
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false
+
+      - name: Check coverage of the changed lines
+        if: matrix.coverage && github.event_name == 'pull_request'
+        run: >-
+          uvx diff-cover coverage.xml --compare-branch=origin/${{ github.base_ref }}
+          --fail-under=80

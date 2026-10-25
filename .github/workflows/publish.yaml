@@ -9,6 +9,8 @@ jobs:
   # The full CI (pre-commit and tests on every platform) must pass before publishing
   tests:
     uses: ./.github/workflows/ci.yml
+    # Passes CODECOV_TOKEN (if set) to the coverage upload
+    secrets: inherit
 
   deploy:
     needs: tests
