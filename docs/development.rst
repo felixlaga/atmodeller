@@ -18,6 +18,15 @@ Contributions follow the usual GitHub workflow:
 3. Make your changes on a branch, including tests and documentation where required (see below).
 4. Run the tests and pre-commit, then open a pull request against the upstream repository and complete the pull request template.
 
+A pull request can be merged once the automated checks pass and a maintainer has reviewed it. The checks are:
+
+- **Tests**: all tests pass on Ubuntu (Python 3.11 and 3.13) and macOS (Python 3.13).
+- **Code style and types**: the pre-commit checks pass (ruff linting and formatting, and pyright type checking).
+- **Test coverage**: at least 80% of the lines that the pull request adds or changes in ``atmodeller/`` are covered by tests (see :ref:`Tests <DevelopmentTests>` below for running coverage locally).
+- **Documentation**: if the pull request changes the documentation, the package, the notebooks or the dependencies, the documentation builds without warnings.
+
+Don't let these checks put you off contributing. You don't need to get everything right before opening a pull request: open it anyway, even as a draft, and the development team is happy to help you add tests, fix failing checks and get your changes merged.
+
 To report a bug, request a feature or ask for help, please open an `issue <https://github.com/ExPlanetology/atmodeller/issues>`__. For bugs, include a minimal example that reproduces the problem, the versions of *Atmodeller* and JAX you are using, and any error message.
 
 Under the Apache License 2.0 you are not required to make your changes public, but we encourage you to contribute them back so the whole community benefits. Contributions submitted by pull request are licensed under the same terms as the project.
@@ -61,6 +70,8 @@ To generate PDF documentation, noting that a LaTeX distribution must be availabl
 
 Documentation is built in the appropriately named subdirectory in ``_build``.
 
+.. _DevelopmentTests:
+
 Tests
 -----
 
@@ -77,8 +88,12 @@ The performance tests, which time the solver for batches of models, are slow and
     
 Similarly, to test coverage::
 
-    pytest --cov
+    pytest --cov=atmodeller --cov-report=xml
 
-The percentage test coverage is reported in ``README.md`` but requires manual update.
+To check the coverage of the lines you changed, as the pull request check does, compare with the ``main`` branch of the upstream repository (here the remote ``upstream``)::
+
+    diff-cover coverage.xml --compare-branch=upstream/main --fail-under=80
+
+The overall coverage is reported by Codecov, and shown by the badge in ``README.md``.
 
 Add a corresponding test for new features that are developed.
