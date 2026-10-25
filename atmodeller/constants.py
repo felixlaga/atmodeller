@@ -65,8 +65,10 @@ LOG_STABILITY_UPPER: float = 35.0
 
 Empirically determined.
 """
+# Default tau settings for species stability, used by atmodeller.containers.SolverParameters (tau,
+# tau_max and tau_num), where they can be adjusted.
 TAU_MAX: float = 1.0e-3
-"""Maximum tau scaling factor for species stability when using the tau cascade solver"""
+"""Maximum tau scaling factor for species stability, at the start of the tau sweep"""
 TAU: float = 1.0e-25
 """Desired (i.e. final/minimum) tau scaling factor for species stability :cite:p:`LKK16`.
 
@@ -77,7 +79,7 @@ corresponds to a log stability of zero.
 TAU_NUM: int = 2
 """Number of tau values solved between :data:`TAU_MAX` and :data:`TAU` (inclusive).
 
-Used by the tau-cascade solver. Empirically, once a solution has been found for
-:data:`TAU_MAX`, the solver can typically proceed directly to :data:`TAU` and converge within a
-few steps on the first attempt.
+Used by the tau sweep. Empirically, once a solution has been found for :data:`TAU_MAX`, the solver
+can typically proceed directly to :data:`TAU` and converge within a few steps on the first
+attempt.
 """

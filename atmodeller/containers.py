@@ -24,6 +24,8 @@ from atmodeller.constants import (
     LOG_STABILITY_UPPER,
     SOLID_STATE,
     TAU,
+    TAU_MAX,
+    TAU_NUM,
 )
 from atmodeller.eos.core import IdealGas
 from atmodeller.interfaces import (
@@ -441,7 +443,12 @@ class SolverParameters(RootFindParameters):  # pragma: no cover
         jac: Whether to use forward- or reverse-mode autodifferentiation to compute the Jacobian.
             Can be either ``fwd`` or ``bwd``. Defaults to ``fwd``.
         max_starts: Maximum number of starts. Defaults to ``10``.
-        tau: Tau factor for species stability. Defaults to :data:`~atmodeller.constants.TAU`.
+        tau: Tau factor for species stability, i.e. the final tau of the tau sweep. Defaults to
+            :data:`~atmodeller.constants.TAU`.
+        tau_max: Largest tau, at the start of the tau sweep for systems with species stability.
+            Defaults to :data:`~atmodeller.constants.TAU_MAX`.
+        tau_num: Number of tau values in the tau sweep, from ``tau_max`` to ``tau`` inclusive.
+            Defaults to :data:`~atmodeller.constants.TAU_NUM`.
         log_number_moles_lower: Lower bound on the log number of moles of a species. Defaults to
             :data:`~atmodeller.constants.LOG_NUMBER_MOLES_LOWER`.
         log_number_moles_upper: Upper bound on the log number of moles of a species. Defaults to
@@ -455,7 +462,11 @@ class SolverParameters(RootFindParameters):  # pragma: no cover
     max_starts: int = 10
     """Maximum number of starts"""
     tau: Array = eqx.field(converter=as_j64, default=TAU)
-    """Tau factor for species stability"""
+    """Tau factor for species stability, i.e. the final tau of the tau sweep"""
+    tau_max: float = TAU_MAX
+    """Largest tau, at the start of the tau sweep"""
+    tau_num: int = TAU_NUM
+    """Number of tau values in the tau sweep, from ``tau_max`` to ``tau`` inclusive"""
     log_number_moles_lower: float = LOG_NUMBER_MOLES_LOWER
     """Lower bound on the log number of moles of a species"""
     log_number_moles_upper: float = LOG_NUMBER_MOLES_UPPER

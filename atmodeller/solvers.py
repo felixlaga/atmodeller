@@ -52,11 +52,6 @@ import optimistix as optx
 from jax import lax
 from jaxtyping import Array, Bool, Float, Integer, PRNGKeyArray
 
-from atmodeller.constants import (
-    TAU,
-    TAU_MAX,
-    TAU_NUM,
-)
 from atmodeller.engine import compute_implied_log_stability, objective_function
 from atmodeller.initializer import ElementPotentialInitializer, InitializerProtocol
 from atmodeller.jax_utils import (
@@ -311,14 +306,15 @@ def make_tau_sweep_solver(batch_retry_solver: Callable, batch_solver: Callable) 
     """Gets a solver function that performs a tau sweep for active stability systems.
 
     Closes over the provided ``batch_retry_solver`` and ``batch_solver``. The returned callable
-    first attempts a solve at ``TAU``; if all batch elements converge it returns immediately,
-    otherwise it runs a full log-spaced sweep from ``TAU_MAX`` down to ``TAU`` for every batch
-    element.
+    first attempts a solve at the final tau, ``solver_parameters.tau``; if all batch elements
+    converge it returns immediately, otherwise it runs a full log-spaced sweep of
+    ``solver_parameters.tau_num`` values from ``solver_parameters.tau_max`` down to the final tau
+    for every batch element.
 
     The solves in the sweep only locate the root. The derivatives of the solution are attached
-    once at the end by a final solve at ``TAU`` (see
-    :func:`~atmodeller.jax_utils.implicit_polish`), so they are those of the root at ``TAU`` and
-    do not depend on the sweep.
+    once at the end by a final solve at the final tau (see
+    :func:`~atmodeller.jax_utils.implicit_polish`), so they are those of the root at the final tau
+    and do not depend on the sweep.
 
     Args:
         batch_retry_solver: Pre-built batch retry solver, e.g. from
@@ -330,23 +326,21 @@ def make_tau_sweep_solver(batch_retry_solver: Callable, batch_solver: Callable) 
         Callable that returns a :class:`atmodeller.containers.MultiAttemptSolution` object
     """
     get_leaf: Callable = lambda t: t.solver_parameters.tau  # noqa: E731
-    varying_schedule: Float[Array, " tau"] = jnp.logspace(
-        jnp.log10(TAU_MAX), jnp.log10(TAU), num=TAU_NUM
-    )
 
     def tau_sweep_solver(
         initial_guess: Float[Array, "... solution"], parameters: Parameters, key: PRNGKeyArray
     ) -> MultiAttemptSolution:
-        """Attempts a solve at ``TAU`` and, if any element fails, runs a full tau sweep.
+        """Attempts a solve at the final tau and, if any element fails, runs a full tau sweep.
 
-        First tries to solve all batch elements at ``TAU`` with multistart retry. If every element
-        converges, the result is returned immediately. Otherwise a log-spaced schedule from
-        ``TAU_MAX`` down to ``TAU`` is swept via :func:`jax.lax.scan`, applying the solver at each
-        step for all batch elements. Because ``tau`` must remain a scalar throughout the scan
-        (to keep the vmapping axes consistent), converged and failed elements both run the full
-        sweep; converged ones simply re-solve quickly from their existing solution, but keep the
-        result of their solve at ``TAU``. The other elements report the final step of the sweep,
-        which solves at ``TAU``.
+        First tries to solve all batch elements at the final tau (``solver_parameters.tau``) with
+        multistart retry. If every element converges, the result is returned immediately.
+        Otherwise a log-spaced schedule of ``solver_parameters.tau_num`` values from
+        ``solver_parameters.tau_max`` down to the final tau is swept via :func:`jax.lax.scan`,
+        applying the solver at each step for all batch elements. Because ``tau`` must remain a
+        scalar throughout the scan (to keep the vmapping axes consistent), converged and failed
+        elements both run the full sweep; converged ones simply re-solve quickly from their
+        existing solution, but keep the result of their solve at the final tau. The other elements
+        report the final step of the sweep, which solves at the final tau.
 
         Args:
             initial_guess: Batched array of initial guesses
@@ -391,13 +385,23 @@ def make_tau_sweep_solver(batch_retry_solver: Callable, batch_solver: Callable) 
 
             return (key, new_sol), None
 
-        # Initial solve at TAU
+        # Log-spaced from tau_max down to the final tau. tau_num is a Python int, so the length of
+        # the scan is fixed at compile time. The last value is set to the final tau exactly, which
+        # logspace reproduces only to within rounding.
+        solver_parameters = parameters.solver_parameters
+        varying_schedule: Float[Array, " tau"] = jnp.logspace(
+            jnp.log10(solver_parameters.tau_max),
+            jnp.log10(solver_parameters.tau),
+            num=solver_parameters.tau_num,
+        )
+        varying_schedule = varying_schedule.at[-1].set(solver_parameters.tau)
+
+        # Initial solve at the final tau
         key, subkey = jax.random.split(key)
-        initial_parameters: Parameters = eqx.tree_at(get_leaf, parameters, jnp.array(TAU))
 
         first_sol: MultiAttemptSolution = batch_retry_solver(
             initial_guess,
-            initial_parameters,
+            parameters,
             subkey,
             parameters.solver_parameters.max_starts - 1,
             parameters.solver_parameters.atol,
@@ -408,13 +412,13 @@ def make_tau_sweep_solver(batch_retry_solver: Callable, batch_solver: Callable) 
         def run_scan(key: PRNGKeyArray) -> MultiAttemptSolution:
             """Run the full tau sweep scan across all batch elements.
 
-            Called when at least one element failed the initial solve at ``TAU``. All batch
+            Called when at least one element failed the initial solve at the final tau. All batch
             elements (including those that already converged) run every step of the
-            ``varying_schedule`` scan, but elements that converged at ``TAU`` on the first attempt
-            keep the result of that solve, so their result does not depend on whether other batch
-            elements failed. The remaining elements report the result of the final step, since
-            only the final step solves at ``TAU``; the earlier steps at larger tau only guide the
-            solution towards the root at ``TAU``.
+            ``varying_schedule`` scan, but elements that converged at the final tau on the first
+            attempt keep the result of that solve, so their result does not depend on whether
+            other batch elements failed. The remaining elements report the result of the final
+            step, since only the final step solves at the final tau; the earlier steps at larger
+            tau only guide the solution towards the root at the final tau.
             """
             (_, sweep_sol), _ = jax.lax.scan(solve_tau_step, (key, first_sol), varying_schedule)
 
@@ -428,17 +432,17 @@ def make_tau_sweep_solver(batch_retry_solver: Callable, batch_solver: Callable) 
             return jax.tree.map(keep_first, first_sol, sweep_sol)
 
         def run_single_step(_: PRNGKeyArray) -> MultiAttemptSolution:
-            """All batch elements converged at ``TAU`` on the first attempt: return immediately."""
-            # jax.debug.print("All converged at TAU on the first attempt. Skipping tau sweep.")
+            """All batch elements converged at the final tau on the first attempt: return
+            immediately."""
             return first_sol
 
-        # If all entries converged at TAU on the first attempt, skip the sweep entirely
+        # If all entries converged at the final tau on the first attempt, skip the sweep entirely
         all_converged: Bool[Array, ""] = jnp.all(first_success)
         multi_sol: MultiAttemptSolution = lax.cond(all_converged, run_single_step, run_scan, key)
 
-        # The sweep finishes at TAU, so attach the derivatives of the root at TAU
+        # The sweep finishes at the final tau, so attach the derivatives of the root there
         polished_solution: Float[Array, "... solution"] = implicit_polish(
-            batch_solver, multi_sol.value, multi_sol.success, initial_parameters
+            batch_solver, multi_sol.value, multi_sol.success, parameters
         )
         multi_sol = eqx.tree_at(lambda m: m.solution.value, multi_sol, polished_solution)
 

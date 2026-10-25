@@ -19,6 +19,7 @@ import logging
 from collections.abc import Callable
 from typing import cast
 
+import equinox as eqx
 import jax
 import jax.numpy as jnp
 import numpy as np
@@ -28,8 +29,7 @@ from equinox._enum import EnumerationItem
 from jaxtyping import Array, ArrayLike, Bool, Float, PRNGKeyArray
 
 from atmodeller import debug_logger
-from atmodeller.constants import TAU
-from atmodeller.containers import ChemicalSpecies
+from atmodeller.containers import ChemicalSpecies, SolverParameters
 from atmodeller.interfaces import ActivityConstraintProtocol
 from atmodeller.jax_utils import MultiAttemptSolution
 from atmodeller.output import Output
@@ -195,32 +195,42 @@ def _stub_solution(
 
 
 @pytest.mark.parametrize(
-    "warm_start_converges, expected_value, expected_steps, expected_attempts",
-    [(True, [1.0, 2.0], [3, 3], [1, 1]), (False, [1.0, 1.0], [3, 0], [1, 0])],
+    "solver_parameters",
+    [SolverParameters(), SolverParameters(tau=1.0e-20, tau_max=1.0e-2, tau_num=3)],
+    ids=["default_tau", "custom_tau"],
+)
+@pytest.mark.parametrize(
+    "warm_start_converges, expected_steps, expected_attempts",
+    [(True, [3, 3], [1, 1]), (False, [3, 0], [1, 0])],
     ids=["converged_at_final_tau", "failed_at_final_tau"],
 )
 def test_tau_sweep_reports_final_tau(
+    solver_parameters: SolverParameters,
     warm_start_converges: bool,
-    expected_value: list[float],
     expected_steps: list[int],
     expected_attempts: list[int],
 ) -> None:
-    """The tau sweep reports the solve at ``TAU`` when one of two models fails the first solve.
+    """The tau sweep reports the solve at the final tau when one of two models fails the first
+    solve, with the tau settings of ``SolverParameters``.
 
     The first model always converges, so it keeps the result of the first solve. The second model
-    converges at a larger tau, but at ``TAU`` only from a warm start and only if
+    converges at a larger tau, but at the final tau only from a warm start and only if
     ``warm_start_converges``, so it reports the final step of the sweep. Each converged solve adds
-    one to the initial guess.
+    one to the initial guess, so the second model gains one per converged step of the
+    ``tau_num``-step sweep. A solve below the final tau fails for both models, so a sweep that
+    ignored ``solver_parameters.tau`` would fail the test.
     """
+    final_tau: float = float(solver_parameters.tau)
 
     def batch_retry_solver(
         initial_guess: Array, parameters: Parameters, *args: object, **kwargs: object
     ) -> MultiAttemptSolution:
-        larger_tau: Array = parameters.solver_parameters.tau > TAU
+        tau: Array = parameters.solver_parameters.tau
+        larger_tau: Array = tau > final_tau
         warm_start: Array = initial_guess[1, 0] > 0
         converged: Array = jnp.stack(
             [jnp.array(True), larger_tau | (warm_start & warm_start_converges)]
-        )
+        ) & (tau >= final_tau)
         value: Array = jnp.where(converged[:, None], initial_guess + 1.0, initial_guess)
 
         return _stub_solution(value, converged, larger_tau)
@@ -229,13 +239,17 @@ def test_tau_sweep_reports_final_tau(
         """Polishes without changing the solution"""
         return _stub_solution(initial_guess, jnp.ones(2, dtype=bool), False)
 
-    parameters: Parameters = _build_parameters(with_condensate=True)
+    parameters: Parameters = eqx.tree_at(
+        lambda p: p.solver_parameters, _build_parameters(with_condensate=True), solver_parameters
+    )
     tau_sweep_solver: Callable = make_tau_sweep_solver(batch_retry_solver, batch_solver)
 
     multi_sol: MultiAttemptSolution = tau_sweep_solver(
         jnp.zeros((2, 2)), parameters, jax.random.PRNGKey(0)
     )
 
-    np.testing.assert_array_equal(multi_sol.value[:, 0], expected_value)
+    # The second model converges at every step before the last, and at the last if it converges
+    sweep_steps: int = solver_parameters.tau_num - (0 if warm_start_converges else 1)
+    np.testing.assert_array_equal(multi_sol.value[:, 0], [1.0, sweep_steps])
     np.testing.assert_array_equal(multi_sol.num_steps, expected_steps)
     np.testing.assert_array_equal(multi_sol.attempts, expected_attempts)
