@@ -9,14 +9,30 @@ on:
     branches: [ "main" ]
     paths-ignore:
       - 'docs/**'
+  workflow_dispatch:
+
+# A newer push to the same branch or PR cancels the run in progress
+concurrency:
+  group: ci-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
 jobs:
   build:
     strategy:
       matrix:
-        python-version: [ "3.11" ] #, "3.12", "3.13" ]
-        os: [ "ubuntu-latest" ]
+        include:
+          # Lowest and highest supported Python on Linux, and Apple-silicon macOS
+          - { os: "ubuntu-latest", python-version: "3.11" }
+          - { os: "ubuntu-latest", python-version: "3.13" }
+          - { os: "macos-latest", python-version: "3.13" }
       fail-fast: false
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    env:
+      UV_PYTHON: ${{ matrix.python-version }}
 
     steps:
       - name: Checkout repository
@@ -30,16 +46,19 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v6
         with:
-          # Install a specific version of uv.
-          version: "0.7.20"
+          # The same uv version as used to write uv.lock
+          version: "0.12.3"
           enable-cache: true
           cache-dependency-glob: uv.lock
 
+      # --locked installs exactly the versions in uv.lock, and fails if it is out of date with
+      # pyproject.toml
       - name: Install the project
-        run: uv sync --all-extras --dev
+        run: uv sync --locked --all-extras --dev
 
       - name: Checks with pre-commit
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.13'
         run: uv run pre-commit run --all-files
 
       - name: Run tests
-        run: uv run pytest -m "not performance"
+        run: uv run pytest -m "not performance" --durations=20
