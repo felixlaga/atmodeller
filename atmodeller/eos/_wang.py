@@ -186,22 +186,22 @@ class VirialQuadratic(RealGas):
 experimental_calibration_wang18: ExperimentalCalibration = ExperimentalCalibration(
     temperature_min=1200, temperature_max=4100, pressure_min=1, pressure_max=1387e3
 )
-"""Experimental calibration for :cite:`WLL18` models"""
+"""Calibration range of the :cite:t:`WLL18` shock data fitted by :cite:t:`Hakim2026`"""
 
-# Virial EOS for H4Si from :cite:t:`WLL18`
-# The coefficients are for the quadratic virial equation of state
+# Quadratic virial EOS for H4Si fitted by Hakim et al. (2026, Table 2) to the shock data of Wang
+# et al. (2018); the coefficients are converted from GPa to bar
 
 H4Si_wang18: RealGas = VirialQuadratic(
     a_coefficients=(1.0, 0, 0),
     b_coefficients=(3.8552e-4, -1.822e-7, 2.54e-11),
     c_coefficients=(-1.942e-10, 1.088e-13, -1.62e-17),
 )
-"""H4Si quadratic virial :cite:p:`WLL18`"""
+"""H4Si quadratic virial fitted by :cite:t:`Hakim2026{Table 2}` to the data of :cite:t:`WLL18`"""
 
 H4Si_wang18_bounded: RealGas = CombinedRealGas.create(
     [H4Si_wang18], [experimental_calibration_wang18]
 )
-"""H4Si quadratic virial bounded :cite:p:`WLL18`"""
+"""H4Si quadratic virial bounded :cite:p:`Hakim2026,WLL18`"""
 
 
 def get_wang_eos_models() -> dict[str, RealGas]:
