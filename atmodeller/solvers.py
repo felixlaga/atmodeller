@@ -53,8 +53,6 @@ from jax import lax
 from jaxtyping import Array, Bool, Float, Integer, PRNGKeyArray
 
 from atmodeller.constants import (
-    LOG_NUMBER_MOLES_LOWER,
-    LOG_NUMBER_MOLES_UPPER,
     TAU,
     TAU_MAX,
     TAU_NUM,
@@ -272,8 +270,8 @@ def make_batch_retry_solver(solver_function: Callable, objective_fn: Callable) -
             log_number_moles,
             attempt,
             key,
-            LOG_NUMBER_MOLES_LOWER,
-            LOG_NUMBER_MOLES_UPPER,
+            parameters.solver_parameters.log_number_moles_lower,
+            parameters.solver_parameters.log_number_moles_upper,
         )
         new_log_stability: Float[Array, "... n_species"] = compute_implied_log_stability(
             parameters, perturbed_log_number_moles

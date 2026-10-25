@@ -107,6 +107,51 @@ def test_graphite_water_stable() -> None:
     assert output.compare(factsage_result, log=True, rtol=TOLERANCE, atol=TOLERANCE)
 
 
+def test_graphite_water_oxidised() -> None:
+    """Tests water and unstable graphite under an O2-rich atmosphere at 368 K
+
+    O exceeds what H2O and CO2 can hold, so the excess is O2 gas and CH4 is about 1e-117 bar, far
+    below the former default lower bound on the log number of moles (-200). Atmodeller result.
+    """
+    gas_species: tuple[ChemicalSpecies, ...] = (H2O_g, H2_g, O2_g, CO_g, CO2_g, CH4_g)
+    condensates: tuple[PurePhase, ...] = (water, graphite)
+
+    planet: BaseThermodynamicState = Planet.from_species(
+        gas_species, temperature=367.8167944988913, condensates=condensates
+    )
+
+    mass_constraints: dict[str, ArrayLike] = {
+        "C": 1.5630593225639497e20,
+        "H": 4.694481522139993e20,
+        "O": 5.571195263063157e21,
+    }
+
+    parameters: Parameters = Parameters(planet, mass_constraints=mass_constraints)
+
+    output: Output = EquilibriumModel(parameters).solve_with_default()
+
+    target: dict[str, Any] = {
+        "gas": {
+            "species": {
+                "partial_pressure": {
+                    "CH4_g": 1.2986814831972477e-117,
+                    "CO2_g": 86.87677822347462,
+                    "CO_g": 1.0923958934052829e-35,
+                    "H2_g": 4.663683521768718e-34,
+                    "O2_g": 298.1046811843703,
+                    "H2O_g": 0.8243073846580263,
+                }
+            }
+        },
+        "H2O_l": {
+            "species": {"activity": {"H2O_l": 1.0}, "mass": {"H2O_l": 4.1930821668734045e21}}
+        },
+    }
+
+    assert bool(np.all(output.multi_attempt_solution.success))
+    assert output.compare(target, log=True, rtol=TOLERANCE, atol=TOLERANCE)
+
+
 def test_impose_stable() -> None:
     """Tests a user-imposed stable condensate"""
     gas_species: tuple[ChemicalSpecies, ...] = (H2_g, N2_g, CH4_g, CHN_g, H_g)

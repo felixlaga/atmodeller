@@ -442,12 +442,28 @@ class SolverParameters(RootFindParameters):  # pragma: no cover
             Can be either ``fwd`` or ``bwd``. Defaults to ``fwd``.
         max_starts: Maximum number of starts. Defaults to ``10``.
         tau: Tau factor for species stability. Defaults to :data:`~atmodeller.constants.TAU`.
+        log_number_moles_lower: Lower bound on the log number of moles of a species. Defaults to
+            :data:`~atmodeller.constants.LOG_NUMBER_MOLES_LOWER`.
+        log_number_moles_upper: Upper bound on the log number of moles of a species. Defaults to
+            :data:`~atmodeller.constants.LOG_NUMBER_MOLES_UPPER`.
+        log_stability_lower: Lower bound on the log stability of a species. Defaults to
+            :data:`~atmodeller.constants.LOG_STABILITY_LOWER`.
+        log_stability_upper: Upper bound on the log stability of a species. Defaults to
+            :data:`~atmodeller.constants.LOG_STABILITY_UPPER`.
     """
 
     max_starts: int = 10
     """Maximum number of starts"""
     tau: Array = eqx.field(converter=as_j64, default=TAU)
     """Tau factor for species stability"""
+    log_number_moles_lower: float = LOG_NUMBER_MOLES_LOWER
+    """Lower bound on the log number of moles of a species"""
+    log_number_moles_upper: float = LOG_NUMBER_MOLES_UPPER
+    """Upper bound on the log number of moles of a species"""
+    log_stability_lower: float = LOG_STABILITY_LOWER
+    """Lower bound on the log stability of a species"""
+    log_stability_upper: float = LOG_STABILITY_UPPER
+    """Upper bound on the log stability of a species"""
 
     def get_options(self, number_species: int) -> dict[str, Any]:
         """Gets the solver options.
@@ -476,7 +492,7 @@ class SolverParameters(RootFindParameters):  # pragma: no cover
             Lower bound for truncating the solution during the solve
         """
         return self._get_hypercube_bound(
-            number_species, LOG_NUMBER_MOLES_LOWER, LOG_STABILITY_LOWER
+            number_species, self.log_number_moles_lower, self.log_stability_lower
         )
 
     def _get_upper_bound(self, number_species: int) -> Float[Array, " dim"]:
@@ -489,7 +505,7 @@ class SolverParameters(RootFindParameters):  # pragma: no cover
             Upper bound for truncating the solution during the solve
         """
         return self._get_hypercube_bound(
-            number_species, LOG_NUMBER_MOLES_UPPER, LOG_STABILITY_UPPER
+            number_species, self.log_number_moles_upper, self.log_stability_upper
         )
 
     def _get_hypercube_bound(

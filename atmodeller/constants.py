@@ -44,11 +44,15 @@ SILICATE_SOLID_PHASE_INDEX: int = 2
 METAL_PHASE_INDEX: int = 3
 """Metal phase index"""
 
-# Lower and upper bounds on the hypercube which contains the root. These are somewhat empirically
-# calibrated to bound the expected values for typical models, but in principle could require
-# adjustment for edge cases.
-LOG_NUMBER_MOLES_LOWER: float = -200.0
-"""Lower log number of moles for a species"""
+# Default lower and upper bounds on the hypercube which contains the root, used by
+# atmodeller.containers.SolverParameters. These are somewhat empirically calibrated to bound the
+# expected values for typical models, and can be adjusted for edge cases through SolverParameters.
+LOG_NUMBER_MOLES_LOWER: float = -400.0
+"""Lower log number of moles for a species
+
+Minor species can be far below -200 at equilibrium, e.g. CH4 at about -220 in an O2-rich
+atmosphere over liquid water at about 370 K.
+"""
 LOG_NUMBER_MOLES_UPPER: float = 80.0
 """Upper log number of moles for a species"""
 LOG_STABILITY_LOWER: float = -700.0
