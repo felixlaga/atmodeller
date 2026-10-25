@@ -97,5 +97,5 @@ jobs:
       - name: Check coverage of the changed lines
         if: matrix.coverage && github.event_name == 'pull_request'
         run: >-
-          uvx diff-cover coverage.xml --compare-branch=origin/${{ github.base_ref }}
+          uv run diff-cover coverage.xml --compare-branch=origin/${{ github.base_ref }}
           --fail-under=80
