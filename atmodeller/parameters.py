@@ -394,9 +394,11 @@ class MassConstraintSet(eqx.Module):
 
         Args:
             new_abundances: Dictionary with new abundance values for some or all elements. The keys
-                should be element names and the values should be the new abundance values. Original
-                abundances that are not included in the ``new_abundance`` dictionary will be
-                retained. Unknown element keys are ignored.
+                must be names of elements in the system, and the values the new abundance values.
+                Original abundances that are not included in the ``new_abundances`` dictionary are
+                retained. Unlike at construction, species names (e.g. ``H2O``) are not accepted,
+                since updating one species would leave the other sources of its elements
+                ambiguous; give the element masses instead.
             units: Units of ``new_abundances``. Defaults to ``mass``.
             squeeze_input: Whether to squeeze input arrays to remove any singleton dimensions
                 since this class is designed to store per-element abundances as 1D arrays. This
@@ -405,15 +407,23 @@ class MassConstraintSet(eqx.Module):
 
         Returns:
             An instance with updated abundance constraints
+
+        Raises:
+            ValueError: If a key is not the name of an element in the system
         """
         units = _validate_mass_units(units)
 
         abundance_dict: dict[str, Array] = dict(self.abundance_dict)
 
-        for element, new_value in new_abundances.items():
-            if element not in abundance_dict:  # pragma: no cover
-                continue
+        unknown: list[str] = [key for key in new_abundances if key not in abundance_dict]
+        if unknown:
+            raise ValueError(
+                f"Mass constraints can only be updated for elements in the system "
+                f"{tuple(abundance_dict)}, not {tuple(unknown)}. Give element masses instead of "
+                "species masses."
+            )
 
+        for element, new_value in new_abundances.items():
             original_value: Array = abundance_dict[element]
             # Keep leaf signatures stable to avoid unnecessary retracing under JAX transforms.
             value_array: FloatArray = jnp.asarray(new_value)

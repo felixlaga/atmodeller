@@ -133,6 +133,10 @@ def value_update_workflow() -> Callable[[EquilibriumModel], bool]:
             mass_constraints={"H": model.parameters.mass_constraints.abundance_dict["H"] * 2}
         )
         mass_updated_output: Output = call_solver(model, warm_start_output.solution)
+
+        # Species keys are accepted at construction but not when updating, which raises
+        with pytest.raises(ValueError, match="H2O"):
+            model.update_constraints(mass_constraints={"H2O": 1.0e21})
         # jax.debug.print("Third call to solver complete.")
 
         # Replace oxygen mass constraint with a fugacity-style activity constraint.
