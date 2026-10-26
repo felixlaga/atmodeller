@@ -66,6 +66,8 @@ from atmodeller.interfaces import RedoxBufferProtocol, SpeciesProtocol, TSpecies
 from atmodeller.jax_utils import FloatArray, as_j64, masked_logsumexp, safe_exp
 from atmodeller.sci_utils import GAS_CONSTANT_BAR
 from atmodeller.thermodata._redox_buffers import IronWustiteBuffer
+from atmodeller.thermodata.core import ActivityCoefficient
+from atmodeller.thermodata.mixing import SubregularSolution
 
 # Due to a Pyright bug (#4965). See Equinox documentation.
 if TYPE_CHECKING:
@@ -879,3 +881,111 @@ class PurePhase(CondensedPhase):
         phase_name: str = species_list[0].name
 
         return cls(species_list, phase_name)
+
+
+class BinarySolutionPhaseOutput(PhaseOutput["BinarySolutionPhase"]):
+    """Output for a binary solution, including homogeneous stability and its binodal."""
+
+    @property
+    def mixing(self) -> dict[str, Array]:
+        """Scalar phase diagnostics, each with shape (n_batch, 1).
+
+        ``equilibrium_*`` entries describe the equilibrium endpoint even if the
+        phase was deliberately constrained to remain homogeneous. The
+        ``demixing_enabled`` flag records which activities the solver used.
+        """
+        x = self.species_mole_fraction[..., 1]
+        diagnostics = self.phase.mixing_model.diagnostics(
+            self.temperature[..., 0], self.pressure[..., 0], x
+        )
+        result = {
+            key: jnp.broadcast_to(value, x.shape)[..., None] for key, value in diagnostics.items()
+        }
+        result["demixing_enabled"] = jnp.full((self.batch_size, 1), self.phase.equilibrate)
+        return result
+
+
+class BinarySolutionPhase(CondensedPhase):
+    """A present binary solution with shared mixing thermodynamics.
+
+    The two conserved component amounts represent the *combined* inventory of
+    the coexisting subphases. The common tangent supplies their shared chemical
+    activities, and the lever rule recovers their individual amounts. They are
+    never counted twice in elemental conservation or phase mass.
+
+    Args:
+        species: Exactly two ordered components from
+            :meth:`~atmodeller.containers.ChemicalSpecies.create_solution`.
+            Component 1 defines the composition coordinate x.
+        mixing_model: Shared binary free energy, on the same component basis.
+        name: Phase name, default ``binary_solution``.
+        equilibrate: Use common-tangent equilibrium activities (default True).
+            False constrains the mixture to be homogeneous and can give an
+            unstable stationary solution; inspect the mixing diagnostics.
+
+    No inert background or independent species activity corrections are allowed:
+    both components must enter the mass and composition balances. Pure-component
+    standard-state properties remain in their species. This first implementation
+    assumes the solution is present; appearance/disappearance of the entire
+    solution requires collective phase stability, not separate pure-component
+    complementarity. It does not add diffusion, nucleation, settling or rainout.
+    """
+
+    mixing_model: SubregularSolution
+    equilibrate: bool
+    output_class: ClassVar[type[PhaseOutput]] = BinarySolutionPhaseOutput
+
+    @override
+    def __init__(
+        self,
+        species: Iterable[ChemicalSpecies],
+        mixing_model: SubregularSolution,
+        name: str = "binary_solution",
+        *,
+        equilibrate: bool = True,
+    ):
+        components = tuple(species)
+        if len(components) != 2:
+            raise ValueError("A binary solution requires exactly two ordered components.")
+        if components[0].data.name == components[1].data.name:
+            raise ValueError("Binary components must have distinct species names.")
+        for component in components:
+            if (
+                not isinstance(component, ChemicalSpecies)
+                or component.solve_for_stability
+                or component.number_solution != 1
+                or not component.include_in_phase_mass
+                or component.data.state in ("g", "d")
+            ):
+                raise ValueError("Use ChemicalSpecies.create_solution for both binary components.")
+            if type(component.activity) is not ActivityCoefficient or not bool(
+                jnp.all(component.activity.gamma == 1)
+            ):
+                raise ValueError("The shared mixing model must supply both component activities.")
+        super().__init__(components, name)
+        self.mixing_model = mixing_model
+        self.equilibrate = equilibrate
+
+    @override
+    def get_log_activity(
+        self,
+        log_number_moles: Float[Array, "... n_species"],
+        temperature: FloatArray,
+        pressure: FloatArray,
+    ) -> Float[Array, "... n_species"]:
+        """Shared chemical potentials / RT, excluding the pure standard states.
+
+        Keep log mole fractions from the native phase calculation, so trace
+        components do not lose their ideal activity through subtraction from one.
+        A failed common-tangent calculation returns NaN, never homogeneous fallback.
+        """
+        log_x = self.get_log_mole_fraction(log_number_moles)
+        x = jnp.exp(log_x[..., 1])
+        homogeneous = log_x + self.mixing_model.log_activity_coefficients(temperature, pressure, x)
+        if not self.equilibrate:
+            return homogeneous
+        coexistence = self.mixing_model.coexistence(temperature, pressure)
+        result = jnp.where(
+            coexistence.contains(x)[..., None], coexistence.log_activity, homogeneous
+        )
+        return jnp.where(coexistence.valid[..., None], result, jnp.nan)

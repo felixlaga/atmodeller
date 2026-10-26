@@ -129,7 +129,12 @@ from atmodeller.database import (  # noqa: E402, F401
 )
 from atmodeller.output import Output  # noqa: E402, F401
 from atmodeller.parameters import FixedActivityConstraint, Parameters  # noqa: E402, F401
-from atmodeller.phases import CondensedPhase, GasPhase, PurePhase  # noqa: E402, F401
+from atmodeller.phases import (  # noqa: E402, F401
+    BinarySolutionPhase,
+    CondensedPhase,
+    GasPhase,
+    PurePhase,
+)
 from atmodeller.sci_utils import (  # noqa: E402, F401
     bulk_silicate_earth_abundances,
     earth,
@@ -151,3 +156,4 @@ from atmodeller.state import (  # noqa: E402, F401
 )
 from atmodeller.thermodata._redox_buffers import IronWustiteBuffer  # noqa: E402, F401
 from atmodeller.thermodata.core import ActivityCoefficient  # noqa: E402, F401
+from atmodeller.thermodata.mixing import SubregularSolution  # noqa: E402, F401

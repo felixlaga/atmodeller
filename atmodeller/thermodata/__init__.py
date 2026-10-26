@@ -22,3 +22,4 @@ from atmodeller.thermodata.janaf import (  # noqa: E402, F401
     glenn_properties,
 )
 from atmodeller.thermodata.defaults import default_properties  # noqa: E402, F401
+from atmodeller.thermodata.mixing import BinaryCoexistence, SubregularSolution  # noqa: E402, F401

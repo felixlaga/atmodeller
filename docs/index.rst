@@ -20,6 +20,7 @@ Atmodeller was created as part of a SERI-funded ERC Starting grant '2ATMO' grant
    output.rst
    solver.rst
    common_tasks.rst
+   spinodal.rst
    development.rst
    troubleshooting.rst
    usedin.rst

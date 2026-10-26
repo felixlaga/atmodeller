@@ -115,6 +115,31 @@ class ChemicalSpecies(eqx.Module):
         )
 
     @classmethod
+    def create_solution(
+        cls,
+        formula: str,
+        state: str = "l",
+        *,
+        thermo: ThermodynamicProperties | None = None,
+    ) -> Self:
+        """Creates a component of a present, compositionally variable solution phase.
+
+        The component amount is solved for, without an independent pure-species
+        stability variable. All component mass contributes to the phase mass.
+        Use with :class:`~atmodeller.phases.BinarySolutionPhase`, which supplies
+        the shared mixing activities. Collective disappearance of the entire
+        solution phase is not handled by this component factory.
+
+        Args:
+            formula: Chemical formula of the component.
+            state: Condensed standard-state suffix. Defaults to ``l``.
+            thermo: Pure-component standard-state properties, or the default database.
+        """
+        if state in ("g", "d"):
+            raise ValueError("A solution component needs a condensed standard state.")
+        return cls.create(formula, state, ActivityCoefficient(), False, 1, True, thermo)
+
+    @classmethod
     def create_condensed(
         cls,
         formula: str,

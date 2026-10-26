@@ -1,5 +1,5 @@
 Research accompanying the spinodal extension
-===========================================
+============================================
 
 ``hydrogen_storage/investigation/report.html`` contains the completed hydrogen
 storage investigation, including its numerical results, plots, source workbooks,
@@ -18,3 +18,7 @@ figures and authors' downloads remain byte-identical. The authors' files retain
 their original attribution and provenance in ``sources/downloaded.json`` and
 the OSF manifest. Archive scripts are excluded from automatic style rewriting
 to preserve this evidence; package code and new tests use the normal checks.
+
+Verify every imported file and the source downloads without rewriting results::
+
+    uv run python research/verify_archive.py

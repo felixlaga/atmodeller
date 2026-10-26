@@ -13,6 +13,30 @@
 [![Claude assisted](https://img.shields.io/badge/Claude-assisted-D97757)](https://anthropic.com)
 [![Test coverage](https://codecov.io/gh/ExPlanetology/atmodeller/graph/badge.svg)](https://codecov.io/gh/ExPlanetology/atmodeller)
 
+## Binary demixing research branch
+
+This branch adds binary mixing free energies, spinodal/binodal calculations, and
+equilibrium demixing through Atmodeller's native phase and activity interfaces.
+It includes a published H2–MgSiO3 mixing parameterization and a reproducible
+gas–solution integration example. Time-dependent decomposition, collective
+solution-phase disappearance, and calibrated multicomponent atmospheric
+predictions remain future work.
+
+Start with the [spinodal guide](docs/spinodal.rst),
+[runnable example](examples/spinodal_equilibrium.py), and
+[archived hydrogen-storage investigation](research/README.rst).
+The archived sensitivity results predate this extension and retain their original provenance.
+
+From this checkout:
+
+```sh
+uv sync --locked --all-extras --dev
+uv run python examples/spinodal_equilibrium.py
+uv run python research/verify_archive.py
+```
+
+This is a development branch of the fork, not the published upstream package.
+
 ## About
 Atmodeller is a Python package for thermochemical equilibrium modeling of planetary interiors and atmospheres, built on [JAX](https://docs.jax.dev/en/latest/index.html).
 

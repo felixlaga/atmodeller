@@ -35,7 +35,7 @@ from atmodeller.jax_utils import (
     stack_broadcast,
 )
 from atmodeller.parameters import ActivityConstraintSet, MassConstraintSet, Parameters
-from atmodeller.phases import BasePhase, GasPhaseOutput, PhaseOutput
+from atmodeller.phases import BasePhase, BinarySolutionPhaseOutput, GasPhaseOutput, PhaseOutput
 from atmodeller.sci_utils import solar
 
 logger: logging.Logger = logging.getLogger(__name__)
@@ -491,7 +491,7 @@ class BaseOutputDict(eqx.Module):
         Returns:
             A dictionary of phase-level properties
         """
-        return {
+        result: dict[str, Any] = {
             "background_mass": phase_output.background_mass,
             "background_number_moles": phase_output.background_number_moles,
             "background_molar_mass": phase_output.background_molar_mass,
@@ -501,6 +501,9 @@ class BaseOutputDict(eqx.Module):
             "molar_mass": phase_output.phase_molar_mass,
             "species_to_phase_mass_ratio": phase_output.species_to_phase_mass_ratio,
         }
+        if isinstance(phase_output, BinarySolutionPhaseOutput):
+            result["mixing"] = phase_output.mixing
+        return result
 
     def solver_to_dict(self) -> dict[str, ArrayLike]:
         """Solver information such as success flags and number of iterations"""
