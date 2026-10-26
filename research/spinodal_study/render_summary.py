@@ -46,7 +46,7 @@ main{width:100%;max-width:1000px;margin:auto}p{margin:0 0 14px}.lede{font-size:2
 figure{margin:16px 0}figure img{width:100%;height:auto;display:block;border-radius:var(--radius,8px)}
 figcaption{font-size:13px;margin-top:8px}.controls{display:flex;flex-wrap:wrap;gap:12px;margin:18px 0}
 label{display:grid;gap:4px;font-size:13px;flex:1;min-width:150px}select{padding:8px;border-radius:6px;border:1px solid var(--border,#ced7dc);background:var(--card,#fff);color:inherit;font:inherit}
-table{width:100%;border-collapse:collapse;font-size:14px;font-variant-numeric:tabular-nums}th,td{padding:9px 5px;text-align:right;border-bottom:1px solid var(--border,#d9e0e5)}th:first-child,td:first-child{text-align:left}th{font-size:12px;font-weight:600}.less{color:var(--chart-1,#167c80)}.more{color:var(--chart-2,#b36829)}
+table{width:100%;border-collapse:collapse;font-size:14px;font-variant-numeric:tabular-nums}th,td{padding:9px 5px;text-align:right;border-bottom:1px solid var(--border,#d9e0e5)}th:first-child,td:first-child{text-align:left}th{font-size:12px;font-weight:600}.less,.more{font-weight:600}
 .status{padding:16px;background:var(--secondary,#edf3f5);border-radius:var(--radius,8px);margin:14px 0}.metrics{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:16px 0}.metrics strong{display:block;font-size:20px}.metrics span{font-size:13px}.small{font-size:13px}@media(max-width:450px){table{font-size:12px}th,td{padding:8px 3px}.lede{font-size:19px}.metrics strong{font-size:17px}}
 </style><main>
 <p class="lede">Separation changes the gas supply. Entrainment and condensation determine how much of that change survives.</p>

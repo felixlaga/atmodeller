@@ -136,15 +136,18 @@ def make_figures(deep_frame, atmospheres):
         subset = deep_frame.loc[
             (deep_frame["pressure_bar"] == 10000) & (deep_frame["hydrogen_wt_percent"] == w)
         ]
+        two_phase = np.asarray(subset["equilibrium_two_phase"], dtype=bool)
+        # Single-phase output assigns all material to `lower`. Do not present
+        # that labeling convention as physical loss of hydrogen or mass.
         axes[0].plot(
             subset["temperature_K"],
-            100 * subset["upper_hydrogen_recovery"],
+            np.where(two_phase, 100 * subset["upper_hydrogen_recovery"], np.nan),
             label=f"{w:g} wt% initial H₂",
             color=color,
         )
         axes[1].plot(
             subset["temperature_K"],
-            100 * subset["upper_mass_kg"],
+            np.where(two_phase, 100 * subset["upper_mass_kg"], np.nan),
             color=color,
         )
     axes[0].set(ylabel="Hydrogen in upper phase (% of total)", title="Hydrogen redistribution")
@@ -153,6 +156,7 @@ def make_figures(deep_frame, atmospheres):
         ax.set(xlabel="Deep temperature (K)", xlim=(2500, 4400))
         ax.grid(alpha=0.15)
     axes[0].legend(fontsize=9)
+    figure.suptitle("Two-phase states at 1 GPa; curves stop outside coexistence", fontsize=12)
     save_figure(figure, "inventories")
 
     figure, axes = plt.subplots(2, 2, figsize=(9.6, 7.1), layout="constrained")

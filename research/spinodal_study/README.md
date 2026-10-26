@@ -57,6 +57,8 @@ The binary free energy is equation 7 of the [Rogers, Young & Schlichting preprin
 
 Each atmospheric feed is normalized to 1 kg for its fixed-temperature/fixed-pressure chemistry solve. Its original available mass is recorded and used to report gas mass per kg of deep bulk. Element ratios, not absolute normalization, set the fixed-pressure gas composition. This is a one-way inventory-transfer experiment: atmospheric reactions do not feed back on the deep free energy, and no planet radius, atmospheric column or pressure profile is solved.
 
+Using the whole parent when no separate upper reservoir exists is a null-control convention, not a continuous transport law across a phase boundary. The temperature sequence must not be interpreted as a planetary cooling track. In single-phase output the whole inventory is assigned to `lower`; the inventory plots therefore stop outside coexistence rather than presenting the change of label as physical loss of hydrogen or mass.
+
 The gas network is H, OH, H₂, H₂O, SiH₄, Mg, MgO, O, SiO, O₂, SiO₂, O₃ and Si. The permitted condensed phases are MgO(s), SiO₂(l), MgSiO₃(l), Mg₂SiO₄(l) and Si(l). All selected parcel temperatures lie inside the thermodynamic data ranges used. The gas-only branch is a deliberately constrained control, not the preferred phase equilibrium wherever condensation is favorable. No liquid silicate data are extrapolated to a cold observable atmosphere.
 
 ## Result 1: separation is not synonymous with spinodal decomposition
