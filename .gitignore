@@ -89,4 +89,5 @@ plot/
 # Provenance-bearing research artifacts intentionally distributed with this fork.
 !research/hydrogen_storage/investigation/sources/*.xlsx
 !research/hydrogen_storage/investigation/figures/*.pdf
+!research/spinodal_study/figures/*.pdf
 .research-venv/

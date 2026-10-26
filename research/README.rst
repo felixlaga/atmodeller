@@ -1,6 +1,13 @@
 Research accompanying the spinodal extension
 ============================================
 
+``spinodal_study/README.md`` reports the new equilibrium-mode API and a matched
+H2-MgSiO3 separation/atmospheric-feed study using that implementation. It includes
+7,236 native solves, conserved subphase inventories, condensation and remixing
+controls, source hashes, figures and reproduction commands. Atmospheric transfer
+is explicitly conditional; the report separates equilibrium demixing from local
+spinodal instability and from kinetic or planetary predictions.
+
 ``hydrogen_storage/investigation/report.html`` contains the completed hydrogen
 storage investigation, including its numerical results, plots, source workbooks,
 validation, and reproduction scripts. See ``investigation/README.txt`` for

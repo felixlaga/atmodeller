@@ -22,8 +22,13 @@ gas–solution integration example. Time-dependent decomposition, collective
 solution-phase disappearance, and calibrated multicomponent atmospheric
 predictions remain future work.
 
+Select `phase_equilibrium="spinodal"` beside temperature, pressure and composition
+in the public model/state factories; use `"homogeneous"` for a matched control.
+Phase-resolved outputs expose conserved component inventories and mass.
+
 Start with the [spinodal guide](docs/spinodal.rst),
-[runnable example](examples/spinodal_equilibrium.py), and
+[runnable example](examples/spinodal_equilibrium.py),
+[new demixing and atmospheric-feed study](research/spinodal_study/README.md), and
 [archived hydrogen-storage investigation](research/README.rst).
 The archived sensitivity results predate this extension and retain their original provenance.
 
