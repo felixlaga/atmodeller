@@ -52,7 +52,7 @@ outputs.
 
 import logging
 from collections.abc import Iterable
-from typing import TYPE_CHECKING, ClassVar, Generic, Self, TypeVar
+from typing import TYPE_CHECKING, Any, ClassVar, Generic, Literal, Self, TypeVar
 
 import equinox as eqx
 import jax.numpy as jnp
@@ -64,7 +64,7 @@ from atmodeller import override
 from atmodeller.containers import ChemicalSpecies, SpeciesCollection, get_formula_matrix
 from atmodeller.interfaces import RedoxBufferProtocol, SpeciesProtocol, TSpecies_co
 from atmodeller.jax_utils import FloatArray, as_j64, masked_logsumexp, safe_exp
-from atmodeller.sci_utils import GAS_CONSTANT_BAR
+from atmodeller.sci_utils import GAS_CONSTANT, GAS_CONSTANT_BAR
 from atmodeller.thermodata._redox_buffers import IronWustiteBuffer
 from atmodeller.thermodata.core import ActivityCoefficient
 from atmodeller.thermodata.mixing import SubregularSolution
@@ -85,6 +85,14 @@ DUMMY_MOLAR_MASS: float = 1.0
 background mass is non-zero)"""
 
 logger: logging.Logger = logging.getLogger(__name__)
+
+PhaseEquilibriumMode = Literal["homogeneous", "spinodal"]
+"""Binary-solution treatment: constrained homogeneous or common-tangent equilibrium.
+
+The public name ``spinodal`` enables equilibrium demixing throughout the binodal,
+including metastable compositions; it does not restrict separation to g'' < 0
+or add time-dependent decomposition kinetics.
+"""
 
 
 class BasePhase(eqx.Module, Generic[TSpecies_co]):
@@ -902,6 +910,68 @@ class BinarySolutionPhaseOutput(PhaseOutput["BinarySolutionPhase"]):
             key: jnp.broadcast_to(value, x.shape)[..., None] for key, value in diagnostics.items()
         }
         result["demixing_enabled"] = jnp.full((self.batch_size, 1), self.phase.equilibrate)
+        actual_log_activity = self.phase.get_log_activity(
+            self.log_number_moles, self.temperature[..., 0], self.pressure[..., 0]
+        )
+        actual_gibbs = (
+            GAS_CONSTANT
+            * self.temperature
+            * jnp.sum(self.species_mole_fraction * actual_log_activity, axis=-1, keepdims=True)
+        )
+        homogeneous_gibbs = self.phase.mixing_model.gibbs_energy(
+            self.temperature[..., 0], self.pressure[..., 0], x
+        )[..., None]
+        result["actual_mixing_gibbs_J_per_mol"] = actual_gibbs
+        result["homogeneous_mixing_gibbs_J_per_mol"] = homogeneous_gibbs
+        return result
+
+    @property
+    def subphases(self) -> dict[str, dict[str, Any]]:
+        """Actual phase-resolved inventories for the selected equilibrium mode.
+
+        Homogeneous mode has one ``lower`` phase at the bulk composition and an
+        absent ``upper`` phase. In spinodal mode, a two-phase state uses the
+        binodal compositions and lever-rule amounts. An absent phase has zero
+        inventory and a NaN composition. All moles/masses sum to the parent
+        phase; these are output subdivisions, not additional solver inventories.
+        """
+        x = self.species_mole_fraction[..., 1]
+        coexistence = self.phase.mixing_model.coexistence(
+            self.temperature[..., 0], self.pressure[..., 0]
+        )
+        separated = self.phase.equilibrate & coexistence.contains(x)
+        fraction = jnp.where(separated, coexistence.upper_fraction(x), 0.0)
+        number_moles = self.phase_species_number_moles[..., 0]
+        result: dict[str, dict[str, Any]] = {}
+        for name, amount, index in (
+            ("lower", 1 - fraction, 0),
+            ("upper", fraction, 1),
+        ):
+            q = coexistence.logits[..., index]
+            # Retain exponentially dilute components even if x rounds to one.
+            coexisting_fractions = jnp.stack(
+                (jnp.exp(-jnp.logaddexp(0, q)), jnp.exp(-jnp.logaddexp(0, -q))), axis=-1
+            )
+            fractions = jnp.where(
+                separated[..., None], coexisting_fractions, self.species_mole_fraction
+            )
+            composition = fractions[..., 1]
+            components = number_moles[..., None] * amount[..., None] * fractions
+            components = jnp.where(coexistence.valid[..., None], components, jnp.nan)
+            mass = jnp.sum(components * self.phase.species.molar_masses, axis=-1, keepdims=True)
+            result[name] = {
+                "present": ((amount > 0) & coexistence.valid)[..., None],
+                "mole_fraction_of_parent": amount[..., None],
+                "component_1_mole_fraction": jnp.where(
+                    (amount > 0) & coexistence.valid, composition, jnp.nan
+                )[..., None],
+                "mass": mass,
+                "number_moles": jnp.sum(components, axis=-1, keepdims=True),
+                "species_number_moles": {
+                    species: components[..., i : i + 1]
+                    for i, species in enumerate(self.phase.species_names)
+                },
+            }
         return result
 
 

@@ -84,6 +84,43 @@ not by themselves give atmospheric molecular abundances.
 Using the native equilibrium engine
 -----------------------------------
 
+Select the treatment beside the temperature, pressure and composition inputs::
+
+    from atmodeller import ChemicalSpecies, EquilibriumModel, SubregularSolution
+
+    model = EquilibriumModel.from_species(
+        [ChemicalSpecies.create_gas(s) for s in ("He", "Fe", "Si")],
+        temperature=2000.0,
+        pressure=1.0,                       # bar
+        mass=0.0,                           # no inert solvent
+        metal_species=[ChemicalSpecies.create_solution(s) for s in ("Fe", "Si")],
+        mixing_models={"metal": SubregularSolution.regular_solution(50000.0)},
+        phase_equilibrium="spinodal",
+        mass_constraints={"He": 1.0, "Fe": 0.75, "Si": 0.25},
+        mass_units="moles",
+    )
+    demixed = model.solve_with_default()
+    homogeneous = model.with_phase_equilibrium("homogeneous").solve_with_default()
+    warmer = model.update_state(temperature=2500.0, phase_equilibrium="spinodal")
+
+``spinodal`` is the API name for common-tangent **equilibrium** demixing. It
+includes metastable mixtures inside the binodal; it is not a rule that waits for
+negative curvature. ``homogeneous`` retains the same nonideal free energy but
+constrains the solution to one phase. This isolates separation from the effect
+of switching the interaction model itself.
+
+The selector is also accepted by ``ThermodynamicState.from_species``,
+``Planet.from_species``, ``EquilibriumModel.from_state`` and the main
+``EquilibriumModel(parameters, phase_equilibrium=...)`` constructor.
+``None`` preserves existing phase settings. Selecting spinodal equilibrium
+without a configured binary mixing model raises an error.
+
+For a binary planetary metal phase use ``core_mass_fraction=None``. A fully
+tracked binary silicate phase likewise needs zero background mass. Temperature,
+pressure, inventories and equilibrium mode can be updated normally; changing
+planetary background mass allocation with binary phases requires reconstructing
+the state so a hidden solvent cannot be introduced.
+
 :class:`~atmodeller.phases.BinarySolutionPhase` subclasses ``CondensedPhase``.
 It overrides the same ``get_log_activity`` method used by the reaction engine,
 with no new residual block, duplicate component inventory or separate solver.
@@ -107,13 +144,13 @@ disappearance of the entire solution phase is not implemented. Check that the
 solution has a finite inventory in the intended physical regime; the pure-phase
 stability variables are not a substitute for this missing collective condition.
 
-Use ``PhaseSystem`` and ``ReactionSystem`` to assemble it into a state. Preserve
+For low-level assembly, use ``PhaseSystem`` and ``ReactionSystem``. Preserve
 the engine's phase order: gas, silicate melt, silicate solid, metal, then any
-additional phases. The example below uses empty phases as placeholders. A
+additional phases, using empty phases as placeholders where necessary. A
 planetary state can likewise be built with a reaction system containing this
 phase; no change to the elemental conservation equations is needed.
 
-Run the complete example from the repository root::
+The public factories handle that ordering automatically. Run the complete example::
 
     uv sync --locked --all-extras --dev
     uv run python examples/spinodal_equilibrium.py
@@ -176,3 +213,28 @@ convention. Transport, settling and cooling then determine whether the
 equilibrium end state is reached. None of those material parameters are inferred
 from the binodal or supplied here. The present code supplies thermodynamic
 driving forces and a validated equilibrium limit for that later development.
+
+Phase-resolved output
+---------------------
+
+``output.to_dict()[phase_name]["phase"]["subphases"]`` contains ``lower`` and
+``upper`` inventories for the **selected** mode. Each provides ``present``,
+``mass`` (kg), ``number_moles`` (mol), ``component_1_mole_fraction`` and a
+``species_number_moles`` dictionary. In homogeneous mode all material is in
+``lower`` at the bulk composition and ``upper`` is absent. An absent phase has
+zero inventory and a NaN composition. These output subdivisions sum to the
+parent inventory and are not counted again in the solver.
+
+The ``mixing`` output also includes ``actual_mixing_gibbs_J_per_mol`` and
+``homogeneous_mixing_gibbs_J_per_mol``. Their difference quantifies the mixing
+free-energy reduction, not heat release or a decomposition timescale.
+
+Worked study
+------------
+
+``research/spinodal_study/README.md`` compares homogeneous and demixed H2-MgSiO3
+inventories through the public API, then runs conditional hot atmospheric parcel
+chemistry with selective transfer, entrainment, condensation and complete-remixing
+controls. Scripts, all numerical outputs, figures and validation are included.
+The study is a one-way inventory-transfer experiment, not a calibrated reacting
+high-pressure fluid or self-consistent planetary atmosphere calculation.

@@ -133,6 +133,7 @@ from atmodeller.phases import (  # noqa: E402, F401
     BinarySolutionPhase,
     CondensedPhase,
     GasPhase,
+    PhaseEquilibriumMode,
     PurePhase,
 )
 from atmodeller.sci_utils import (  # noqa: E402, F401

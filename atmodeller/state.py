@@ -17,7 +17,7 @@ The hierarchy is:
 """
 
 from abc import abstractmethod
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Iterable, Mapping
 from typing import Any, Optional, Self, cast
 
 import equinox as eqx
@@ -34,9 +34,17 @@ from atmodeller.constants import (
 from atmodeller.containers import ChemicalSpecies
 from atmodeller.interfaces import SpeciesProtocol
 from atmodeller.jax_utils import FloatArray, as_j64
-from atmodeller.phases import BasePhase, CondensedPhase, GasPhase, PurePhase
+from atmodeller.phases import (
+    BasePhase,
+    BinarySolutionPhase,
+    CondensedPhase,
+    GasPhase,
+    PhaseEquilibriumMode,
+    PurePhase,
+)
 from atmodeller.reactions import PhaseSystem, ReactionSystem
 from atmodeller.sci_utils import FE_MOLAR_MASS, SIO2_MOLAR_MASS, earth, unit_conversion
+from atmodeller.thermodata.mixing import SubregularSolution
 
 
 class BaseThermodynamicState(eqx.Module):
@@ -54,6 +62,76 @@ class BaseThermodynamicState(eqx.Module):
     def phase_system(self) -> PhaseSystem:
         """Phase system representing the thermodynamic state of the planetary body"""
         return self.reaction_system.phase_system
+
+    def with_phase_equilibrium(self, mode: PhaseEquilibriumMode) -> Self:
+        """Selects homogeneous or spinodal equilibrium for every binary solution.
+
+        ``spinodal`` uses the common tangent throughout the coexistence gap,
+        including the metastable region. It is an equilibrium end state, not a
+        kinetic trigger. Other phase types keep their existing treatment.
+        Selecting spinodal equilibrium without a configured binary mixing model
+        raises an error so the requested physics cannot silently have no effect.
+
+        Args:
+            mode: ``"homogeneous"`` or ``"spinodal"``.
+
+        Returns:
+            An immutable copy of the state with the selected phase treatment.
+        """
+        if mode not in ("homogeneous", "spinodal"):
+            raise ValueError("phase_equilibrium must be 'homogeneous' or 'spinodal'.")
+        binary = [p for p in self.phase_system.phases if isinstance(p, BinarySolutionPhase)]
+        if mode == "spinodal" and not binary:
+            raise ValueError(
+                "Spinodal equilibrium requires a binary solution: supply mixing_models."
+            )
+        phases = tuple(
+            eqx.tree_at(lambda p: p.equilibrate, phase, mode == "spinodal")
+            if isinstance(phase, BinarySolutionPhase)
+            else phase
+            for phase in self.phase_system.phases
+        )
+        return eqx.tree_at(lambda s: s.reaction_system.phase_system.phases, self, phases)
+
+    def with_mixing_models(self, mixing_models: Mapping[str, SubregularSolution]) -> Self:
+        """Assigns shared binary free energies to named condensed phases.
+
+        The specified phases must contain two ``create_solution`` components and
+        zero background mass. Their complete inventories are explicit; an inert
+        solvent cannot be silently removed or counted as a third component.
+
+        Args:
+            mixing_models: Mapping from phase name (e.g. ``"silicate_melt"`` or
+                ``"metal"``) to its binary mixing model.
+
+        Returns:
+            A state with rebuilt phase/reaction containers and the same species.
+        """
+        phases = list(self.phase_system.phases)
+        for name, mixing in mixing_models.items():
+            indices = [i for i, p in enumerate(phases) if p.name == name]
+            if len(indices) != 1:
+                raise ValueError(
+                    f"Mixing model phase {name!r} must name exactly one existing phase."
+                )
+            index = indices[0]
+            phase = phases[index]
+            if not isinstance(phase, CondensedPhase):
+                raise ValueError("Binary mixing models require a condensed solution phase.")
+            if bool(jnp.any(phase.background_mass != 0)):
+                raise ValueError(
+                    f"Binary solution {name!r} requires zero background mass. "
+                    "Use mass=0 for a fully tracked thermodynamic state; for a tracked "
+                    "planetary metal phase use core_mass_fraction=None."
+                )
+            phases[index] = BinarySolutionPhase(
+                cast(Iterable[ChemicalSpecies], phase.species),
+                mixing,
+                name,
+                equilibrate=phase.equilibrate if isinstance(phase, BinarySolutionPhase) else True,
+            )
+        system = PhaseSystem(cast(GasPhase, phases[0]), other_phases=tuple(phases[1:]))
+        return eqx.tree_at(lambda s: s.reaction_system, self, ReactionSystem(system))
 
     @property
     def silicate_melt_phase_index(self) -> int:
@@ -213,6 +291,8 @@ class ThermodynamicState(BaseThermodynamicState):
         silicate_solid_species: Iterable[SpeciesProtocol] = (),
         metal_species: Iterable[SpeciesProtocol] = (),
         condensates: Iterable[PurePhase] = (),
+        mixing_models: Mapping[str, SubregularSolution] | None = None,
+        phase_equilibrium: PhaseEquilibriumMode | None = None,
     ) -> Self:
         """Builds an instance from phase-species inputs.
 
@@ -234,6 +314,10 @@ class ThermodynamicState(BaseThermodynamicState):
             metal_species: Iterable of species in the metal phase. Defaults to an empty tuple.
             condensates: Iterable of pure phases representing condensates in the system. Defaults
                 to an empty tuple.
+            mixing_models: Binary free energies keyed by phase name. Components must be created
+                with ``ChemicalSpecies.create_solution`` and the phase background must be zero.
+            phase_equilibrium: ``"spinodal"`` or ``"homogeneous"`` for binary solutions.
+                ``None`` preserves phase defaults; new binary solutions default to spinodal.
 
         Returns:
             An instance
@@ -264,7 +348,12 @@ class ThermodynamicState(BaseThermodynamicState):
         phase_system: PhaseSystem = PhaseSystem(gas, other_phases=other_phases)
         reaction_system: ReactionSystem = ReactionSystem(phase_system)
 
-        return cls(reaction_system, temperature, pressure)
+        state = cls(reaction_system, temperature, pressure)
+        if mixing_models is not None:
+            state = state.with_mixing_models(mixing_models)
+        if phase_equilibrium is not None:
+            state = state.with_phase_equilibrium(phase_equilibrium)
+        return state
 
     @override
     def get_pressure(self, log_number_moles: Float[Array, "... n_species"]) -> FloatArray:
@@ -301,7 +390,11 @@ class ThermodynamicState(BaseThermodynamicState):
 
     @override
     def update(
-        self, temperature: Optional[ArrayLike] = None, pressure: Optional[ArrayLike] = None
+        self,
+        temperature: Optional[ArrayLike] = None,
+        pressure: Optional[ArrayLike] = None,
+        *,
+        phase_equilibrium: PhaseEquilibriumMode | None = None,
     ) -> Self:
         """Updates the state.
 
@@ -312,6 +405,7 @@ class ThermodynamicState(BaseThermodynamicState):
         Args:
             temperature: Temperature (K). Defaults to ``None``.
             pressure: Pressure (bar). Defaults to ``None``.
+            phase_equilibrium: Binary equilibrium treatment, or ``None`` to retain it.
 
         Returns:
             Updated state
@@ -330,14 +424,14 @@ class ThermodynamicState(BaseThermodynamicState):
             pressure = jnp.broadcast_to(as_j64(pressure), self.pressure.shape)
             updates.append((lambda s: s.pressure, pressure))
 
-        if not updates:
-            return cast(Self, self)
-
-        selectors, values = zip(*updates)
-        state_updated: ThermodynamicState = eqx.tree_at(
-            lambda s: tuple(sel(s) for sel in selectors), self, tuple(values)
-        )
-
+        state_updated = self
+        if updates:
+            selectors, values = zip(*updates)
+            state_updated = eqx.tree_at(
+                lambda s: tuple(sel(s) for sel in selectors), self, tuple(values)
+            )
+        if phase_equilibrium is not None:
+            state_updated = state_updated.with_phase_equilibrium(phase_equilibrium)
         return cast(Self, state_updated)
 
 
@@ -421,6 +515,8 @@ class BasePlanet(BaseThermodynamicState):
         silicate_solid_species: Iterable[SpeciesProtocol] = (),
         metal_species: Iterable[SpeciesProtocol] = (),
         condensates: Iterable[PurePhase] = (),
+        mixing_models: Mapping[str, SubregularSolution] | None = None,
+        phase_equilibrium: PhaseEquilibriumMode | None = None,
     ) -> Self:
         """Builds a new instance from phase-species inputs.
 
@@ -467,6 +563,10 @@ class BasePlanet(BaseThermodynamicState):
             metal_species: Iterable of species in the metal phase. Defaults to an empty tuple.
             condensates: Iterable of pure phases representing condensates in the system. Defaults
                 to an empty tuple.
+            mixing_models: Binary free energies keyed by phase name. The corresponding phase
+                needs two explicit solution components and zero background mass.
+            phase_equilibrium: ``"spinodal"`` or ``"homogeneous"`` for binary solutions.
+                ``None`` preserves phase defaults.
 
         Returns:
             An instance
@@ -503,7 +603,12 @@ class BasePlanet(BaseThermodynamicState):
         phase_system = PhaseSystem(gas, other_phases=other_phases)
         reaction_system: ReactionSystem = ReactionSystem(phase_system)
 
-        return cls(reaction_system, surface_radius, temperature, pressure, planet_mass)
+        state = cls(reaction_system, surface_radius, temperature, pressure, planet_mass)
+        if mixing_models is not None:
+            state = state.with_mixing_models(mixing_models)
+        if phase_equilibrium is not None:
+            state = state.with_phase_equilibrium(phase_equilibrium)
+        return state
 
     @property
     def background_metallic_core_mass(self) -> FloatArray:
@@ -621,6 +726,8 @@ class BasePlanet(BaseThermodynamicState):
         surface_radius: Optional[ArrayLike] = None,
         temperature: Optional[ArrayLike] = None,
         pressure: Optional[ArrayLike] = None,
+        *,
+        phase_equilibrium: PhaseEquilibriumMode | None = None,
     ) -> Self:
         """Updates the state.
 
@@ -653,6 +760,7 @@ class BasePlanet(BaseThermodynamicState):
             surface_radius: Radius of the planetary surface (m). Defaults to ``None``.
             temperature: Temperature (K). Defaults to ``None``.
             pressure: Pressure (bar). Defaults to ``None``.
+            phase_equilibrium: Binary equilibrium treatment, or ``None`` to retain it.
 
         Returns:
             Updated state
@@ -678,6 +786,12 @@ class BasePlanet(BaseThermodynamicState):
             or core_mass_fraction is not None
             or (mantle_melt_fraction is not None)
         ):
+            if any(isinstance(p, BinarySolutionPhase) for p in self.phase_system.phases):
+                raise ValueError(
+                    "Reconstruct the planetary state to change background masses with binary "
+                    "solutions; each binary phase must retain zero background mass. "
+                    "Use mass_constraints to change its tracked component inventory."
+                )
             old_planet_mass: FloatArray = self.background_planet_mass
             old_core_mass: FloatArray = self.background_metallic_core_mass
             old_melt_mass: FloatArray = self.phase_system.phases[
@@ -754,14 +868,14 @@ class BasePlanet(BaseThermodynamicState):
             pressure = jnp.broadcast_to(as_j64(pressure), self.pressure.shape)
             updates.append((lambda s: s.pressure, pressure))
 
-        if not updates:
-            return cast(Self, self)
-
-        selectors, values = zip(*updates)
-        state_updated: BasePlanet = eqx.tree_at(
-            lambda s: tuple(sel(s) for sel in selectors), self, tuple(values)
-        )
-
+        state_updated = self
+        if updates:
+            selectors, values = zip(*updates)
+            state_updated = eqx.tree_at(
+                lambda s: tuple(sel(s) for sel in selectors), self, tuple(values)
+            )
+        if phase_equilibrium is not None:
+            state_updated = state_updated.with_phase_equilibrium(phase_equilibrium)
         return cast(Self, state_updated)
 
 

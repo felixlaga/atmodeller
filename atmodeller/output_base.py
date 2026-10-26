@@ -503,6 +503,7 @@ class BaseOutputDict(eqx.Module):
         }
         if isinstance(phase_output, BinarySolutionPhaseOutput):
             result["mixing"] = phase_output.mixing
+            result["subphases"] = phase_output.subphases
         return result
 
     def solver_to_dict(self) -> dict[str, ArrayLike]:

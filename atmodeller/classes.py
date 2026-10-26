@@ -25,8 +25,8 @@ Typical usage:
 """
 
 import logging
-from collections.abc import Callable, Mapping
-from typing import Literal, Self, cast
+from collections.abc import Callable, Iterable, Mapping
+from typing import Any, Literal, Self, cast
 
 import equinox as eqx
 import jax
@@ -34,13 +34,15 @@ import jax.numpy as jnp
 import numpy as np
 from jaxtyping import Array, ArrayLike, Float, PRNGKeyArray
 
-from atmodeller.containers import SolverParameters
+from atmodeller.containers import ChemicalSpecies, SolverParameters
 from atmodeller.initializer import ElementPotentialInitializer, InitializerProtocol
-from atmodeller.interfaces import ActivityConstraintProtocol
+from atmodeller.interfaces import ActivityConstraintProtocol, SpeciesProtocol
 from atmodeller.output import Output
 from atmodeller.parameters import Parameters
+from atmodeller.phases import PhaseEquilibriumMode, PurePhase
 from atmodeller.solvers import make_solver_with_jit
-from atmodeller.state import BaseThermodynamicState
+from atmodeller.state import BaseThermodynamicState, ThermodynamicState
+from atmodeller.thermodata.mixing import SubregularSolution
 
 logger: logging.Logger = logging.getLogger(__name__)
 
@@ -62,6 +64,8 @@ class EquilibriumModel(eqx.Module):
         initializer: Initializer for the cold initial guess, used for batch elements without an
             initial guess. Defaults to
             :class:`~atmodeller.initializer.element_potential.ElementPotentialInitializer`.
+        phase_equilibrium: Optional ``"spinodal"`` or ``"homogeneous"`` binary-solution mode.
+            ``None`` preserves the state's existing phase settings.
     """
 
     parameters: Parameters
@@ -69,7 +73,15 @@ class EquilibriumModel(eqx.Module):
     solver: SolverCallable
     key: PRNGKeyArray
 
-    def __init__(self, parameters: Parameters, initializer: InitializerProtocol | None = None):
+    def __init__(
+        self,
+        parameters: Parameters,
+        initializer: InitializerProtocol | None = None,
+        *,
+        phase_equilibrium: PhaseEquilibriumMode | None = None,
+    ):
+        if phase_equilibrium is not None:
+            parameters = parameters.update_state(phase_equilibrium=phase_equilibrium)
         self.parameters = parameters
         self.initializer = ElementPotentialInitializer() if initializer is None else initializer
         self.solver = make_solver_with_jit(parameters, self.initializer)
@@ -85,6 +97,7 @@ class EquilibriumModel(eqx.Module):
         mass_units: Literal["mass", "moles"] = "mass",
         solver_parameters: SolverParameters | None = None,
         initializer: InitializerProtocol | None = None,
+        phase_equilibrium: PhaseEquilibriumMode | None = None,
     ) -> Self:
         """Builds a model by constructing :class:`~atmodeller.parameters.Parameters` internally.
 
@@ -99,6 +112,8 @@ class EquilibriumModel(eqx.Module):
             mass_units: Units used for ``mass_constraints``. Defaults to ``"mass"``.
             solver_parameters: Optional solver parameter object. Defaults to ``None``.
             initializer: Optional initializer for the cold initial guess. Defaults to ``None``.
+            phase_equilibrium: Optional binary-solution equilibrium mode; ``None`` preserves
+                the state's settings. Spinodal mode requires a configured binary mixing model.
 
         Returns:
             A new :class:`EquilibriumModel` instance
@@ -111,7 +126,82 @@ class EquilibriumModel(eqx.Module):
             solver_parameters=solver_parameters,
         )
 
-        return cls(parameters, initializer)
+        return cls(parameters, initializer, phase_equilibrium=phase_equilibrium)
+
+    @classmethod
+    def from_species(
+        cls,
+        gas_species: Iterable[ChemicalSpecies],
+        pressure: ArrayLike,
+        *,
+        temperature: ArrayLike = 2000.0,
+        silicate_melt_species: Iterable[SpeciesProtocol] = (),
+        silicate_solid_species: Iterable[SpeciesProtocol] = (),
+        metal_species: Iterable[SpeciesProtocol] = (),
+        condensates: Iterable[PurePhase] = (),
+        mixing_models: Mapping[str, SubregularSolution] | None = None,
+        phase_equilibrium: PhaseEquilibriumMode | None = None,
+        activity_constraints: Mapping[str, ActivityConstraintProtocol] | None = None,
+        mass_constraints: Mapping[str, ArrayLike] | None = None,
+        mass_units: Literal["mass", "moles"] = "mass",
+        solver_parameters: SolverParameters | None = None,
+        initializer: InitializerProtocol | None = None,
+        **state_options: Any,
+    ) -> Self:
+        """Builds a fixed-pressure model from temperature, composition and phase treatment.
+
+        This combines ``ThermodynamicState.from_species`` and ``from_state``;
+        the same equilibrium engine and conservation equations are used.
+        For a planetary pressure law, construct ``Planet.from_species`` with
+        the same ``mixing_models``/``phase_equilibrium`` options, then use ``from_state``.
+
+        Args:
+            gas_species: Gas species.
+            pressure: Pressure (bar).
+            temperature: Temperature (K).
+            silicate_melt_species: Components of the silicate melt.
+            silicate_solid_species: Components of the silicate solid.
+            metal_species: Components of the metal phase.
+            condensates: Additional pure condensates.
+            mixing_models: Binary mixing free energies keyed by condensed phase name.
+            phase_equilibrium: ``"spinodal"`` (common-tangent equilibrium) or
+                ``"homogeneous"``. ``None`` keeps the phase defaults.
+            activity_constraints: Optional activity constraints.
+            mass_constraints: Elemental or compound inventories, in ``mass_units``.
+            mass_units: ``"mass"`` (kg) or ``"moles"`` (mol of each specified formula).
+            solver_parameters: Numerical solver settings.
+            initializer: Initial-guess strategy.
+            **state_options: Other ``ThermodynamicState.from_species`` arguments,
+                such as ``mass=0`` for fully tracked phases with no inert solvent.
+        """
+        state = ThermodynamicState.from_species(
+            gas_species,
+            pressure,
+            temperature=temperature,
+            silicate_melt_species=silicate_melt_species,
+            silicate_solid_species=silicate_solid_species,
+            metal_species=metal_species,
+            condensates=condensates,
+            mixing_models=mixing_models,
+            phase_equilibrium=phase_equilibrium,
+            **state_options,
+        )
+        return cls.from_state(
+            state,
+            activity_constraints=activity_constraints,
+            mass_constraints=mass_constraints,
+            mass_units=mass_units,
+            solver_parameters=solver_parameters,
+            initializer=initializer,
+        )
+
+    def with_phase_equilibrium(self, mode: PhaseEquilibriumMode) -> Self:
+        """Returns a model with a new binary equilibrium mode and rebuilt solver.
+
+        The original model, inventories, thermodynamic functions and random key
+        are preserved. Use this for matched homogeneous/spinodal comparisons.
+        """
+        return self.update_state(phase_equilibrium=mode)
 
     def solve(self, base_solution_array: Float[Array, "n_batch twice_species"]) -> Output:
         """Runs the solver and returns the output state.
@@ -228,6 +318,9 @@ class EquilibriumModel(eqx.Module):
 
         Arguments are forwarded to ``self.parameters.update_state``, which in turn forwards them
         to the underlying thermodynamic state's ``update`` implementation.
+        A ``phase_equilibrium`` change also rebuilds the solver, since it changes
+        the static phase treatment. Temperature/pressure updates retain the
+        existing shape-preserving behavior.
 
         Args:
             *args: Positional arguments accepted by the state ``update`` method
@@ -241,4 +334,6 @@ class EquilibriumModel(eqx.Module):
             lambda m: m.parameters, self, parameters_updated
         )
 
+        if kwargs.get("phase_equilibrium") is not None:
+            model_updated = model_updated.rebuild_solver()
         return cast(Self, model_updated)

@@ -15,47 +15,33 @@ import json
 import numpy as np
 
 from atmodeller import (
-    BinarySolutionPhase,
     ChemicalSpecies,
-    CondensedPhase,
     EquilibriumModel,
-    GasPhase,
+    PhaseEquilibriumMode,
     SolverParameters,
     SubregularSolution,
-    ThermodynamicState,
 )
-from atmodeller.reactions import PhaseSystem, ReactionSystem
 from atmodeller.sci_utils import GAS_CONSTANT
 
 
-def gas_solution_example(interaction: float, *, equilibrate: bool = True) -> dict:
+def gas_solution_example(
+    interaction: float, *, phase_equilibrium: PhaseEquilibriumMode = "spinodal"
+) -> dict:
     """Compare ideal, constrained homogeneous, and demixed solution activities."""
     components = tuple(ChemicalSpecies.create_solution(s) for s in ("Fe", "Si"))
-    solution = BinarySolutionPhase(
-        components,
-        SubregularSolution.regular_solution(interaction),
-        "metal",
-        equilibrate=equilibrate,
-    )
-    gas = GasPhase([ChemicalSpecies.create_gas(s) for s in ("He", "Fe", "Si")])
-    # Preserve the existing phase ordering: gas, silicate melt, silicate solid,
-    # metal. Empty phases are placeholders for the native state mass helpers.
-    phases = PhaseSystem(
-        gas,
-        other_phases=(
-            CondensedPhase(name="silicate_melt"),
-            CondensedPhase(name="silicate_solid"),
-            solution,
-        ),
-    )
-    state = ThermodynamicState(ReactionSystem(phases), temperature=2000.0, pressure=1.0)
     masses = {
         "He": 0.004002602,
         "Fe": 0.75 * components[0].data.molar_mass,
         "Si": 0.25 * components[1].data.molar_mass,
     }
-    model = EquilibriumModel.from_state(
-        state,
+    model = EquilibriumModel.from_species(
+        [ChemicalSpecies.create_gas(s) for s in ("He", "Fe", "Si")],
+        temperature=2000.0,
+        pressure=1.0,
+        mass=0.0,
+        metal_species=components,
+        mixing_models={"metal": SubregularSolution.regular_solution(interaction)},
+        phase_equilibrium=phase_equilibrium,
         mass_constraints=masses,
         solver_parameters=SolverParameters(atol=1e-10, rtol=1e-10),
     )
@@ -88,7 +74,7 @@ def main() -> None:
         "illustrative_gas_solution": {
             "ideal": gas_solution_example(0),
             "constrained_homogeneous": gas_solution_example(
-                3 * GAS_CONSTANT * 2000, equilibrate=False
+                3 * GAS_CONSTANT * 2000, phase_equilibrium="homogeneous"
             ),
             "equilibrium_demixing": gas_solution_example(3 * GAS_CONSTANT * 2000),
         },
