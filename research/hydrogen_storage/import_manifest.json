@@ -1,0 +1,70 @@
+{
+  "baseline_engine_commit": "f1e3d94041ce6056a4995f7d55d11edeeaee5de1",
+  "source_archive_sha256": "d39288ebd521d0b38dff44d9c109c2bf3e06c86716efe55073ecf69f8eb67c72",
+  "scope": "Migration of accepted investigation, earlier literature brief, and baseline check; excludes transient compilation caches and failed exploratory diagnostics. Scientific outputs and source downloads are unchanged.",
+  "path_changes": {
+    "run_baseline.py": {
+      "original_sha256": "d553ab1d6986b9e8d9a99e0a715fe842a511f7658a6d2d25f6998edd2cd52484",
+      "imported_sha256": "868a16a0aa61f9d62c07b91c08d304e45638abc0c514f3c0731b87b5749966a4"
+    },
+    "environment.freeze.txt": {
+      "original_sha256": "9747911c46406840bfab124e6cce74f8db8f5a87124ce31a558293572a906f29",
+      "imported_sha256": "3dd89fc29d25b5e8a47085f26ecd800623159e8959bf9b510a3c2cddd4c90439"
+    },
+    "investigation/build_report.py": {
+      "original_sha256": "94eb0c035b5e1ab31517de7c2129c1736b6e09c17d205dd4f33a10229b5be9f1",
+      "imported_sha256": "cd540de17faf811dd328c467209db19d0a8e6c0774ac608ef88ad68a02aeec01"
+    },
+    "investigation/README.txt": {
+      "original_sha256": "1881fa54ae22d2b4d23c299e3b8f9c87e51609e78cf9859bd17f405bf22e2c87",
+      "imported_sha256": "628e6d90b208112127604a11514531ed77ce25a0374973268ed5fdcfee80215e"
+    }
+  },
+  "original_sha256": {
+    "run_baseline.py": "d553ab1d6986b9e8d9a99e0a715fe842a511f7658a6d2d25f6998edd2cd52484",
+    "environment.freeze.txt": "9747911c46406840bfab124e6cce74f8db8f5a87124ce31a558293572a906f29",
+    "research-brief.html": "398d6cc97236ac8739f428a64ca7c4ed25e0c28721edb5c63e5154845e9590db",
+    "concept.html": "0965f58cf708fd0bcb593809c5c73f62491f97151f785970f8cce260285b2c3f",
+    "investigation/check_numerics.py": "15156a1800294051f8abb4634c551a9af0b3465c38deb112da1fcaabac808aea",
+    "investigation/run_study.py": "fd000878b1b7bb6fb70667569da5328b90cdb4471dc3f181cb65ef49f7844fb1",
+    "investigation/run_atmospheres.py": "99b651520f81b16decec195f743747c632f8c8f1fe5fe90f3539b0a5be0efaeb",
+    "investigation/analyse.py": "ac1a4b0f37a8055beabf91ce218a458db2921ede35af20eedcaee748726ce72f",
+    "investigation/build_report.py": "94eb0c035b5e1ab31517de7c2129c1736b6e09c17d205dd4f33a10229b5be9f1",
+    "investigation/model.py": "dc1a935aebf39b796d31b9fa6e824b7a515cec9cc2183af1ccdd2cf63a9c3493",
+    "investigation/requirements.lock.txt": "f391834e96deb7b918bfed1375bcd8bec0bfbd86886ebbcb58cf69fb456afba9",
+    "investigation/README.txt": "1881fa54ae22d2b4d23c299e3b8f9c87e51609e78cf9859bd17f405bf22e2c87",
+    "investigation/validate_atmosphere.py": "bc8c469e1eae9a665030e41092d206d6fcde47a410a7b9a11869141460c6fddb",
+    "investigation/validate_reference.py": "3fd17ec6fba0f63609b7876c832e8da4256c9e1879a3e25995157c18c9120ff2",
+    "investigation/report.html": "2fd9f30c5019b6b5bafb5f39c1c8ec47d4419bbe6753c98f1530ba3c95e3eeb4",
+    "outputs/baseline_check.json": "b1366786be3f6eb74ad9b608fdcf4e9f60a7eb8b019378f2cdfec17a1128dc01",
+    "investigation/figures/condensation_control.pdf": "cd29277d09a61f0fdb10bb65b652d86e63156a5f5c93f7e85c6a3a7559204ec8",
+    "investigation/figures/condensation_control.png": "869cc4ccbc5f051b5cc803f0525449d1fbacb49aee0f1d9c633e993d0ee1664b",
+    "investigation/figures/condensation_control.svg": "a2c257c14f504d8bd9b952dc4c4af2b083b64f43c05070c6f200a307edcea4fb",
+    "investigation/figures/phase_buffers.svg": "5df1a377fbfc02beedcc3bccd37e1bda55fc93f562403a0ffe0335600b7c8adf",
+    "investigation/figures/storage_sensitivity.png": "7ebe6bcccbe776e372b3d262c80785ce744e2cb967ce14da8f9172ad1c64d044",
+    "investigation/figures/storage_sensitivity.pdf": "197156e0fcbc4b30ef08a21cdbd98df073e64815a4c697490fcb41ff00ad2af9",
+    "investigation/figures/storage_sensitivity.svg": "c5031e14f3565e419881eb47b224171671af745b1c6c5cae04bed84189661d2c",
+    "investigation/figures/phase_buffers.png": "e54c44c54d3e87add63d240e6828bd70c3be915767c148130b640c896a3ca3b9",
+    "investigation/figures/phase_buffers.pdf": "790c982266d0443190bc4f5df030b640c672ae1475b5f7d1ee503ac327511bce",
+    "investigation/sources/HHeCNOSi_magma_sol_real_100xsolar_melt100.xlsx": "496ddc27a500f185877b52e6e4f60f75efaf1104f3a6bfe005c42caa65c3f04f",
+    "investigation/sources/osf_manifest.json": "98827b14a2992114172821597364b7b67d0d5cc41bcd52d93f08739604fe946d",
+    "investigation/sources/generate_data.ipynb": "fd24f19878407ca5b04b082ca0d0bec86e94c2035be561f9c0b1179b6a8929f6",
+    "investigation/sources/HHeCNOSi_atm_magma_sol_real_1xsolar_melt100_1wtH.xlsx": "58cc8d2a422843ae4d08b0b28316292760788a212fe53361646658bc4d1dc6b0",
+    "investigation/sources/HHeCNOSi_magma_sol_real_1xsolar_melt100.xlsx": "c0627278c4d729950654e27f5dae9fb7ca1a27c9b96e2e6002635a1c1540f1eb",
+    "investigation/sources/generate_data_extracted.py": "eecac5a7adc1800be31918cc0255133590dba3c48ce5d379405287d5f9c8a80e",
+    "investigation/sources/downloaded.json": "1ed6ac689b4c3e18cb1534616669daae5740b414c82420d319ac964f07c51afd",
+    "investigation/outputs/reference_atmosphere_validation.json": "570e8baa8a7225ff5c7abe1c77dedee48ef58f3ab9db7936c7a02933f428e496",
+    "investigation/outputs/provenance.json": "cfc40fa51e9fe2a2998653fecba00ac2021a961b54dd2479ea077f484f358818",
+    "investigation/outputs/numerical_robustness.json": "50deeb25cd5b791db5edc02b6ae9e84a42d0b378468d4ab9bcd254b447daf49a",
+    "investigation/outputs/reference_atmosphere.json": "6b9690f431324aac1b58504f363cd3d8cbf8e9de6059d05347cb83f693760ba5",
+    "investigation/outputs/reference_atmosphere_solution.npy": "0b9cbc6f2632ebd1ce5dbf99483f27c61f867fbb239d08357a179dcdc33a0e08",
+    "investigation/outputs/study_meb_solution.npy": "8238d9b3bae4638d8276dad5eb98ae1296d84288dd513110c618e3b855449e86",
+    "investigation/outputs/reference_meb_solution.npy": "08323817ad56637a4525e4ca83d04ec16b85e0a811ed70b32d5eb37d8f053ce0",
+    "investigation/outputs/reference_meb_validation.json": "0190b11c3e7794eb32f2bfb0300a5d1a1d1e318579b63ad24f5c5aeed61c7bff",
+    "investigation/outputs/reference_meb.json": "c22aaca27a1be7a42f555dfabe6f7d404d4fb19c82a9f9e57550edca7a3b7187",
+    "investigation/outputs/atmosphere_gas_only.json": "3a4f8f6582fdae8c516cdce894d9b7004c236a4a11f25ac1dab60f0b131a273e",
+    "investigation/outputs/atmosphere_condensed.json": "b7835c9b042f482d33a3135c24a59f2277e0a4c001d259ba00bccfdf732388b2",
+    "investigation/outputs/study_meb.json": "513bec3509d7f9a96baf7794770b6d7bfaaac84a88ceb47a39843965662206d1",
+    "investigation/outputs/analysis_summary.json": "2dc2f2203fb8426112f4999f3a13c199ccc6b6220c038565f3cb9fa6967619cb"
+  }
+}

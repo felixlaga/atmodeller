@@ -1,0 +1,26 @@
+[
+  {
+    "name": "HHeCNOSi_magma_sol_real_100xsolar_melt100.xlsx",
+    "url": "https://osf.io/download/69315a3cbbc8f5ed0e39bdab/",
+    "sha256": "496ddc27a500f185877b52e6e4f60f75efaf1104f3a6bfe005c42caa65c3f04f",
+    "bytes": 254455
+  },
+  {
+    "name": "HHeCNOSi_magma_sol_real_1xsolar_melt100.xlsx",
+    "url": "https://osf.io/download/69315a3c95a56f20be39be52/",
+    "sha256": "c0627278c4d729950654e27f5dae9fb7ca1a27c9b96e2e6002635a1c1540f1eb",
+    "bytes": 253773
+  },
+  {
+    "name": "HHeCNOSi_atm_magma_sol_real_1xsolar_melt100_1wtH.xlsx",
+    "url": "https://osf.io/download/69315a3d14955bc1a04c3e9a/",
+    "sha256": "58cc8d2a422843ae4d08b0b28316292760788a212fe53361646658bc4d1dc6b0",
+    "bytes": 230531
+  },
+  {
+    "name": "generate_data.ipynb",
+    "url": "https://osf.io/download/2sh5w/",
+    "sha256": "fd24f19878407ca5b04b082ca0d0bec86e94c2035be561f9c0b1179b6a8929f6",
+    "bytes": 45956
+  }
+]

@@ -1,0 +1,22 @@
+{
+  "n_cases": 18,
+  "n_success": 18,
+  "seed": 260126,
+  "log_moles_perturbation_sigma": 0.05,
+  "tolerance": 1e-10,
+  "maximum_relative_gas_mole_fraction_difference": 3.842330897896318e-10,
+  "differences_by_species": {
+    "CH4_g": 3.246480861918144e-11,
+    "CO2_g": 1.7421797338101896e-10,
+    "CO_g": 7.576517191409948e-11,
+    "H2O_g": 2.040038138417799e-10,
+    "H2_g": 1.0796696869874722e-10,
+    "H3N_g": 3.842330897896318e-10,
+    "H4Si_g": 7.968736781549524e-11,
+    "He_g": 8.535749884686084e-11,
+    "N2_g": 3.744276000361424e-10,
+    "O2_g": 2.9196201012382517e-10,
+    "OSi_g": 3.749534016606049e-11
+  },
+  "maximum_relative_element_error": 1.2398915460643102e-14
+}

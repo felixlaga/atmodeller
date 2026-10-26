@@ -1,3 +1,5 @@
+# Preserve archived research and third-party source hashes; new package code and tests are checked.
+exclude: ^research/hydrogen_storage/
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.15.8

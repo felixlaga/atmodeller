@@ -1,0 +1,24 @@
+{
+  "scope": "Upstream README H-O example; no Hakim reproduction or spinodal physics",
+  "atmodeller_version": "2.0.0",
+  "commit": "f1e3d94041ce6056a4995f7d55d11edeeaee5de1",
+  "jax_version": "0.12.0.1",
+  "devices": [
+    "cpu:0"
+  ],
+  "solver_success": true,
+  "temperature_K": 2000.0,
+  "element_budgets_kg": {
+    "H": 1.5500015377899477e+20,
+    "O": 6.25774e+20
+  },
+  "element_relative_mass_errors": {
+    "H": 2.114062418720041e-16,
+    "O": 2.7229255290248554e-15
+  },
+  "gas_partial_pressures_bar": {
+    "H2O_g": 0.06638092262166355,
+    "H2_g": 15.170776685887933,
+    "O2_g": 1.5894213584793904e-12
+  }
+}

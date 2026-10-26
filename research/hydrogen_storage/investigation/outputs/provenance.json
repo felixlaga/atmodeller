@@ -1,0 +1,174 @@
+{
+  "generated_utc": "2026-10-26T04:03:14.971722+00:00",
+  "atmodeller_commit": "f1e3d94041ce6056a4995f7d55d11edeeaee5de1",
+  "scope": "Hydrogen dissolution sensitivity with local atmospheric equilibrium; no spinodal model",
+  "checks": {
+    "meb": {
+      "n_attempted": 504,
+      "n_cases": 501,
+      "n_excluded": 3,
+      "n_success": 501,
+      "maximum_relative_element_error": 1.7611336521033494e-11,
+      "maximum_abs_ln_reaction_residual": 9.43245481721533e-13,
+      "maximum_abs_ln_ratio_identity_residual": 9.413581025796702e-13,
+      "seconds": 122.94573879241943
+    },
+    "atmosphere": {
+      "n_cases": 615,
+      "n_success": 615,
+      "maximum_relative_element_error": 3.946810300753009e-15,
+      "maximum_abs_ln_reaction_residual": 1.7763568394002505e-14,
+      "maximum_relative_pressure_error": 8.881784197001252e-16,
+      "seconds": 11.207458019256592
+    },
+    "gas_only": {
+      "n_cases": 297,
+      "n_success": 297,
+      "maximum_relative_element_error": 3.509694728277069e-15,
+      "maximum_abs_ln_reaction_residual": 1.0658141036401503e-14,
+      "maximum_relative_pressure_error": 6.661338147750939e-16,
+      "seconds": 5.221199989318848
+    }
+  },
+  "buffer_checks": {
+    "silicon_and_silicon_carbide_cases": 460,
+    "carbon_and_silicon_carbide_cases": 92,
+    "other_cases": 63,
+    "maximum_relative_Si_SiC_buffer_error": 1.0658141036401503e-14,
+    "maximum_relative_C_SiC_buffer_error": 2.3092638912203256e-14,
+    "predicted_ratios_at_920K_10mbar": [
+      0.0063820347095777255,
+      2.255921565264407e-10
+    ]
+  },
+  "reference_meb": {
+    "n_cases": 100,
+    "n_success": 100,
+    "maximum_relative_element_error": 1.2503117049697525e-14,
+    "maximum_relative_pressure_difference": 0.001531183037681183,
+    "maximum_relative_species_differences": {
+      "mole_fraction": {
+        "CH4_g": 0.012477525205637718,
+        "CO2_g": 0.005276447092668057,
+        "CO_g": 0.006355939642322284,
+        "H2O_g": 0.006415263235595492,
+        "H2_g": 0.020598723992681922,
+        "H3N_g": 0.011765009810941529,
+        "H4Si_g": 0.015485718171316054,
+        "He_g": 0.020756791684687803,
+        "N2_g": 0.009988492469949373,
+        "O2_g": 0.006767582515152748,
+        "OSi_g": 0.01260339744655603
+      },
+      "partial_pressure_bar": {
+        "CH4_g": 0.01121880120144958,
+        "CO2_g": 0.00437876478493493,
+        "CO_g": 0.005459231516169338,
+        "H2O_g": 0.005148519064120394,
+        "H2_g": 0.021477232253464873,
+        "H3N_g": 0.010598369494773996,
+        "H4Si_g": 0.014074595916208743,
+        "He_g": 0.021635436006558928,
+        "N2_g": 0.01012982100005666,
+        "O2_g": 0.006715588118397786,
+        "OSi_g": 0.011311038820493113
+      },
+      "fugacity_bar": {
+        "CH4_g": 0.014859985480792037,
+        "CO2_g": 0.008932492075040765,
+        "CO_g": 0.009888512661678894,
+        "H2O_g": 0.0020525432031623936,
+        "H2_g": 0.0036055989445974435,
+        "H3N_g": 0.003256280557996871,
+        "H4Si_g": 0.010455881792145849,
+        "He_g": 0.006175699539211821,
+        "N2_g": 0.005442887401821306,
+        "O2_g": 0.00363633722630885,
+        "OSi_g": 0.01155380984239518
+      }
+    },
+    "seconds": 19.275206089019775
+  },
+  "reference_atmosphere": {
+    "n_cases": 50,
+    "n_success": 50,
+    "maximum_relative_element_error": 9.125659736142297e-15,
+    "maximum_relative_mole_fraction_differences": {
+      "CH4_g": 2.150269762246637e-07,
+      "CO2_g": 0.003280533525618967,
+      "CO_g": 0.0016389237275331592,
+      "H2O_g": 0.0016389237269434087,
+      "H2_g": 1.0751348600290811e-07,
+      "H3N_g": 2.1502687841401524e-07,
+      "H4Si_g": 2.1502697289399464e-07,
+      "He_g": 1.0751330126179681e-07,
+      "N2_g": 1.0751327983449244e-07,
+      "O2_g": 0.0032805335252577006,
+      "OSi_g": 0.0016389237271461354
+    },
+    "maximum_relative_ratio_difference": 4.04343225568482e-13,
+    "seconds": 12.045238018035889
+  },
+  "numerical_robustness": {
+    "n_cases": 18,
+    "n_success": 18,
+    "seed": 260126,
+    "log_moles_perturbation_sigma": 0.05,
+    "tolerance": 1e-10,
+    "maximum_relative_gas_mole_fraction_difference": 3.842330897896318e-10,
+    "differences_by_species": {
+      "CH4_g": 3.246480861918144e-11,
+      "CO2_g": 1.7421797338101896e-10,
+      "CO_g": 7.576517191409948e-11,
+      "H2O_g": 2.040038138417799e-10,
+      "H2_g": 1.0796696869874722e-10,
+      "H3N_g": 3.842330897896318e-10,
+      "H4Si_g": 7.968736781549524e-11,
+      "He_g": 8.535749884686084e-11,
+      "N2_g": 3.744276000361424e-10,
+      "O2_g": 2.9196201012382517e-10,
+      "OSi_g": 3.749534016606049e-11
+    },
+    "maximum_relative_element_error": 1.2398915460643102e-14
+  },
+  "source_downloads": [
+    {
+      "name": "HHeCNOSi_magma_sol_real_100xsolar_melt100.xlsx",
+      "url": "https://osf.io/download/69315a3cbbc8f5ed0e39bdab/",
+      "sha256": "496ddc27a500f185877b52e6e4f60f75efaf1104f3a6bfe005c42caa65c3f04f",
+      "bytes": 254455
+    },
+    {
+      "name": "HHeCNOSi_magma_sol_real_1xsolar_melt100.xlsx",
+      "url": "https://osf.io/download/69315a3c95a56f20be39be52/",
+      "sha256": "c0627278c4d729950654e27f5dae9fb7ca1a27c9b96e2e6002635a1c1540f1eb",
+      "bytes": 253773
+    },
+    {
+      "name": "HHeCNOSi_atm_magma_sol_real_1xsolar_melt100_1wtH.xlsx",
+      "url": "https://osf.io/download/69315a3d14955bc1a04c3e9a/",
+      "sha256": "58cc8d2a422843ae4d08b0b28316292760788a212fe53361646658bc4d1dc6b0",
+      "bytes": 230531
+    },
+    {
+      "name": "generate_data.ipynb",
+      "url": "https://osf.io/download/2sh5w/",
+      "sha256": "fd24f19878407ca5b04b082ca0d0bec86e94c2035be561f9c0b1179b6a8929f6",
+      "bytes": 45956
+    }
+  ],
+  "files": {
+    "model.py": "dc1a935aebf39b796d31b9fa6e824b7a515cec9cc2183af1ccdd2cf63a9c3493",
+    "run_study.py": "fd000878b1b7bb6fb70667569da5328b90cdb4471dc3f181cb65ef49f7844fb1",
+    "run_atmospheres.py": "99b651520f81b16decec195f743747c632f8c8f1fe5fe90f3539b0a5be0efaeb",
+    "analyse.py": "ac1a4b0f37a8055beabf91ce218a458db2921ede35af20eedcaee748726ce72f",
+    "check_numerics.py": "15156a1800294051f8abb4634c551a9af0b3465c38deb112da1fcaabac808aea",
+    "validate_reference.py": "3fd17ec6fba0f63609b7876c832e8da4256c9e1879a3e25995157c18c9120ff2",
+    "validate_atmosphere.py": "bc8c469e1eae9a665030e41092d206d6fcde47a410a7b9a11869141460c6fddb",
+    "report.html": "2fd9f30c5019b6b5bafb5f39c1c8ec47d4419bbe6753c98f1530ba3c95e3eeb4",
+    "outputs/study_meb.json": "513bec3509d7f9a96baf7794770b6d7bfaaac84a88ceb47a39843965662206d1",
+    "outputs/atmosphere_condensed.json": "b7835c9b042f482d33a3135c24a59f2277e0a4c001d259ba00bccfdf732388b2",
+    "outputs/atmosphere_gas_only.json": "3a4f8f6582fdae8c516cdce894d9b7004c236a4a11f25ac1dab60f0b131a273e",
+    "outputs/analysis_summary.json": "2dc2f2203fb8426112f4999f3a13c199ccc6b6220c038565f3cb9fa6967619cb"
+  }
+}

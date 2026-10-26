@@ -85,3 +85,8 @@ dmypy.json
 # Local work that is not part of the package (sandboxes and figure scripts)
 dev/
 plot/
+
+# Provenance-bearing research artifacts intentionally distributed with this fork.
+!research/hydrogen_storage/investigation/sources/*.xlsx
+!research/hydrogen_storage/investigation/figures/*.pdf
+.research-venv/
