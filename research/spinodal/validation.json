@@ -1,0 +1,80 @@
+{
+  "recorded_utc": "2026-10-26T04:57:20.177595+00:00",
+  "implementation_commit": "754dfa47e8d37f2d94cbb2ab98a4a607c7892aca",
+  "upstream_base_commit": "f1e3d94041ce6056a4995f7d55d11edeeaee5de1",
+  "scope": "Local numerical and software validation of binary thermodynamics and native gas coupling; not physical validation of a sub-Neptune atmosphere or time-dependent decomposition.",
+  "environment": {
+    "python": "3.13.7",
+    "platform": "Darwin",
+    "machine": "arm64",
+    "jax": "0.12.0.1",
+    "equinox": "0.13.8",
+    "optimistix": "0.1.0",
+    "backend": "cpu",
+    "uv_lock_sha256": "9b4da357a99586fea1964ceeadbb6b93e44eb84d816e210a90a8f654006b9772"
+  },
+  "checks": [
+    {
+      "command": "uv run pytest --cov=atmodeller --cov-report=xml",
+      "status": "passed",
+      "passed": 263,
+      "deselected_performance": 3,
+      "new_tests": 36
+    },
+    {
+      "command": "uv run diff-cover coverage.xml --compare-branch=upstream/main --fail-under=80",
+      "status": "passed",
+      "changed_executable_lines": 233,
+      "covered_percent": 100
+    },
+    {
+      "command": "uv run pre-commit run --all-files",
+      "status": "passed",
+      "hooks": [
+        "ruff-check",
+        "ruff-format",
+        "pyright",
+        "sphinx-apidoc"
+      ]
+    },
+    {
+      "command": "uv run sphinx-build -W --keep-going -b html docs docs/_build/html",
+      "status": "passed"
+    },
+    {
+      "command": "uv run python examples/spinodal_equilibrium.py",
+      "status": "passed",
+      "output": "example_output.json"
+    },
+    {
+      "command": "uv run python research/verify_archive.py",
+      "status": "passed",
+      "imported_files": 45,
+      "source_downloads": 4
+    }
+  ],
+  "source_sha256": {
+    "atmodeller/__init__.py": "750cbd8bf230eb592148d93d9e0f629df36aed0a4d0d247fba6b442400994bee",
+    "atmodeller/containers.py": "44d053439f25f93c818a5f93ef6eb9a183bbbd63de8598f7169a4c165c21fcaa",
+    "atmodeller/output_base.py": "3a0bdb08623b0be53e29f339e8654f2dfd2af7738f6d9039ca4bcea79f7e7d83",
+    "atmodeller/phases.py": "d8e34c910a371bd0d93ce38ef5f0c5405d24ab29bedd2e3dfc08aaa59634a5f6",
+    "atmodeller/thermodata/__init__.py": "352700e58f9556d838b305dcee38331eb8db9c447786ea1e2c329dab536143bd",
+    "atmodeller/thermodata/mixing.py": "3c3d327ac01aed510f4f3e9a3a3e458b851957cb188beb25b0bf7617d7491561",
+    "examples/spinodal_equilibrium.py": "43292bda50ca39e1039dbde0fb09292fcca564b828bf84590eeb20cec7589da2"
+  },
+  "evidence_sha256": {
+    "tests.txt": "5b9e20a85e31a5a94857f60a90ceec25d40c0f35b0756f0f58742bb73c259713",
+    "documentation.txt": "9946fae64b3c68295d52ff3f9d276a88523f88635d5046a8088d9e2b2d75978b",
+    "example_output.json": "3a165f7842f4eb4fe95bfbf2dc18bb37fa9931402db5758771664f4b7635efb1",
+    "precommit.txt": "446334e577cac8f4ea85608f90e618ed5fbecebf918e260bc326d21eda7df518",
+    "diff_coverage.txt": "5300bd7f1a7e5980d2e56b8fbe91bd131bf03d8961b17bd793c6115abb0f29e5"
+  },
+  "limitations": [
+    "Binary thermodynamics only; no multicomponent stability Hessian.",
+    "Solution phase assumed present; collective phase appearance and disappearance not implemented.",
+    "No mobility, gradient-energy calibration, spatial evolution, rainout, or cooling.",
+    "H2-MgSiO3 preset reproduces Rogers et al. (2025) equation 7, not a new calibration to final 2026 DFT results.",
+    "Gas-coupling example uses an illustrative uncalibrated Fe-Si interaction, not a planetary atmospheric prediction.",
+    "Validation is local CPU evidence, not remote CI or cross-platform testing."
+  ]
+}

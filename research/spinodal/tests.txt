@@ -1,0 +1,43 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.13.7, pytest-9.1.1, pluggy-1.6.0
+rootdir: <checkout>
+configfile: pyproject.toml
+plugins: beartype-0.2.0, cov-7.1.0, jaxtyping-0.3.11, anyio-4.14.2
+collected 266 items / 3 deselected / 263 selected
+
+tests/eos/holland/test_cork.py .....................                     [  7%]
+tests/eos/holland/test_mrk.py ........                                   [ 11%]
+tests/eos/test_chabrier.py ...............                               [ 16%]
+tests/eos/test_eos_core.py .....                                         [ 18%]
+tests/eos/test_holley.py .................                               [ 25%]
+tests/eos/test_reid_connolly.py .....                                    [ 26%]
+tests/eos/test_saxena.py ................................                [ 39%]
+tests/eos/test_vanderwaals.py ...                                        [ 40%]
+tests/eos/test_wang.py .......                                           [ 42%]
+tests/eos/test_zhang.py .............                                    [ 47%]
+tests/solubility/test_carbon_species.py .....                            [ 49%]
+tests/solubility/test_hydrogen_species.py ............                   [ 54%]
+tests/solubility/test_other_species.py .......                           [ 57%]
+tests/solubility/test_sulfur_species.py .........                        [ 60%]
+tests/test_CHO.py ............                                           [ 65%]
+tests/test_binary_solution.py ...................                        [ 72%]
+tests/test_condensates.py .....                                          [ 74%]
+tests/test_database.py ....                                              [ 75%]
+tests/test_initializer.py ..                                             [ 76%]
+tests/test_jax_utils.py .                                                [ 76%]
+tests/test_output.py ............                                        [ 81%]
+tests/test_readme.py .                                                   [ 81%]
+tests/test_real_gas.py ......                                            [ 84%]
+tests/test_retracing.py ....                                             [ 85%]
+tests/test_solvers.py .......                                            [ 88%]
+tests/test_state.py ..                                                   [ 88%]
+tests/thermodata/test_activity.py ..                                     [ 89%]
+tests/thermodata/test_mixing.py .................                        [ 96%]
+tests/thermodata/test_redox_buffers.py ....                              [ 97%]
+tests/thermodata/test_thermodynamic_properties.py ......                 [100%]
+
+================================ tests coverage ================================
+_______________ coverage: platform darwin, python 3.13.7-final-0 _______________
+
+Coverage XML written to file coverage.xml
+================ 263 passed, 3 deselected in 356.23s (0:05:56) =================

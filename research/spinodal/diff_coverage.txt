@@ -1,0 +1,14 @@
+-------------
+Diff Coverage
+Diff: upstream/main...HEAD, staged and unstaged changes
+-------------
+atmodeller/containers.py (100%)
+atmodeller/output_base.py (100%)
+atmodeller/phases.py (100%)
+atmodeller/thermodata/mixing.py (100%)
+-------------
+Total:   233 lines
+Missing: 0 lines
+Coverage: 100%
+-------------
+
