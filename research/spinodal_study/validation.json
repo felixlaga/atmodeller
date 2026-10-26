@@ -1,0 +1,283 @@
+{
+  "recorded_utc": "2026-10-26T06:13:51.123245+00:00",
+  "api_commit": "f737823dcd734e00d73c628db5ecac74d6e5d1c6",
+  "research_source_commit": "ee746087bc11d132574a72a951dcd39aea597829",
+  "primary_run_recorded_parent": "7e5fd2f92bb291924ec516d8fe648c4fd9b68e8c",
+  "scope": "Local numerical/software evidence. Conditional binary demixing and one-way hot-parcel chemistry, not physical validation of a planet or kinetic decomposition.",
+  "environment": {
+    "python": "3.13.7",
+    "platform": "Darwin",
+    "machine": "arm64",
+    "backend": "cpu",
+    "versions": {
+      "jax": "0.12.0.1",
+      "equinox": "0.13.8",
+      "optimistix": "0.1.0",
+      "numpy": "2.5.1",
+      "scipy": "1.18.0",
+      "pytest": "9.1.1"
+    },
+    "uv_lock_sha256": "9b4da357a99586fea1964ceeadbb6b93e44eb84d816e210a90a8f654006b9772"
+  },
+  "checks": [
+    {
+      "command": ".venv/bin/pytest --cov=atmodeller --cov-report=xml --cov-report=term-missing",
+      "status": "passed",
+      "passed": 274,
+      "performance_deselected": 3,
+      "new_api_tests": 11,
+      "evidence": "validation/tests.txt",
+      "post_test_package_change": "Only the from_species docstring was corrected to describe mol of specified formulas. No executable package or test changes followed the full suite."
+    },
+    {
+      "command": ".venv/bin/diff-cover coverage.xml --compare-branch=upstream/main --fail-under=80",
+      "status": "passed",
+      "changed_executable_lines": 332,
+      "covered_lines": 331,
+      "evidence": "validation/diff_coverage.txt"
+    },
+    {
+      "command": ".venv/bin/pre-commit run --all-files",
+      "status": "passed",
+      "evidence": "validation/precommit.txt"
+    },
+    {
+      "command": ".venv/bin/sphinx-build -W --keep-going -b html docs docs/_build/html",
+      "status": "passed",
+      "evidence": "validation/documentation.txt"
+    },
+    {
+      "command": ".venv/bin/python research/spinodal_study/run_study.py",
+      "status": "passed",
+      "deep_solves": 1476,
+      "atmospheric_solves": 5760,
+      "all_accepted": true,
+      "evidence": "validation/study.txt"
+    },
+    {
+      "command": ".venv/bin/python research/spinodal_study/analyze_study.py",
+      "status": "passed",
+      "evidence": "outputs/summary.json"
+    },
+    {
+      "command": ".venv/bin/python research/spinodal_study/verify_study.py --resolve",
+      "status": "passed",
+      "resolves": 66,
+      "maximum_gas_abs_log_ratio": 7.462919171527517e-13,
+      "evidence": "numerical_crosscheck.json"
+    },
+    {
+      "command": ".venv/bin/python examples/spinodal_equilibrium.py",
+      "status": "passed",
+      "evidence": "validation/example_output.json"
+    },
+    {
+      "command": ".venv/bin/python research/verify_archive.py",
+      "status": "passed",
+      "imported_files": 45,
+      "source_downloads": 4,
+      "evidence": "validation/historical_archive.txt"
+    }
+  ],
+  "visual_checks": {
+    "standalone_figures_inspected": [
+      "phase_diagram.png",
+      "inventories.png",
+      "entrainment.png"
+    ],
+    "html_preview": [
+      {
+        "width": 728,
+        "appearance": "light",
+        "content_height": 1303
+      },
+      {
+        "width": 360,
+        "appearance": "dark",
+        "content_height": 1404
+      }
+    ],
+    "interactive_control_cases": 16,
+    "console": "All 16 control-change events render archived results; full-remixing controls pass.",
+    "errors": []
+  },
+  "primary_numerics": {
+    "maximum_subphase_relative_component_error": 2.4424906541753444e-15,
+    "maximum_common_tangent_residual": 6.972193310162637e-15,
+    "atmospheric_checks": {
+      "condensed": {
+        "cases": 2880,
+        "maximum_control_abs_log_ratio": 3.357536471065762e-12,
+        "maximum_relative_element_error": 1.3322676295501878e-15,
+        "maximum_abs_log_reaction_residual": 7.105427357601002e-14,
+        "maximum_normalized_complementarity": 9.523561832393602e-26,
+        "pure_upper_phase_cases": 320,
+        "pure_upper_phase_ratios": {
+          "H2": {
+            "min": 1.0,
+            "max": 163.6177403211626,
+            "median": 1.6587226953301188
+          },
+          "H2O": {
+            "min": 4.6042095293843273e-07,
+            "max": 1.0000000000000397,
+            "median": 0.015150115396505789
+          },
+          "SiO": {
+            "min": 9.168977406580105e-10,
+            "max": 1.0000000000000067,
+            "median": 0.008386085321580975
+          },
+          "SiH4": {
+            "min": 0.015515394730594899,
+            "max": 3054.711642991188,
+            "median": 1.4530907591731395
+          }
+        }
+      },
+      "gas_only": {
+        "cases": 2880,
+        "maximum_control_abs_log_ratio": 2.1316282072803233e-14,
+        "maximum_relative_element_error": 1.3322676295501878e-15,
+        "maximum_abs_log_reaction_residual": 4.263256414560601e-14,
+        "maximum_normalized_complementarity": 0.0,
+        "pure_upper_phase_cases": 320,
+        "pure_upper_phase_ratios": {
+          "H2": {
+            "min": 1.4337867947156107,
+            "max": 4634.572419684508,
+            "median": 6.231814578563223
+          },
+          "H2O": {
+            "min": 3.6521568600952966e-07,
+            "max": 0.8054276984310544,
+            "median": 0.00950724814580093
+          },
+          "SiO": {
+            "min": 9.168977406580113e-10,
+            "max": 0.46759337012195407,
+            "median": 0.006973892566926164
+          },
+          "SiH4": {
+            "min": 0.017704430333529707,
+            "max": 8073131145.021809,
+            "median": 144.13826913012724
+          }
+        }
+      }
+    }
+  },
+  "source_sha256": {
+    "atmodeller/__init__.py": "be30888961b18f178b45f8f04816d098669411980800162c1d9dbdba0b681d7b",
+    "atmodeller/classes.py": "4174ebc582408c1dd75ce5443cd61ad93543b38b214cf3f7b61d06b43a86ca00",
+    "atmodeller/constants.py": "b1794cd4aa936b8dc44ce01fa560aa3f2ae346672113b1c48ff3a44854310c9b",
+    "atmodeller/containers.py": "44d053439f25f93c818a5f93ef6eb9a183bbbd63de8598f7169a4c165c21fcaa",
+    "atmodeller/database.py": "4c8be62000af735a145193cae06a0d30bd3d38aeff9ea35a6bf92331e6163248",
+    "atmodeller/engine.py": "70adeefc5e302790a910b573eda5ebfe6fe2ebc69e2d354830b105d3c8727c60",
+    "atmodeller/eos/__init__.py": "900a510ddf9b86ad04adaa04f745417ff7def879d51198fc82b93f833c4e689f",
+    "atmodeller/eos/_aggregators.py": "e3fc0d12f1fb9fad393216947c75e9907a73a9b875fadfd52da39b534bae97e1",
+    "atmodeller/eos/_chabrier.py": "2feebe8f33f0c0febecb67ad8f80c0c9283eb219210feef412349a3786088319",
+    "atmodeller/eos/_holland_powell.py": "8b101851eea066a7186d06d41a193ec437db7db65596ea3b5f13eaa2f763b75c",
+    "atmodeller/eos/_holley.py": "4ce90649047300da3f3031ca5a96365efa2eccb652e0ebdd2ca6a300b79e9782",
+    "atmodeller/eos/_reid_connolly.py": "d110d939a43bd8e0d992fb1bbac1d793aff9cbff89349d6724eb936ce926c659",
+    "atmodeller/eos/_saxena.py": "5547f7805c42aa2eea2aae90d5fbd1ff31cfbb4512ebfbc15ab18d2bea1f50a2",
+    "atmodeller/eos/_vanderwaals.py": "ad052140a7be230062c0c9c7eb1ad59a095c3a49b6d725c81d2a38a9b40ea76f",
+    "atmodeller/eos/_wang.py": "1eb5eb42509f2020aafaa7f6994990a9eac9e1922734e12172d51342aa21c2ae",
+    "atmodeller/eos/_zhang_duan.py": "dda2665e2de8a9083f35a420ecfe33d5481ccdd5b08ae6d20d69a7607ea6e493",
+    "atmodeller/eos/_zhang_duan_base.py": "eba068c7a034917e796cd4ccab503a9a8e61db559ad424c3bc6385d0dcb2c567",
+    "atmodeller/eos/core.py": "c816d503e160a40c338e10fc4b7485e42f76f8311086c7f143eec701e1c0512e",
+    "atmodeller/eos/data/__init__.py": "5625807d1d2528c31256bdfc439bd7c9cd1eb00deac094124f5c9c0d4e65aec0",
+    "atmodeller/eos/library.py": "611b58d73cfd2da91e709f42286b2a8a94f0ad19ebad635129abf95066b36b20",
+    "atmodeller/eos/redlich_kwong.py": "9e115bf276bcaceb2821dc09aba33dde9500d47ef525e1f490bc7a6b63681452",
+    "atmodeller/initializer/__init__.py": "240ae45c2506a87b43bca4faec56d6584efc12cfc3b866d205e53c226cfb5e2f",
+    "atmodeller/initializer/core.py": "9097f6b279fc0f50f4ad6de98d0443f5b5c6695abce4f92a91aedf73eea108ad",
+    "atmodeller/initializer/element_potential.py": "e71e042bf0274d773108481f4ed14e3c71c8510499533cef03eb581b634b1b0d",
+    "atmodeller/initializer/heuristic.py": "ad3982be5ab48e91915cd3c69d8e5d802c587f8a7f63717d1dcb437722b2829f",
+    "atmodeller/interfaces.py": "f3452d459537f95644b731fe3fbfaaf844d77d0b23e33a6ff172ad4e8b6977cc",
+    "atmodeller/jax_utils.py": "8cf3902c03f5c67d9b786e8c4ad2038300c0711da33750c3c3075d4fd09eff27",
+    "atmodeller/output.py": "f0aec4b71a20b83d649fbd0a5956df41795a76a25c7b3dcadfaf25f64bd1d50a",
+    "atmodeller/output_base.py": "a50b38b96a68b4e0cb5a0aae0943a7fd1e5c4ed19ed21cd3cd91cc2646b43ebe",
+    "atmodeller/parameters.py": "37f6dc754296fe25d75171b08790eaadf7761e063bbdb4bb155047ef13aa095b",
+    "atmodeller/phases.py": "353fd7e1250dc592623a7ad9799746ef38316f87366d0f3be4431472e6ee13d8",
+    "atmodeller/reactions.py": "4320c1ce08a541732198608a96dc788ef6aec83f24a4868e80bf79e84843609c",
+    "atmodeller/sci_utils.py": "08d4fe3c684239b588328c1ed0ab6ac76e30fa9a74517cb3ed917cf048b18088",
+    "atmodeller/solubility/__init__.py": "45088a101633865104bc3493223dda817007306b0acae5fca5bebdd0e0bd03e1",
+    "atmodeller/solubility/_carbon_species.py": "4b1bd62a1715312cf9cf5fbd48489f144c62ced6361ec93d94c5d3d3361a2b48",
+    "atmodeller/solubility/_hydrogen_species.py": "e4f7746c6c6e0e94845259c282ab6564a5f568d27df7e0960822620e3bc1ce4a",
+    "atmodeller/solubility/_other_species.py": "0d32db67d10845a525dfe98f813720dc5f65b971f14c107e4868633563908349",
+    "atmodeller/solubility/_sulfur_species.py": "d6ecdaabfe68712eefb54c5fbddd62ad8232ab51838450f101b18d53af33f9a1",
+    "atmodeller/solubility/core.py": "4b2a208e76f374f6799e094fe23d3076e66cb33df609adea3d31f3320e86757d",
+    "atmodeller/solubility/library.py": "a12481ebe8b281aaf41efff2c334f2e50defce7cbb3f8d05b59ad732208be7cf",
+    "atmodeller/solvers.py": "71869761740c16ff004d8a2715003dcb8ab64b9f4d97cf945f98a4c0a419aefe",
+    "atmodeller/state.py": "4e868441e68a060acea98c274f77baf0f7830883e52796ee40496b0e2c548f3a",
+    "atmodeller/thermodata/__init__.py": "352700e58f9556d838b305dcee38331eb8db9c447786ea1e2c329dab536143bd",
+    "atmodeller/thermodata/_redox_buffers.py": "3af555543ed8b3c62b96ecb69b9a8f7ebd3d0a6b84d502204349c963bb438e6e",
+    "atmodeller/thermodata/activity_models.py": "1a9b4c1566b9cfbcc9eb3b33279971525125041a23d8a28f92f59b80e3b730ea",
+    "atmodeller/thermodata/core.py": "3a3702b8a411860f6494ae5c58efb0fd3fbbf3fd805439226df818b00fa44306",
+    "atmodeller/thermodata/data/nasa_glenn_coefficients.txt": "7f743d3432d12c34d9f0e57ef804ce2bad81e76284f2078000f64151d0776e4a",
+    "atmodeller/thermodata/defaults.py": "7dce1629e33331d80c06833222fcec1a73d4720409a48e0d72e39637585143c2",
+    "atmodeller/thermodata/gustafson.py": "da890592417768e819aa1e71bb855c2f78f8844ec3d57bb08b9568c5837005ad",
+    "atmodeller/thermodata/holland_powell.py": "f05e9f8bff10b38534b8b12d51acc2259763cc8aa804ad1302ea50061ce8fedf",
+    "atmodeller/thermodata/janaf.py": "eb441cd23ccd492e5d469c46152bcd9e79ba8170b10d9dd481bd7f010818df4a",
+    "atmodeller/thermodata/mixing.py": "3c3d327ac01aed510f4f3e9a3a3e458b851957cb188beb25b0bf7617d7491561",
+    "atmodeller/thermodata/vassiliev.py": "397dea0ae4146e9f5110f052dc734ed173d1054c620031436db04dd80154fe1d",
+    "docs/spinodal.rst": "6f6d5ac18bb249344f4da2347df660e19c7d128c7521372ffeeca234ee254e25",
+    "research/spinodal_study/README.md": "28f9a3ad8d0f90eafa24073a3633be0f4ba6a03d774e75c1459aec06b0219f46",
+    "research/spinodal_study/analyze_study.py": "bf2a65e168b7ca2a24c09fd510a58c529e07880295d7c5597d0f892a85702903",
+    "research/spinodal_study/render_summary.py": "61a75c336b905b328201e746cfe86356659f5867eef861eee16b2354329b9344",
+    "research/spinodal_study/run_study.py": "220d381843f5e0d24b60fdac20c747c4bd2b50de687323b523ebe431244dd112",
+    "research/spinodal_study/verify_study.py": "9f7ecfc774872c7fa4060c2a2ece42c0d494cc9c4c400334e100d76c4479e795",
+    "tests/test_phase_equilibrium_api.py": "7e71eee6bd2f2b9d57a9c4045c551b71a2589ae255b660231a7a858ff4865b7c",
+    "uv.lock": "9b4da357a99586fea1964ceeadbb6b93e44eb84d816e210a90a8f654006b9772"
+  },
+  "artifact_sha256": {
+    "outputs/atmosphere_condensed.json": "1c296ce7aafdb21a2792daa700017beb2e13bafc907fe03e02b29bd822c47b5f",
+    "outputs/atmosphere_condensed_solution.npy": "4e7ac578512df2b62ee0858676e17dc7f775c528f7ffcc7a3038b633ca2fbd0b",
+    "outputs/atmosphere_condensed_summary.csv": "8a95399bef2d0d8c4aeac9bddbc474ac9a0d2f9636165e26806d77bf903c3bb6",
+    "outputs/atmosphere_gas_only.json": "fc23851c064bea49ae1b161590c6719c68664501f160988d4f78d28ee5e629c0",
+    "outputs/atmosphere_gas_only_solution.npy": "3a4bcb49c226cf4609c7ff97057801901d98cf974890dcb8a9519b1e7727a1b2",
+    "outputs/atmosphere_gas_only_summary.csv": "64e253ab3cf4b63a46246713348d85678262f9532fe29dd7a73b31ab9a696fa8",
+    "outputs/deep.json": "fab288fa19fb0e640b8b8c8315114e4bb768573707245e7a1cd2d8fe4d95acb7",
+    "outputs/deep_homogeneous_solution.npy": "7ec23de98cdc6694819ccd316d5fd6a0aa5b0aab69fbda243404745a4172dbdf",
+    "outputs/deep_spinodal_solution.npy": "7ec23de98cdc6694819ccd316d5fd6a0aa5b0aab69fbda243404745a4172dbdf",
+    "outputs/deep_summary.csv": "e3a24a5533ec87cb8530b1a28a19daf56bb4df2ae42f95d74dc45a11246958aa",
+    "outputs/feeds.json": "71cd3231ed0245241e8ac2e35be08ecc78c19055cfd99fb8e56c50c75b71fbe9",
+    "outputs/provenance.json": "02c6e657fb0df519171e5e236de53971473cd75c92eff515203a241a39b80532",
+    "outputs/summary.json": "4ec495b8ce6a9156265a6ad83de7c8e8cdb0399766421dac3e8388eaf1618d1b",
+    "figures/entrainment.pdf": "b47ca898e7a204ae41deab1a4f159e5332b322c085bdb70449173e926d830613",
+    "figures/entrainment.png": "3953db27d80762a403a53b2b653108930a8953612022358961b57c0bdb747556",
+    "figures/entrainment.svg": "0d2ce9b847044d35b8f91a8552c17c25ad9efd9acd89300996fe5d4aa010febd",
+    "figures/inventories.pdf": "813e4d4cc8290794e543d54c93a08004d2d16281bb0cd6bbd17e2864a355fa8b",
+    "figures/inventories.png": "a9eb1ab62ceebc1415da2d00332937f237889d59bd5f9978457e25e2314c859f",
+    "figures/inventories.svg": "e38e0d7f7fb583ceac807d4fedc49bf664af3ae769de7e160020d179eac10ba0",
+    "figures/phase_diagram.pdf": "7399441defc5244f9367663e6572d249991659cc67097019ab107f9f405dbaf5",
+    "figures/phase_diagram.png": "a5b711e813a6794f8a0d772d0bfc4436f1eedf5f2d6ba889d045db63b4ea4a26",
+    "figures/phase_diagram.svg": "244a38132cd7c5fbb487746cc2ac6eecc6eabe0f7b3ca588979cb62881d34698",
+    "validation/crosscheck.txt": "180e49e721647de371e2bcceffa8daedcf40058947bcb786cb3197eadcff5f98",
+    "validation/diff_coverage.txt": "7c35bc2fc832ea18c28390a032422d10b384de574cac07085a0dc0b595b75772",
+    "validation/documentation.txt": "e6cdc6d09e10f14059ba86695341d3b5667a47064488e3a8472be94af950f46b",
+    "validation/example_output.json": "5c2b65748e88a667400f1c690535268c9c23cfa237e0fe1d1769ca54dcdb7006",
+    "validation/historical_archive.txt": "19184b1981ea3130c754a27e2b3c89079cafaa559dc1dea653e49aa88ef52288",
+    "validation/precommit.txt": "446334e577cac8f4ea85608f90e618ed5fbecebf918e260bc326d21eda7df518",
+    "validation/study.txt": "951d7daeea491c00b851203468d8098a302a52044215f37d82a7dc6c676c2e73",
+    "validation/tests.txt": "aadf76474ff67dfeefcd1a14b48afc7dd90c1e8e71b01bd780168c6f46d19ce3",
+    "numerical_crosscheck.json": "7d6d78ba1c67e5480e3a1c20024fbea5422ff41d6aa033fe84e14b0eeab23940",
+    "summary.html": "6cf84106eb66f439ba4d417fb9501e1827985a33bd435e5781a248e6952d561a"
+  },
+  "limitations": [
+    "No remote CI or additional operating-system/Python-version execution was claimed.",
+    "No kinetic, cooling or transport model; entrainment is imposed.",
+    "Binary model with no multicomponent calibration, collective phase appearance/disappearance or atmospheric feedback.",
+    "Hot ideal-gas parcel chemistry is not a cold observable atmosphere or a spectral prediction."
+  ],
+  "archive_text_normalization": {
+    "operation": "Removed line-end whitespace and extra EOF blank lines from generated SVG/text evidence; numerical JSON, arrays and CSV files unchanged.",
+    "before_sha256": {
+      "figures/entrainment.svg": "2b9677df7e971f7817248f258bb71b13394059d704f2b8fd4e4e16dba0ee4b92",
+      "figures/inventories.svg": "ef6c8d68b5ffd052118a3d1020bc9c4e6ef43c1e67b5bef3d6e19e31e2d21d30",
+      "figures/phase_diagram.svg": "bc407ff57e98cda4a2b72871cf81b6407fb55c5bfe4498110cb55d1282031b48",
+      "validation/diff_coverage.txt": "5a0883f8621fb1b659b519b8a95f2fcb3900cd0304a30f93dbe77c2b6ffd963f",
+      "validation/documentation.txt": "3927bd823c5fc835e634b797b085a8eb784037d9bf286fddb9d19acd3134c824"
+    }
+  }
+}

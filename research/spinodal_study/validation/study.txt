@@ -1,0 +1,4 @@
+deep homogeneous: 738/738 accepted
+deep spinodal: 738/738 accepted
+atmosphere condensed: 2880/2880 accepted; max element error 1.33e-15; max lnQ/K 7.11e-14
+atmosphere gas_only: 2880/2880 accepted; max element error 1.33e-15; max lnQ/K 4.26e-14

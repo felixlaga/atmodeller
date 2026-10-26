@@ -1,0 +1,579 @@
+{
+  "deep_scenarios": 738,
+  "deep_solves": 1476,
+  "deep_regime_counts": {
+    "equilibrium_two_phase": 376,
+    "spinodally_unstable": 274,
+    "metastable": 102
+  },
+  "deep_counts_by_hydrogen_wt_percent": [
+    {
+      "hydrogen_wt_percent": 0.1,
+      "equilibrium_two_phase": 0,
+      "spinodally_unstable": 0,
+      "metastable": 0
+    },
+    {
+      "hydrogen_wt_percent": 0.3,
+      "equilibrium_two_phase": 20,
+      "spinodally_unstable": 0,
+      "metastable": 20
+    },
+    {
+      "hydrogen_wt_percent": 1.0,
+      "equilibrium_two_phase": 75,
+      "spinodally_unstable": 0,
+      "metastable": 75
+    },
+    {
+      "hydrogen_wt_percent": 3.0,
+      "equilibrium_two_phase": 93,
+      "spinodally_unstable": 89,
+      "metastable": 4
+    },
+    {
+      "hydrogen_wt_percent": 5.0,
+      "equilibrium_two_phase": 95,
+      "spinodally_unstable": 95,
+      "metastable": 0
+    },
+    {
+      "hydrogen_wt_percent": 10.0,
+      "equilibrium_two_phase": 93,
+      "spinodally_unstable": 90,
+      "metastable": 3
+    }
+  ],
+  "maximum_subphase_relative_component_error": 2.4424906541753444e-15,
+  "minimum_gibbs_decrease_J_per_mol": -5.4569682106375694e-12,
+  "maximum_common_tangent_residual": 6.972193310162637e-15,
+  "analytic_lower_spinodal_limit": {
+    "x_H2": 0.3359671488316125,
+    "hydrogen_wt_percent": 1.00576594702424,
+    "condition": "1-T/C+P/D >= 0; strictly positive T"
+  },
+  "analytic_spinodal_onsets": [
+    {
+      "hydrogen_wt_percent": 0.1,
+      "x_H2": 0.047481887559110154,
+      "local_spinodal_onset_K_at_1_GPa": null
+    },
+    {
+      "hydrogen_wt_percent": 0.3,
+      "x_H2": 0.1303186243511117,
+      "local_spinodal_onset_K_at_1_GPa": null
+    },
+    {
+      "hydrogen_wt_percent": 1.0,
+      "x_H2": 0.3346727424182652,
+      "local_spinodal_onset_K_at_1_GPa": null
+    },
+    {
+      "hydrogen_wt_percent": 3.0,
+      "x_H2": 0.6063261552712688,
+      "local_spinodal_onset_K_at_1_GPa": 4026.869856348413
+    },
+    {
+      "hydrogen_wt_percent": 5.0,
+      "x_H2": 0.7238330106257475,
+      "local_spinodal_onset_K_at_1_GPa": 4104.1892759248985
+    },
+    {
+      "hydrogen_wt_percent": 10.0,
+      "x_H2": 0.8469360526541777,
+      "local_spinodal_onset_K_at_1_GPa": 4038.5586572358043
+    }
+  ],
+  "selected_deep_case": {
+    "id": 122,
+    "temperature_K": 3500.0,
+    "pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 1.0,
+    "spinodally_unstable": false,
+    "metastable": true,
+    "equilibrium_two_phase": true,
+    "upper_mass_kg": 0.00511040845958135,
+    "upper_hydrogen_recovery": 0.46995585633727244,
+    "upper_silicate_recovery": 0.0004149998951602276,
+    "gibbs_decrease_J_per_mol": 1883.9155084585036,
+    "gibbs_decrease_J_per_kg_bulk": 27923.8934232616
+  },
+  "atmosphere": {
+    "condensed": {
+      "cases": 2880,
+      "maximum_control_abs_log_ratio": 3.357536471065762e-12,
+      "maximum_relative_element_error": 1.3322676295501878e-15,
+      "maximum_abs_log_reaction_residual": 7.105427357601002e-14,
+      "maximum_normalized_complementarity": 9.523561832393602e-26,
+      "pure_upper_phase_cases": 320,
+      "pure_upper_phase_ratios": {
+        "H2": {
+          "min": 1.0,
+          "max": 163.6177403211626,
+          "median": 1.6587226953301188
+        },
+        "H2O": {
+          "min": 4.6042095293843273e-07,
+          "max": 1.0000000000000397,
+          "median": 0.015150115396505789
+        },
+        "SiO": {
+          "min": 9.168977406580105e-10,
+          "max": 1.0000000000000067,
+          "median": 0.008386085321580975
+        },
+        "SiH4": {
+          "min": 0.015515394730594899,
+          "max": 3054.711642991188,
+          "median": 1.4530907591731395
+        }
+      }
+    },
+    "gas_only": {
+      "cases": 2880,
+      "maximum_control_abs_log_ratio": 2.1316282072803233e-14,
+      "maximum_relative_element_error": 1.3322676295501878e-15,
+      "maximum_abs_log_reaction_residual": 4.263256414560601e-14,
+      "maximum_normalized_complementarity": 0.0,
+      "pure_upper_phase_cases": 320,
+      "pure_upper_phase_ratios": {
+        "H2": {
+          "min": 1.4337867947156107,
+          "max": 4634.572419684508,
+          "median": 6.231814578563223
+        },
+        "H2O": {
+          "min": 3.6521568600952966e-07,
+          "max": 0.8054276984310544,
+          "median": 0.00950724814580093
+        },
+        "SiO": {
+          "min": 9.168977406580113e-10,
+          "max": 0.46759337012195407,
+          "median": 0.006973892566926164
+        },
+        "SiH4": {
+          "min": 0.017704430333529707,
+          "max": 8073131145.021809,
+          "median": 144.13826913012724
+        }
+      }
+    }
+  },
+  "selected_atmospheric_cases": {
+    "condensed": [
+      {
+        "feed_id": 70,
+        "parent_id": 122,
+        "mode": "homogeneous",
+        "entrained_lower_fraction": 1.0,
+        "deep_temperature_K": 3500.0,
+        "deep_pressure_bar": 10000.0,
+        "hydrogen_wt_percent": 1.0,
+        "separated": false,
+        "available_mass_kg_per_kg_bulk": 0.9999999999999999,
+        "available_component_moles": {
+          "MgSiO3": 9.861656400665751,
+          "H2": 4.960607813354156
+        },
+        "normalized_component_mass_kg": {
+          "MgSiO3": 0.99,
+          "H2": 0.010000000000000005
+        },
+        "Si_to_H_atomic_ratio": 0.9939967814143436,
+        "atmosphere_temperature_K": 2500.0,
+        "atmosphere_pressure_bar": 1.0,
+        "H2": 0.807646534280456,
+        "H2O": 0.08421917609616006,
+        "SiO": 0.06750164144677488,
+        "SiH4": 7.557763833286573e-11,
+        "Mg": 0.017264254986387395,
+        "O2": 3.834553840789967e-07,
+        "mean_molar_mass_g_per_mol": 6.582734829414352,
+        "gas_mass_kg_per_kg_feed": 0.036144005195048054,
+        "gas_mass_kg_per_kg_bulk": 0.03614400519504805,
+        "success": true,
+        "accepted": true,
+        "maximum_relative_element_error": 4.440892098500626e-16,
+        "maximum_abs_log_reaction_residual": 2.842170943040401e-14,
+        "maximum_normalized_complementarity": 6.582730303975736e-26,
+        "relative_pressure_error": 0.0,
+        "H2_ratio": 1.0,
+        "H2O_ratio": 1.0,
+        "SiO_ratio": 1.0,
+        "SiH4_ratio": 1.0
+      },
+      {
+        "feed_id": 71,
+        "parent_id": 122,
+        "mode": "spinodal",
+        "entrained_lower_fraction": 0.0,
+        "deep_temperature_K": 3500.0,
+        "deep_pressure_bar": 10000.0,
+        "hydrogen_wt_percent": 1.0,
+        "separated": true,
+        "available_mass_kg_per_kg_bulk": 0.00511040845958135,
+        "available_component_moles": {
+          "MgSiO3": 0.004092586372382475,
+          "H2": 2.3312666928782164
+        },
+        "normalized_component_mass_kg": {
+          "MgSiO3": 0.08039472763440961,
+          "H2": 0.9196052723655904
+        },
+        "Si_to_H_atomic_ratio": 0.0008777602289958742,
+        "atmosphere_temperature_K": 2500.0,
+        "atmosphere_pressure_bar": 1.0,
+        "H2": 0.9683063467375401,
+        "H2O": 0.0034352777851463174,
+        "SiO": 0.001726961527024293,
+        "SiH4": 8.169304931617154e-11,
+        "Mg": 0.0017274483590425688,
+        "O2": 4.4384741591526003e-10,
+        "mean_molar_mass_g_per_mol": 2.157356173807071,
+        "gas_mass_kg_per_kg_feed": 0.9999999999999998,
+        "gas_mass_kg_per_kg_bulk": 0.005110408459581349,
+        "success": true,
+        "accepted": true,
+        "maximum_relative_element_error": 4.440892098500626e-16,
+        "maximum_abs_log_reaction_residual": 2.842170943040401e-14,
+        "maximum_normalized_complementarity": 1.727683128878769e-28,
+        "relative_pressure_error": 0.0,
+        "H2_ratio": 1.1989234221133858,
+        "H2O_ratio": 0.04078973393451361,
+        "SiO_ratio": 0.025583993070538946,
+        "SiH4_ratio": 1.0809156136418523
+      },
+      {
+        "feed_id": 72,
+        "parent_id": 122,
+        "mode": "spinodal",
+        "entrained_lower_fraction": 0.01,
+        "deep_temperature_K": 3500.0,
+        "deep_pressure_bar": 10000.0,
+        "hydrogen_wt_percent": 1.0,
+        "separated": true,
+        "available_mass_kg_per_kg_bulk": 0.01505930437498554,
+        "available_component_moles": {
+          "MgSiO3": 0.10266822451531621,
+          "H2": 2.357560104082976
+        },
+        "normalized_component_mass_kg": {
+          "MgSiO3": 0.684410191905457,
+          "H2": 0.31558980809454296
+        },
+        "Si_to_H_atomic_ratio": 0.021774253885936717,
+        "atmosphere_temperature_K": 2500.0,
+        "atmosphere_pressure_bar": 1.0,
+        "H2": 0.8373087612903857,
+        "H2O": 0.06930265198769077,
+        "SiO": 0.03658018861313257,
+        "SiH4": 5.545988481212192e-11,
+        "Mg": 0.03316425095077358,
+        "O2": 2.415816635916785e-07,
+        "mean_molar_mass_g_per_mol": 5.393151612641997,
+        "gas_mass_kg_per_kg_feed": 0.9193723287952213,
+        "gas_mass_kg_per_kg_bulk": 0.013845107733266521,
+        "success": true,
+        "accepted": true,
+        "maximum_relative_element_error": 3.3306690738754696e-16,
+        "maximum_abs_log_reaction_residual": 3.552713678800501e-14,
+        "maximum_normalized_complementarity": 3.9858854428937824e-27,
+        "relative_pressure_error": 0.0,
+        "H2_ratio": 1.036726743384538,
+        "H2O_ratio": 0.822884468835959,
+        "SiO_ratio": 0.5419155420387235,
+        "SiH4_ratio": 0.7338134140664806
+      },
+      {
+        "feed_id": 73,
+        "parent_id": 122,
+        "mode": "spinodal",
+        "entrained_lower_fraction": 0.1,
+        "deep_temperature_K": 3500.0,
+        "deep_pressure_bar": 10000.0,
+        "hydrogen_wt_percent": 1.0,
+        "separated": true,
+        "available_mass_kg_per_kg_bulk": 0.10459936761362326,
+        "available_component_moles": {
+          "MgSiO3": 0.9898489678017198,
+          "H2": 2.5942008049258103
+        },
+        "normalized_component_mass_kg": {
+          "MgSiO3": 0.9500034959450907,
+          "H2": 0.04999650405490919
+        },
+        "Si_to_H_atomic_ratio": 0.19078110027608827,
+        "atmosphere_temperature_K": 2500.0,
+        "atmosphere_pressure_bar": 1.0,
+        "H2": 0.8076465342804556,
+        "H2O": 0.08421917609616118,
+        "SiO": 0.0675016414467744,
+        "SiH4": 7.55776383328644e-11,
+        "Mg": 0.017264254986387086,
+        "O2": 3.8345538407900684e-07,
+        "mean_molar_mass_g_per_mol": 6.582734829414346,
+        "gas_mass_kg_per_kg_feed": 0.18070739022948745,
+        "gas_mass_kg_per_kg_bulk": 0.01890187874111263,
+        "success": true,
+        "accepted": true,
+        "maximum_relative_element_error": 2.220446049250313e-16,
+        "maximum_abs_log_reaction_residual": 2.842170943040401e-14,
+        "maximum_normalized_complementarity": 2.6992570108449683e-26,
+        "relative_pressure_error": 0.0,
+        "H2_ratio": 0.9999999999999996,
+        "H2O_ratio": 1.0000000000000133,
+        "SiO_ratio": 0.9999999999999928,
+        "SiH4_ratio": 0.9999999999999823
+      },
+      {
+        "feed_id": 74,
+        "parent_id": 122,
+        "mode": "spinodal",
+        "entrained_lower_fraction": 1.0,
+        "deep_temperature_K": 3500.0,
+        "deep_pressure_bar": 10000.0,
+        "hydrogen_wt_percent": 1.0,
+        "separated": true,
+        "available_mass_kg_per_kg_bulk": 1.0000000000000002,
+        "available_component_moles": {
+          "MgSiO3": 9.861656400665755,
+          "H2": 4.960607813354155
+        },
+        "normalized_component_mass_kg": {
+          "MgSiO3": 0.99,
+          "H2": 0.01
+        },
+        "Si_to_H_atomic_ratio": 0.9939967814143441,
+        "atmosphere_temperature_K": 2500.0,
+        "atmosphere_pressure_bar": 1.0,
+        "H2": 0.8076465342804562,
+        "H2O": 0.08421917609616003,
+        "SiO": 0.06750164144677467,
+        "SiH4": 7.557763833286547e-11,
+        "Mg": 0.017264254986387454,
+        "O2": 3.834553840789973e-07,
+        "mean_molar_mass_g_per_mol": 6.582734829414352,
+        "gas_mass_kg_per_kg_feed": 0.03614400519504799,
+        "gas_mass_kg_per_kg_bulk": 0.036144005195048,
+        "success": true,
+        "accepted": true,
+        "maximum_relative_element_error": 5.551115123125783e-16,
+        "maximum_abs_log_reaction_residual": 2.842170943040401e-14,
+        "maximum_normalized_complementarity": 6.582730303975723e-26,
+        "relative_pressure_error": 2.220446049250313e-16,
+        "H2_ratio": 1.0000000000000002,
+        "H2O_ratio": 0.9999999999999997,
+        "SiO_ratio": 0.9999999999999969,
+        "SiH4_ratio": 0.9999999999999966
+      }
+    ],
+    "gas_only": [
+      {
+        "feed_id": 70,
+        "parent_id": 122,
+        "mode": "homogeneous",
+        "entrained_lower_fraction": 1.0,
+        "deep_temperature_K": 3500.0,
+        "deep_pressure_bar": 10000.0,
+        "hydrogen_wt_percent": 1.0,
+        "separated": false,
+        "available_mass_kg_per_kg_bulk": 0.9999999999999999,
+        "available_component_moles": {
+          "MgSiO3": 9.861656400665751,
+          "H2": 4.960607813354156
+        },
+        "normalized_component_mass_kg": {
+          "MgSiO3": 0.99,
+          "H2": 0.010000000000000005
+        },
+        "Si_to_H_atomic_ratio": 0.9939967814143436,
+        "atmosphere_temperature_K": 2500.0,
+        "atmosphere_pressure_bar": 1.0,
+        "H2": 0.003728469432125678,
+        "H2O": 0.17095807318992826,
+        "SiO": 0.20693198100313653,
+        "SiH4": 1.1229378791132136e-17,
+        "Mg": 0.13234192474844345,
+        "O2": 0.07414017140884556,
+        "mean_molar_mass_g_per_mol": 36.99175607741536,
+        "gas_mass_kg_per_kg_feed": 1.0,
+        "gas_mass_kg_per_kg_bulk": 0.9999999999999999,
+        "success": true,
+        "accepted": true,
+        "maximum_relative_element_error": 5.551115123125783e-16,
+        "maximum_abs_log_reaction_residual": 2.1316282072803006e-14,
+        "maximum_normalized_complementarity": 0.0,
+        "relative_pressure_error": 0.0,
+        "H2_ratio": 1.0,
+        "H2O_ratio": 1.0,
+        "SiO_ratio": 1.0,
+        "SiH4_ratio": 1.0
+      },
+      {
+        "feed_id": 71,
+        "parent_id": 122,
+        "mode": "spinodal",
+        "entrained_lower_fraction": 0.0,
+        "deep_temperature_K": 3500.0,
+        "deep_pressure_bar": 10000.0,
+        "hydrogen_wt_percent": 1.0,
+        "separated": true,
+        "available_mass_kg_per_kg_bulk": 0.00511040845958135,
+        "available_component_moles": {
+          "MgSiO3": 0.004092586372382475,
+          "H2": 2.3312666928782164
+        },
+        "normalized_component_mass_kg": {
+          "MgSiO3": 0.08039472763440961,
+          "H2": 0.9196052723655904
+        },
+        "Si_to_H_atomic_ratio": 0.0008777602289958742,
+        "atmosphere_temperature_K": 2500.0,
+        "atmosphere_pressure_bar": 1.0,
+        "H2": 0.9683063467375401,
+        "H2O": 0.0034352777851463174,
+        "SiO": 0.001726961527024293,
+        "SiH4": 8.169304931617154e-11,
+        "Mg": 0.0017274483590425688,
+        "O2": 4.4384741591526003e-10,
+        "mean_molar_mass_g_per_mol": 2.157356173807071,
+        "gas_mass_kg_per_kg_feed": 0.9999999999999998,
+        "gas_mass_kg_per_kg_bulk": 0.005110408459581349,
+        "success": true,
+        "accepted": true,
+        "maximum_relative_element_error": 4.440892098500626e-16,
+        "maximum_abs_log_reaction_residual": 2.842170943040401e-14,
+        "maximum_normalized_complementarity": 0.0,
+        "relative_pressure_error": 0.0,
+        "H2_ratio": 259.7061245545705,
+        "H2O_ratio": 0.020094270607097026,
+        "SiO_ratio": 0.00834555160904837,
+        "SiH4_ratio": 7274939.320836226
+      },
+      {
+        "feed_id": 72,
+        "parent_id": 122,
+        "mode": "spinodal",
+        "entrained_lower_fraction": 0.01,
+        "deep_temperature_K": 3500.0,
+        "deep_pressure_bar": 10000.0,
+        "hydrogen_wt_percent": 1.0,
+        "separated": true,
+        "available_mass_kg_per_kg_bulk": 0.01505930437498554,
+        "available_component_moles": {
+          "MgSiO3": 0.10266822451531621,
+          "H2": 2.357560104082976
+        },
+        "normalized_component_mass_kg": {
+          "MgSiO3": 0.684410191905457,
+          "H2": 0.31558980809454296
+        },
+        "Si_to_H_atomic_ratio": 0.021774253885936717,
+        "atmosphere_temperature_K": 2500.0,
+        "atmosphere_pressure_bar": 1.0,
+        "H2": 0.8190445622156711,
+        "H2O": 0.07847066861735075,
+        "SiO": 0.03952905630592978,
+        "SiH4": 4.9540188802193635e-11,
+        "Mg": 0.039447812798422036,
+        "O2": 3.2369439120603177e-07,
+        "mean_molar_mass_g_per_mol": 5.807414323214778,
+        "gas_mass_kg_per_kg_feed": 1.0000000000000002,
+        "gas_mass_kg_per_kg_bulk": 0.015059304374985543,
+        "success": true,
+        "accepted": true,
+        "maximum_relative_element_error": 3.3306690738754696e-16,
+        "maximum_abs_log_reaction_residual": 2.842170943040401e-14,
+        "maximum_normalized_complementarity": 0.0,
+        "relative_pressure_error": 4.440892098500626e-16,
+        "H2_ratio": 219.67313320541743,
+        "H2O_ratio": 0.45900534062625203,
+        "SiO_ratio": 0.1910243941719701,
+        "SiH4_ratio": 4411658.892593028
+      },
+      {
+        "feed_id": 73,
+        "parent_id": 122,
+        "mode": "spinodal",
+        "entrained_lower_fraction": 0.1,
+        "deep_temperature_K": 3500.0,
+        "deep_pressure_bar": 10000.0,
+        "hydrogen_wt_percent": 1.0,
+        "separated": true,
+        "available_mass_kg_per_kg_bulk": 0.10459936761362326,
+        "available_component_moles": {
+          "MgSiO3": 0.9898489678017198,
+          "H2": 2.5942008049258103
+        },
+        "normalized_component_mass_kg": {
+          "MgSiO3": 0.9500034959450907,
+          "H2": 0.04999650405490919
+        },
+        "Si_to_H_atomic_ratio": 0.19078110027608827,
+        "atmosphere_temperature_K": 2500.0,
+        "atmosphere_pressure_bar": 1.0,
+        "H2": 0.158937171066389,
+        "H2O": 0.39565506424264907,
+        "SiO": 0.20607952890504638,
+        "SiH4": 3.7430060603939774e-13,
+        "Mg": 0.19593070686331907,
+        "O2": 0.00021853350489160146,
+        "mean_molar_mass_g_per_mol": 22.678830327455575,
+        "gas_mass_kg_per_kg_feed": 1.0,
+        "gas_mass_kg_per_kg_bulk": 0.10459936761362326,
+        "success": true,
+        "accepted": true,
+        "maximum_relative_element_error": 6.661338147750939e-16,
+        "maximum_abs_log_reaction_residual": 2.842170943040401e-14,
+        "maximum_normalized_complementarity": 0.0,
+        "relative_pressure_error": 0.0,
+        "H2_ratio": 42.62799359354694,
+        "H2O_ratio": 2.3143397492734405,
+        "SiO_ratio": 0.9958805202851789,
+        "SiH4_ratio": 33332.26289730147
+      },
+      {
+        "feed_id": 74,
+        "parent_id": 122,
+        "mode": "spinodal",
+        "entrained_lower_fraction": 1.0,
+        "deep_temperature_K": 3500.0,
+        "deep_pressure_bar": 10000.0,
+        "hydrogen_wt_percent": 1.0,
+        "separated": true,
+        "available_mass_kg_per_kg_bulk": 1.0000000000000002,
+        "available_component_moles": {
+          "MgSiO3": 9.861656400665755,
+          "H2": 4.960607813354155
+        },
+        "normalized_component_mass_kg": {
+          "MgSiO3": 0.99,
+          "H2": 0.01
+        },
+        "Si_to_H_atomic_ratio": 0.9939967814143441,
+        "atmosphere_temperature_K": 2500.0,
+        "atmosphere_pressure_bar": 1.0,
+        "H2": 0.003728469432125678,
+        "H2O": 0.1709580731899281,
+        "SiO": 0.20693198100313676,
+        "SiH4": 1.1229378791132055e-17,
+        "Mg": 0.13234192474844345,
+        "O2": 0.07414017140884559,
+        "mean_molar_mass_g_per_mol": 36.991756077415374,
+        "gas_mass_kg_per_kg_feed": 1.0000000000000002,
+        "gas_mass_kg_per_kg_bulk": 1.0000000000000004,
+        "success": true,
+        "accepted": true,
+        "maximum_relative_element_error": 4.440892098500626e-16,
+        "maximum_abs_log_reaction_residual": 2.842170943040401e-14,
+        "maximum_normalized_complementarity": 0.0,
+        "relative_pressure_error": 0.0,
+        "H2_ratio": 1.0,
+        "H2O_ratio": 0.999999999999999,
+        "SiO_ratio": 1.000000000000001,
+        "SiH4_ratio": 0.9999999999999929
+      }
+    ]
+  }
+}

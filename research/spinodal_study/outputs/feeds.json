@@ -1,0 +1,3602 @@
+[
+  {
+    "feed_id": 0,
+    "parent_id": 0,
+    "mode": "homogeneous",
+    "entrained_lower_fraction": 1.0,
+    "deep_temperature_K": 2500.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 0.1,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 0.9999999999999999,
+    "available_component_moles": {
+      "MgSiO3": 9.951307822489985,
+      "H2": 0.4960607813354155
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.999,
+      "H2": 0.0010000000000000002
+    },
+    "Si_to_H_atomic_ratio": 10.030331157908378
+  },
+  {
+    "feed_id": 1,
+    "parent_id": 0,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.0,
+    "deep_temperature_K": 2500.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 0.1,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 0.9999999999999999,
+    "available_component_moles": {
+      "MgSiO3": 9.951307822489985,
+      "H2": 0.4960607813354155
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.999,
+      "H2": 0.0010000000000000002
+    },
+    "Si_to_H_atomic_ratio": 10.030331157908378
+  },
+  {
+    "feed_id": 2,
+    "parent_id": 0,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.01,
+    "deep_temperature_K": 2500.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 0.1,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 0.9999999999999999,
+    "available_component_moles": {
+      "MgSiO3": 9.951307822489985,
+      "H2": 0.4960607813354155
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.999,
+      "H2": 0.0010000000000000002
+    },
+    "Si_to_H_atomic_ratio": 10.030331157908378
+  },
+  {
+    "feed_id": 3,
+    "parent_id": 0,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.1,
+    "deep_temperature_K": 2500.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 0.1,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 0.9999999999999999,
+    "available_component_moles": {
+      "MgSiO3": 9.951307822489985,
+      "H2": 0.4960607813354155
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.999,
+      "H2": 0.0010000000000000002
+    },
+    "Si_to_H_atomic_ratio": 10.030331157908378
+  },
+  {
+    "feed_id": 4,
+    "parent_id": 0,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 1.0,
+    "deep_temperature_K": 2500.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 0.1,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 0.9999999999999999,
+    "available_component_moles": {
+      "MgSiO3": 9.951307822489985,
+      "H2": 0.4960607813354155
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.999,
+      "H2": 0.0010000000000000002
+    },
+    "Si_to_H_atomic_ratio": 10.030331157908378
+  },
+  {
+    "feed_id": 5,
+    "parent_id": 1,
+    "mode": "homogeneous",
+    "entrained_lower_fraction": 1.0,
+    "deep_temperature_K": 2500.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 0.3,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 1.0000000000000002,
+    "available_component_moles": {
+      "MgSiO3": 9.931385284306826,
+      "H2": 1.4881823440062463
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.997,
+      "H2": 0.002999999999999999
+    },
+    "Si_to_H_atomic_ratio": 3.3367501382831692
+  },
+  {
+    "feed_id": 6,
+    "parent_id": 1,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.0,
+    "deep_temperature_K": 2500.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 0.3,
+    "separated": true,
+    "available_mass_kg_per_kg_bulk": 0.0009915225604428886,
+    "available_component_moles": {
+      "MgSiO3": 2.7484662206116464e-08,
+      "H2": 0.4918540873375619
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 2.7827432068866613e-06,
+      "H2": 0.9999972172567931
+    },
+    "Si_to_H_atomic_ratio": 2.7939853417598625e-08
+  },
+  {
+    "feed_id": 7,
+    "parent_id": 1,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.01,
+    "deep_temperature_K": 2500.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 0.3,
+    "separated": true,
+    "available_mass_kg_per_kg_bulk": 0.010981607334838463,
+    "available_component_moles": {
+      "MgSiO3": 0.09931388005288386,
+      "H2": 0.5018173699042487
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.9078819181534507,
+      "H2": 0.09211808184654939
+    },
+    "Si_to_H_atomic_ratio": 0.09895420725655016
+  },
+  {
+    "feed_id": 8,
+    "parent_id": 1,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.1,
+    "deep_temperature_K": 2500.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 0.3,
+    "separated": true,
+    "available_mass_kg_per_kg_bulk": 0.10089237030439864,
+    "available_component_moles": {
+      "MgSiO3": 0.9931385531668787,
+      "H2": 0.5914869130044303
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.9881817840381414,
+      "H2": 0.011818215961858645
+    },
+    "Si_to_H_atomic_ratio": 0.8395270726466944
+  },
+  {
+    "feed_id": 9,
+    "parent_id": 1,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 1.0,
+    "deep_temperature_K": 2500.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 0.3,
+    "separated": true,
+    "available_mass_kg_per_kg_bulk": 1.0000000000000002,
+    "available_component_moles": {
+      "MgSiO3": 9.931385284306826,
+      "H2": 1.4881823440062463
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.997,
+      "H2": 0.002999999999999999
+    },
+    "Si_to_H_atomic_ratio": 3.3367501382831692
+  },
+  {
+    "feed_id": 10,
+    "parent_id": 2,
+    "mode": "homogeneous",
+    "entrained_lower_fraction": 1.0,
+    "deep_temperature_K": 2500.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 1.0,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 0.9999999999999999,
+    "available_component_moles": {
+      "MgSiO3": 9.861656400665751,
+      "H2": 4.960607813354156
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.99,
+      "H2": 0.010000000000000005
+    },
+    "Si_to_H_atomic_ratio": 0.9939967814143436
+  },
+  {
+    "feed_id": 11,
+    "parent_id": 2,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.0,
+    "deep_temperature_K": 2500.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 1.0,
+    "separated": true,
+    "available_mass_kg_per_kg_bulk": 0.008005643784690725,
+    "available_component_moles": {
+      "MgSiO3": 2.2191367493084299e-07,
+      "H2": 3.9712748598578016
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 2.782743206886661e-06,
+      "H2": 0.999997217256793
+    },
+    "Si_to_H_atomic_ratio": 2.7939853417598625e-08
+  },
+  {
+    "feed_id": 12,
+    "parent_id": 2,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.01,
+    "deep_temperature_K": 2500.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 1.0,
+    "separated": true,
+    "available_mass_kg_per_kg_bulk": 0.017925587346843817,
+    "available_component_moles": {
+      "MgSiO3": 0.09861678370119574,
+      "H2": 3.9811681893927653
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.5522843889752636,
+      "H2": 0.44771561102473656
+    },
+    "Si_to_H_atomic_ratio": 0.012385407876505394
+  },
+  {
+    "feed_id": 13,
+    "parent_id": 2,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.1,
+    "deep_temperature_K": 2500.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 1.0,
+    "separated": true,
+    "available_mass_kg_per_kg_bulk": 0.10720507940622168,
+    "available_component_moles": {
+      "MgSiO3": 0.986165839788883,
+      "H2": 4.070208155207437
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.9234638936720037,
+      "H2": 0.0765361063279964
+    },
+    "Si_to_H_atomic_ratio": 0.12114439878549937
+  },
+  {
+    "feed_id": 14,
+    "parent_id": 2,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 1.0,
+    "deep_temperature_K": 2500.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 1.0,
+    "separated": true,
+    "available_mass_kg_per_kg_bulk": 1.0000000000000002,
+    "available_component_moles": {
+      "MgSiO3": 9.861656400665755,
+      "H2": 4.960607813354156
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.99,
+      "H2": 0.010000000000000002
+    },
+    "Si_to_H_atomic_ratio": 0.9939967814143439
+  },
+  {
+    "feed_id": 15,
+    "parent_id": 3,
+    "mode": "homogeneous",
+    "entrained_lower_fraction": 1.0,
+    "deep_temperature_K": 2500.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 3.0,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 1.0,
+    "available_component_moles": {
+      "MgSiO3": 9.662431018834122,
+      "H2": 14.881823440062462
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.9700000000000001,
+      "H2": 0.029999999999999995
+    },
+    "Si_to_H_atomic_ratio": 0.32463867945182284
+  },
+  {
+    "feed_id": 16,
+    "parent_id": 3,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.0,
+    "deep_temperature_K": 2500.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 3.0,
+    "separated": true,
+    "available_mass_kg_per_kg_bulk": 0.02804599013968452,
+    "available_component_moles": {
+      "MgSiO3": 7.774251398586326e-07,
+      "H2": 13.912477067058477
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 2.7827432068866617e-06,
+      "H2": 0.9999972172567931
+    },
+    "Si_to_H_atomic_ratio": 2.793985341759863e-08
+  },
+  {
+    "feed_id": 17,
+    "parent_id": 3,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.01,
+    "deep_temperature_K": 2500.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 3.0,
+    "separated": true,
+    "available_mass_kg_per_kg_bulk": 0.03776553023828768,
+    "available_component_moles": {
+      "MgSiO3": 0.0966250798392297,
+      "H2": 13.922170530788517
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.2568500217827332,
+      "H2": 0.7431499782172667
+    },
+    "Si_to_H_atomic_ratio": 0.003470187339881589
+  },
+  {
+    "feed_id": 18,
+    "parent_id": 3,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.1,
+    "deep_temperature_K": 2500.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 3.0,
+    "separated": true,
+    "available_mass_kg_per_kg_bulk": 0.1252413911257161,
+    "available_component_moles": {
+      "MgSiO3": 0.9662438015660383,
+      "H2": 14.009411704358875
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.7745048930584137,
+      "H2": 0.2254951069415862
+    },
+    "Si_to_H_atomic_ratio": 0.034485523802023826
+  },
+  {
+    "feed_id": 19,
+    "parent_id": 3,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 1.0,
+    "deep_temperature_K": 2500.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 3.0,
+    "separated": true,
+    "available_mass_kg_per_kg_bulk": 1.0000000000000002,
+    "available_component_moles": {
+      "MgSiO3": 9.662431018834123,
+      "H2": 14.88182344006246
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.9700000000000001,
+      "H2": 0.029999999999999985
+    },
+    "Si_to_H_atomic_ratio": 0.3246386794518229
+  },
+  {
+    "feed_id": 20,
+    "parent_id": 4,
+    "mode": "homogeneous",
+    "entrained_lower_fraction": 1.0,
+    "deep_temperature_K": 2500.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 5.0,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 1.0,
+    "available_component_moles": {
+      "MgSiO3": 9.46320563700249,
+      "H2": 24.803039066770776
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.9500000000000001,
+      "H2": 0.05000000000000001
+    },
+    "Si_to_H_atomic_ratio": 0.1907670590593185
+  },
+  {
+    "feed_id": 21,
+    "parent_id": 4,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.0,
+    "deep_temperature_K": 2500.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 5.0,
+    "separated": true,
+    "available_mass_kg_per_kg_bulk": 0.04808633649467835,
+    "available_component_moles": {
+      "MgSiO3": 1.332936604786423e-06,
+      "H2": 23.853679274259168
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 2.7827432068866613e-06,
+      "H2": 0.999997217256793
+    },
+    "Si_to_H_atomic_ratio": 2.7939853417598625e-08
+  },
+  {
+    "feed_id": 22,
+    "parent_id": 4,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.01,
+    "deep_temperature_K": 2500.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 5.0,
+    "separated": true,
+    "available_mass_kg_per_kg_bulk": 0.05760547312973155,
+    "available_component_moles": {
+      "MgSiO3": 0.09463337597726357,
+      "H2": 23.863172872184283
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.16491718508086886,
+      "H2": 0.8350828149191312
+    },
+    "Si_to_H_atomic_ratio": 0.0019828330558584566
+  },
+  {
+    "feed_id": 23,
+    "parent_id": 4,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.1,
+    "deep_temperature_K": 2500.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 5.0,
+    "separated": true,
+    "available_mass_kg_per_kg_bulk": 0.14327770284521044,
+    "available_component_moles": {
+      "MgSiO3": 0.9463217633431925,
+      "H2": 23.94861525351033
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.6630488802110861,
+      "H2": 0.3369511197889139
+    },
+    "Si_to_H_atomic_ratio": 0.019757337811097096
+  },
+  {
+    "feed_id": 24,
+    "parent_id": 4,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 1.0,
+    "deep_temperature_K": 2500.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 5.0,
+    "separated": true,
+    "available_mass_kg_per_kg_bulk": 0.9999999999999994,
+    "available_component_moles": {
+      "MgSiO3": 9.463205637002483,
+      "H2": 24.803039066770776
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.95,
+      "H2": 0.05000000000000004
+    },
+    "Si_to_H_atomic_ratio": 0.19076705905931837
+  },
+  {
+    "feed_id": 25,
+    "parent_id": 5,
+    "mode": "homogeneous",
+    "entrained_lower_fraction": 1.0,
+    "deep_temperature_K": 2500.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 10.0,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 1.0,
+    "available_component_moles": {
+      "MgSiO3": 8.965142182423412,
+      "H2": 49.60607813354158
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.9,
+      "H2": 0.10000000000000007
+    },
+    "Si_to_H_atomic_ratio": 0.0903633437649403
+  },
+  {
+    "feed_id": 26,
+    "parent_id": 5,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.0,
+    "deep_temperature_K": 2500.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 10.0,
+    "separated": true,
+    "available_mass_kg_per_kg_bulk": 0.09818720238216291,
+    "available_component_moles": {
+      "MgSiO3": 2.721715267105899e-06,
+      "H2": 48.706684792260894
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 2.7827432068866617e-06,
+      "H2": 0.9999972172567931
+    },
+    "Si_to_H_atomic_ratio": 2.7939853417598625e-08
+  },
+  {
+    "feed_id": 27,
+    "parent_id": 5,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.01,
+    "deep_temperature_K": 2500.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 10.0,
+    "separated": true,
+    "available_mass_kg_per_kg_bulk": 0.10720533035834129,
+    "available_component_moles": {
+      "MgSiO3": 0.08965411632234864,
+      "H2": 48.7156787256737
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.08395357271311703,
+      "H2": 0.916046427286883
+    },
+    "Si_to_H_atomic_ratio": 0.0009201772269991995
+  },
+  {
+    "feed_id": 28,
+    "parent_id": 5,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.1,
+    "deep_temperature_K": 2500.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 10.0,
+    "separated": true,
+    "available_mass_kg_per_kg_bulk": 0.18836848214394672,
+    "available_component_moles": {
+      "MgSiO3": 0.8965166677860824,
+      "H2": 48.79662412638896
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.47778824186743424,
+      "H2": 0.5222117581325658
+    },
+    "Si_to_H_atomic_ratio": 0.00918625708065377
+  },
+  {
+    "feed_id": 29,
+    "parent_id": 5,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 1.0,
+    "deep_temperature_K": 2500.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 10.0,
+    "separated": true,
+    "available_mass_kg_per_kg_bulk": 1.0000000000000009,
+    "available_component_moles": {
+      "MgSiO3": 8.96514218242342,
+      "H2": 49.60607813354157
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.9000000000000001,
+      "H2": 0.09999999999999998
+    },
+    "Si_to_H_atomic_ratio": 0.0903633437649404
+  },
+  {
+    "feed_id": 30,
+    "parent_id": 60,
+    "mode": "homogeneous",
+    "entrained_lower_fraction": 1.0,
+    "deep_temperature_K": 3000.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 0.1,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 0.9999999999999999,
+    "available_component_moles": {
+      "MgSiO3": 9.951307822489985,
+      "H2": 0.4960607813354155
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.999,
+      "H2": 0.0010000000000000002
+    },
+    "Si_to_H_atomic_ratio": 10.030331157908378
+  },
+  {
+    "feed_id": 31,
+    "parent_id": 60,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.0,
+    "deep_temperature_K": 3000.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 0.1,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 0.9999999999999999,
+    "available_component_moles": {
+      "MgSiO3": 9.951307822489985,
+      "H2": 0.4960607813354155
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.999,
+      "H2": 0.0010000000000000002
+    },
+    "Si_to_H_atomic_ratio": 10.030331157908378
+  },
+  {
+    "feed_id": 32,
+    "parent_id": 60,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.01,
+    "deep_temperature_K": 3000.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 0.1,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 0.9999999999999999,
+    "available_component_moles": {
+      "MgSiO3": 9.951307822489985,
+      "H2": 0.4960607813354155
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.999,
+      "H2": 0.0010000000000000002
+    },
+    "Si_to_H_atomic_ratio": 10.030331157908378
+  },
+  {
+    "feed_id": 33,
+    "parent_id": 60,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.1,
+    "deep_temperature_K": 3000.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 0.1,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 0.9999999999999999,
+    "available_component_moles": {
+      "MgSiO3": 9.951307822489985,
+      "H2": 0.4960607813354155
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.999,
+      "H2": 0.0010000000000000002
+    },
+    "Si_to_H_atomic_ratio": 10.030331157908378
+  },
+  {
+    "feed_id": 34,
+    "parent_id": 60,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 1.0,
+    "deep_temperature_K": 3000.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 0.1,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 0.9999999999999999,
+    "available_component_moles": {
+      "MgSiO3": 9.951307822489985,
+      "H2": 0.4960607813354155
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.999,
+      "H2": 0.0010000000000000002
+    },
+    "Si_to_H_atomic_ratio": 10.030331157908378
+  },
+  {
+    "feed_id": 35,
+    "parent_id": 61,
+    "mode": "homogeneous",
+    "entrained_lower_fraction": 1.0,
+    "deep_temperature_K": 3000.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 0.3,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 1.0000000000000002,
+    "available_component_moles": {
+      "MgSiO3": 9.931385284306826,
+      "H2": 1.4881823440062463
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.997,
+      "H2": 0.002999999999999999
+    },
+    "Si_to_H_atomic_ratio": 3.3367501382831692
+  },
+  {
+    "feed_id": 36,
+    "parent_id": 61,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.0,
+    "deep_temperature_K": 3000.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 0.3,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 1.0000000000000002,
+    "available_component_moles": {
+      "MgSiO3": 9.931385284306826,
+      "H2": 1.4881823440062463
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.997,
+      "H2": 0.002999999999999999
+    },
+    "Si_to_H_atomic_ratio": 3.3367501382831692
+  },
+  {
+    "feed_id": 37,
+    "parent_id": 61,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.01,
+    "deep_temperature_K": 3000.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 0.3,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 1.0000000000000002,
+    "available_component_moles": {
+      "MgSiO3": 9.931385284306826,
+      "H2": 1.4881823440062463
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.997,
+      "H2": 0.002999999999999999
+    },
+    "Si_to_H_atomic_ratio": 3.3367501382831692
+  },
+  {
+    "feed_id": 38,
+    "parent_id": 61,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.1,
+    "deep_temperature_K": 3000.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 0.3,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 1.0000000000000002,
+    "available_component_moles": {
+      "MgSiO3": 9.931385284306826,
+      "H2": 1.4881823440062463
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.997,
+      "H2": 0.002999999999999999
+    },
+    "Si_to_H_atomic_ratio": 3.3367501382831692
+  },
+  {
+    "feed_id": 39,
+    "parent_id": 61,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 1.0,
+    "deep_temperature_K": 3000.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 0.3,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 1.0000000000000002,
+    "available_component_moles": {
+      "MgSiO3": 9.931385284306826,
+      "H2": 1.4881823440062463
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.997,
+      "H2": 0.002999999999999999
+    },
+    "Si_to_H_atomic_ratio": 3.3367501382831692
+  },
+  {
+    "feed_id": 40,
+    "parent_id": 62,
+    "mode": "homogeneous",
+    "entrained_lower_fraction": 1.0,
+    "deep_temperature_K": 3000.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 1.0,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 0.9999999999999999,
+    "available_component_moles": {
+      "MgSiO3": 9.861656400665751,
+      "H2": 4.960607813354156
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.99,
+      "H2": 0.010000000000000005
+    },
+    "Si_to_H_atomic_ratio": 0.9939967814143436
+  },
+  {
+    "feed_id": 41,
+    "parent_id": 62,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.0,
+    "deep_temperature_K": 3000.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 1.0,
+    "separated": true,
+    "available_mass_kg_per_kg_bulk": 0.006973110978496695,
+    "available_component_moles": {
+      "MgSiO3": 8.225663102410876e-05,
+      "H2": 3.4549905861465566
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.0011842125759746257,
+      "H2": 0.9988157874240254
+    },
+    "Si_to_H_atomic_ratio": 1.1904031135993887e-05
+  },
+  {
+    "feed_id": 42,
+    "parent_id": 62,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.01,
+    "deep_temperature_K": 3000.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 1.0,
+    "separated": true,
+    "available_mass_kg_per_kg_bulk": 0.01690337986871173,
+    "available_component_moles": {
+      "MgSiO3": 0.09869799807137142,
+      "H2": 3.4700467584186327
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.5861653199664145,
+      "H2": 0.41383468003358553
+    },
+    "Si_to_H_atomic_ratio": 0.01422142192060115
+  },
+  {
+    "feed_id": 43,
+    "parent_id": 62,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.1,
+    "deep_temperature_K": 3000.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 1.0,
+    "separated": true,
+    "available_mass_kg_per_kg_bulk": 0.10627579988064705,
+    "available_component_moles": {
+      "MgSiO3": 0.9862396710344972,
+      "H2": 3.6055523088673165
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.931608437596642,
+      "H2": 0.06839156240335804
+    },
+    "Si_to_H_atomic_ratio": 0.13676679556263657
+  },
+  {
+    "feed_id": 44,
+    "parent_id": 62,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 1.0,
+    "deep_temperature_K": 3000.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 1.0,
+    "separated": true,
+    "available_mass_kg_per_kg_bulk": 1.0000000000000002,
+    "available_component_moles": {
+      "MgSiO3": 9.861656400665755,
+      "H2": 4.960607813354156
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.99,
+      "H2": 0.010000000000000002
+    },
+    "Si_to_H_atomic_ratio": 0.9939967814143439
+  },
+  {
+    "feed_id": 45,
+    "parent_id": 63,
+    "mode": "homogeneous",
+    "entrained_lower_fraction": 1.0,
+    "deep_temperature_K": 3000.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 3.0,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 1.0,
+    "available_component_moles": {
+      "MgSiO3": 9.662431018834122,
+      "H2": 14.881823440062462
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.9700000000000001,
+      "H2": 0.029999999999999995
+    },
+    "Si_to_H_atomic_ratio": 0.32463867945182284
+  },
+  {
+    "feed_id": 46,
+    "parent_id": 63,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.0,
+    "deep_temperature_K": 3000.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 3.0,
+    "separated": true,
+    "available_mass_kg_per_kg_bulk": 0.02705828562176262,
+    "available_component_moles": {
+      "MgSiO3": 0.0003191865758909963,
+      "H2": 13.406659149516198
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.0011842125759746257,
+      "H2": 0.9988157874240253
+    },
+    "Si_to_H_atomic_ratio": 1.1904031135993887e-05
+  },
+  {
+    "feed_id": 47,
+    "parent_id": 63,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.01,
+    "deep_temperature_K": 3000.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 3.0,
+    "separated": true,
+    "available_mass_kg_per_kg_bulk": 0.036787702765544994,
+    "available_component_moles": {
+      "MgSiO3": 0.09694030489847334,
+      "H2": 13.42141079242166
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.2645373753430201,
+      "H2": 0.73546262465698
+    },
+    "Si_to_H_atomic_ratio": 0.003611405179297926
+  },
+  {
+    "feed_id": 48,
+    "parent_id": 63,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.1,
+    "deep_temperature_K": 3000.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 3.0,
+    "separated": true,
+    "available_mass_kg_per_kg_bulk": 0.12435245705958639,
+    "available_component_moles": {
+      "MgSiO3": 0.9665303698017144,
+      "H2": 13.554175578570824
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.7802727889760331,
+      "H2": 0.2197272110239668
+    },
+    "Si_to_H_atomic_ratio": 0.035654340029717506
+  },
+  {
+    "feed_id": 49,
+    "parent_id": 63,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 1.0,
+    "deep_temperature_K": 3000.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 3.0,
+    "separated": true,
+    "available_mass_kg_per_kg_bulk": 1.0000000000000004,
+    "available_component_moles": {
+      "MgSiO3": 9.662431018834125,
+      "H2": 14.881823440062462
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.97,
+      "H2": 0.02999999999999998
+    },
+    "Si_to_H_atomic_ratio": 0.32463867945182295
+  },
+  {
+    "feed_id": 50,
+    "parent_id": 64,
+    "mode": "homogeneous",
+    "entrained_lower_fraction": 1.0,
+    "deep_temperature_K": 3000.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 5.0,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 1.0,
+    "available_component_moles": {
+      "MgSiO3": 9.46320563700249,
+      "H2": 24.803039066770776
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.9500000000000001,
+      "H2": 0.05000000000000001
+    },
+    "Si_to_H_atomic_ratio": 0.1907670590593185
+  },
+  {
+    "feed_id": 51,
+    "parent_id": 64,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.0,
+    "deep_temperature_K": 3000.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 5.0,
+    "separated": true,
+    "available_mass_kg_per_kg_bulk": 0.04714346026502857,
+    "available_component_moles": {
+      "MgSiO3": 0.0005561165207578841,
+      "H2": 23.358327712885853
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.0011842125759746257,
+      "H2": 0.9988157874240254
+    },
+    "Si_to_H_atomic_ratio": 1.1904031135993887e-05
+  },
+  {
+    "feed_id": 52,
+    "parent_id": 64,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.01,
+    "deep_temperature_K": 3000.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 5.0,
+    "separated": true,
+    "available_mass_kg_per_kg_bulk": 0.05667202566237828,
+    "available_component_moles": {
+      "MgSiO3": 0.09518261172557514,
+      "H2": 23.372774826424703
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.16860645950192069,
+      "H2": 0.8313935404980793
+    },
+    "Si_to_H_atomic_ratio": 0.0020361855285142257
+  },
+  {
+    "feed_id": 53,
+    "parent_id": 64,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.1,
+    "deep_temperature_K": 3000.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 5.0,
+    "separated": true,
+    "available_mass_kg_per_kg_bulk": 0.14242911423852567,
+    "available_component_moles": {
+      "MgSiO3": 0.9468210685689304,
+      "H2": 23.502798848274345
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.6673512336212966,
+      "H2": 0.33264876637870344
+    },
+    "Si_to_H_atomic_ratio": 0.020142730120809617
+  },
+  {
+    "feed_id": 54,
+    "parent_id": 64,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 1.0,
+    "deep_temperature_K": 3000.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 5.0,
+    "separated": true,
+    "available_mass_kg_per_kg_bulk": 0.9999999999999992,
+    "available_component_moles": {
+      "MgSiO3": 9.463205637002481,
+      "H2": 24.80303906677078
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.95,
+      "H2": 0.05000000000000006
+    },
+    "Si_to_H_atomic_ratio": 0.19076705905931832
+  },
+  {
+    "feed_id": 55,
+    "parent_id": 65,
+    "mode": "homogeneous",
+    "entrained_lower_fraction": 1.0,
+    "deep_temperature_K": 3000.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 10.0,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 1.0,
+    "available_component_moles": {
+      "MgSiO3": 8.965142182423412,
+      "H2": 49.60607813354158
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.9,
+      "H2": 0.10000000000000007
+    },
+    "Si_to_H_atomic_ratio": 0.0903633437649403
+  },
+  {
+    "feed_id": 56,
+    "parent_id": 65,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.0,
+    "deep_temperature_K": 3000.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 10.0,
+    "separated": true,
+    "available_mass_kg_per_kg_bulk": 0.09735639687319342,
+    "available_component_moles": {
+      "MgSiO3": 0.0011484413829251036,
+      "H2": 48.23749912130998
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.0011842125759746257,
+      "H2": 0.9988157874240254
+    },
+    "Si_to_H_atomic_ratio": 1.1904031135993887e-05
+  },
+  {
+    "feed_id": 57,
+    "parent_id": 65,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.01,
+    "deep_temperature_K": 3000.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 10.0,
+    "separated": true,
+    "available_mass_kg_per_kg_bulk": 0.1063828329044615,
+    "available_component_moles": {
+      "MgSiO3": 0.09078837879333013,
+      "H2": 48.2511849114323
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.08567301240246734,
+      "H2": 0.9143269875975326
+    },
+    "Si_to_H_atomic_ratio": 0.0009407891118112145
+  },
+  {
+    "feed_id": 58,
+    "parent_id": 65,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.1,
+    "deep_temperature_K": 3000.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 10.0,
+    "separated": true,
+    "available_mass_kg_per_kg_bulk": 0.18762075718587426,
+    "available_component_moles": {
+      "MgSiO3": 0.8975478154869754,
+      "H2": 48.37435702253314
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.48024409960839826,
+      "H2": 0.5197559003916017
+    },
+    "Si_to_H_atomic_ratio": 0.009277103311873385
+  },
+  {
+    "feed_id": 59,
+    "parent_id": 65,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 1.0,
+    "deep_temperature_K": 3000.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 10.0,
+    "separated": true,
+    "available_mass_kg_per_kg_bulk": 1.0000000000000018,
+    "available_component_moles": {
+      "MgSiO3": 8.965142182423428,
+      "H2": 49.60607813354157
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.9000000000000001,
+      "H2": 0.09999999999999988
+    },
+    "Si_to_H_atomic_ratio": 0.09036334376494047
+  },
+  {
+    "feed_id": 60,
+    "parent_id": 120,
+    "mode": "homogeneous",
+    "entrained_lower_fraction": 1.0,
+    "deep_temperature_K": 3500.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 0.1,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 0.9999999999999999,
+    "available_component_moles": {
+      "MgSiO3": 9.951307822489985,
+      "H2": 0.4960607813354155
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.999,
+      "H2": 0.0010000000000000002
+    },
+    "Si_to_H_atomic_ratio": 10.030331157908378
+  },
+  {
+    "feed_id": 61,
+    "parent_id": 120,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.0,
+    "deep_temperature_K": 3500.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 0.1,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 0.9999999999999999,
+    "available_component_moles": {
+      "MgSiO3": 9.951307822489985,
+      "H2": 0.4960607813354155
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.999,
+      "H2": 0.0010000000000000002
+    },
+    "Si_to_H_atomic_ratio": 10.030331157908378
+  },
+  {
+    "feed_id": 62,
+    "parent_id": 120,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.01,
+    "deep_temperature_K": 3500.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 0.1,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 0.9999999999999999,
+    "available_component_moles": {
+      "MgSiO3": 9.951307822489985,
+      "H2": 0.4960607813354155
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.999,
+      "H2": 0.0010000000000000002
+    },
+    "Si_to_H_atomic_ratio": 10.030331157908378
+  },
+  {
+    "feed_id": 63,
+    "parent_id": 120,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.1,
+    "deep_temperature_K": 3500.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 0.1,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 0.9999999999999999,
+    "available_component_moles": {
+      "MgSiO3": 9.951307822489985,
+      "H2": 0.4960607813354155
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.999,
+      "H2": 0.0010000000000000002
+    },
+    "Si_to_H_atomic_ratio": 10.030331157908378
+  },
+  {
+    "feed_id": 64,
+    "parent_id": 120,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 1.0,
+    "deep_temperature_K": 3500.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 0.1,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 0.9999999999999999,
+    "available_component_moles": {
+      "MgSiO3": 9.951307822489985,
+      "H2": 0.4960607813354155
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.999,
+      "H2": 0.0010000000000000002
+    },
+    "Si_to_H_atomic_ratio": 10.030331157908378
+  },
+  {
+    "feed_id": 65,
+    "parent_id": 121,
+    "mode": "homogeneous",
+    "entrained_lower_fraction": 1.0,
+    "deep_temperature_K": 3500.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 0.3,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 1.0000000000000002,
+    "available_component_moles": {
+      "MgSiO3": 9.931385284306826,
+      "H2": 1.4881823440062463
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.997,
+      "H2": 0.002999999999999999
+    },
+    "Si_to_H_atomic_ratio": 3.3367501382831692
+  },
+  {
+    "feed_id": 66,
+    "parent_id": 121,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.0,
+    "deep_temperature_K": 3500.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 0.3,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 1.0000000000000002,
+    "available_component_moles": {
+      "MgSiO3": 9.931385284306826,
+      "H2": 1.4881823440062463
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.997,
+      "H2": 0.002999999999999999
+    },
+    "Si_to_H_atomic_ratio": 3.3367501382831692
+  },
+  {
+    "feed_id": 67,
+    "parent_id": 121,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.01,
+    "deep_temperature_K": 3500.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 0.3,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 1.0000000000000002,
+    "available_component_moles": {
+      "MgSiO3": 9.931385284306826,
+      "H2": 1.4881823440062463
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.997,
+      "H2": 0.002999999999999999
+    },
+    "Si_to_H_atomic_ratio": 3.3367501382831692
+  },
+  {
+    "feed_id": 68,
+    "parent_id": 121,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.1,
+    "deep_temperature_K": 3500.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 0.3,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 1.0000000000000002,
+    "available_component_moles": {
+      "MgSiO3": 9.931385284306826,
+      "H2": 1.4881823440062463
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.997,
+      "H2": 0.002999999999999999
+    },
+    "Si_to_H_atomic_ratio": 3.3367501382831692
+  },
+  {
+    "feed_id": 69,
+    "parent_id": 121,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 1.0,
+    "deep_temperature_K": 3500.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 0.3,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 1.0000000000000002,
+    "available_component_moles": {
+      "MgSiO3": 9.931385284306826,
+      "H2": 1.4881823440062463
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.997,
+      "H2": 0.002999999999999999
+    },
+    "Si_to_H_atomic_ratio": 3.3367501382831692
+  },
+  {
+    "feed_id": 70,
+    "parent_id": 122,
+    "mode": "homogeneous",
+    "entrained_lower_fraction": 1.0,
+    "deep_temperature_K": 3500.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 1.0,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 0.9999999999999999,
+    "available_component_moles": {
+      "MgSiO3": 9.861656400665751,
+      "H2": 4.960607813354156
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.99,
+      "H2": 0.010000000000000005
+    },
+    "Si_to_H_atomic_ratio": 0.9939967814143436
+  },
+  {
+    "feed_id": 71,
+    "parent_id": 122,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.0,
+    "deep_temperature_K": 3500.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 1.0,
+    "separated": true,
+    "available_mass_kg_per_kg_bulk": 0.00511040845958135,
+    "available_component_moles": {
+      "MgSiO3": 0.004092586372382475,
+      "H2": 2.3312666928782164
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.08039472763440961,
+      "H2": 0.9196052723655904
+    },
+    "Si_to_H_atomic_ratio": 0.0008777602289958742
+  },
+  {
+    "feed_id": 72,
+    "parent_id": 122,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.01,
+    "deep_temperature_K": 3500.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 1.0,
+    "separated": true,
+    "available_mass_kg_per_kg_bulk": 0.01505930437498554,
+    "available_component_moles": {
+      "MgSiO3": 0.10266822451531621,
+      "H2": 2.357560104082976
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.684410191905457,
+      "H2": 0.31558980809454296
+    },
+    "Si_to_H_atomic_ratio": 0.021774253885936717
+  },
+  {
+    "feed_id": 73,
+    "parent_id": 122,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.1,
+    "deep_temperature_K": 3500.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 1.0,
+    "separated": true,
+    "available_mass_kg_per_kg_bulk": 0.10459936761362326,
+    "available_component_moles": {
+      "MgSiO3": 0.9898489678017198,
+      "H2": 2.5942008049258103
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.9500034959450907,
+      "H2": 0.04999650405490919
+    },
+    "Si_to_H_atomic_ratio": 0.19078110027608827
+  },
+  {
+    "feed_id": 74,
+    "parent_id": 122,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 1.0,
+    "deep_temperature_K": 3500.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 1.0,
+    "separated": true,
+    "available_mass_kg_per_kg_bulk": 1.0000000000000002,
+    "available_component_moles": {
+      "MgSiO3": 9.861656400665755,
+      "H2": 4.960607813354155
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.99,
+      "H2": 0.01
+    },
+    "Si_to_H_atomic_ratio": 0.9939967814143441
+  },
+  {
+    "feed_id": 75,
+    "parent_id": 123,
+    "mode": "homogeneous",
+    "entrained_lower_fraction": 1.0,
+    "deep_temperature_K": 3500.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 3.0,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 1.0,
+    "available_component_moles": {
+      "MgSiO3": 9.662431018834122,
+      "H2": 14.881823440062462
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.9700000000000001,
+      "H2": 0.029999999999999995
+    },
+    "Si_to_H_atomic_ratio": 0.32463867945182284
+  },
+  {
+    "feed_id": 76,
+    "parent_id": 123,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.0,
+    "deep_temperature_K": 3500.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 3.0,
+    "separated": true,
+    "available_mass_kg_per_kg_bulk": 0.026985602497387025,
+    "available_component_moles": {
+      "MgSiO3": 0.02161097491615847,
+      "H2": 12.31029511378104
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.0803947276344096,
+      "H2": 0.9196052723655904
+    },
+    "Si_to_H_atomic_ratio": 0.000877760228995874
+  },
+  {
+    "feed_id": 77,
+    "parent_id": 123,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.01,
+    "deep_temperature_K": 3500.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 3.0,
+    "separated": true,
+    "available_mass_kg_per_kg_bulk": 0.03671574647241316,
+    "available_component_moles": {
+      "MgSiO3": 0.11801917535533814,
+      "H2": 12.336010397043854
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.3226900253846561,
+      "H2": 0.6773099746153439
+    },
+    "Si_to_H_atomic_ratio": 0.004783522855315513
+  },
+  {
+    "feed_id": 78,
+    "parent_id": 123,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.1,
+    "deep_temperature_K": 3500.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 3.0,
+    "separated": true,
+    "available_mass_kg_per_kg_bulk": 0.12428704224764836,
+    "available_component_moles": {
+      "MgSiO3": 0.9856929793079551,
+      "H2": 12.567447946409182
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.7961614369209709,
+      "H2": 0.20383856307902917
+    },
+    "Si_to_H_atomic_ratio": 0.03921611545602586
+  },
+  {
+    "feed_id": 79,
+    "parent_id": 123,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 1.0,
+    "deep_temperature_K": 3500.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 3.0,
+    "separated": true,
+    "available_mass_kg_per_kg_bulk": 1.0000000000000004,
+    "available_component_moles": {
+      "MgSiO3": 9.662431018834125,
+      "H2": 14.881823440062462
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.97,
+      "H2": 0.02999999999999998
+    },
+    "Si_to_H_atomic_ratio": 0.32463867945182295
+  },
+  {
+    "feed_id": 80,
+    "parent_id": 124,
+    "mode": "homogeneous",
+    "entrained_lower_fraction": 1.0,
+    "deep_temperature_K": 3500.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 5.0,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 1.0,
+    "available_component_moles": {
+      "MgSiO3": 9.46320563700249,
+      "H2": 24.803039066770776
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.9500000000000001,
+      "H2": 0.05000000000000001
+    },
+    "Si_to_H_atomic_ratio": 0.1907670590593185
+  },
+  {
+    "feed_id": 81,
+    "parent_id": 124,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.0,
+    "deep_temperature_K": 3500.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 5.0,
+    "separated": true,
+    "available_mass_kg_per_kg_bulk": 0.04886079653519272,
+    "available_component_moles": {
+      "MgSiO3": 0.039129363459934494,
+      "H2": 22.289323534683874
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.08039472763440961,
+      "H2": 0.9196052723655904
+    },
+    "Si_to_H_atomic_ratio": 0.0008777602289958742
+  },
+  {
+    "feed_id": 82,
+    "parent_id": 124,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.01,
+    "deep_temperature_K": 3500.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 5.0,
+    "separated": true,
+    "available_mass_kg_per_kg_bulk": 0.05837218856984079,
+    "available_component_moles": {
+      "MgSiO3": 0.13337012619535998,
+      "H2": 22.314460690004744
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.229370685821266,
+      "H2": 0.770629314178734
+    },
+    "Si_to_H_atomic_ratio": 0.0029884236963678918
+  },
+  {
+    "feed_id": 83,
+    "parent_id": 124,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.1,
+    "deep_temperature_K": 3500.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 5.0,
+    "separated": true,
+    "available_mass_kg_per_kg_bulk": 0.1439747168816734,
+    "available_component_moles": {
+      "MgSiO3": 0.9815369908141894,
+      "H2": 22.540695087892566
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.6843933262774484,
+      "H2": 0.31560667372255163
+    },
+    "Si_to_H_atomic_ratio": 0.021772553751933963
+  },
+  {
+    "feed_id": 84,
+    "parent_id": 124,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 1.0,
+    "deep_temperature_K": 3500.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 5.0,
+    "separated": true,
+    "available_mass_kg_per_kg_bulk": 0.9999999999999996,
+    "available_component_moles": {
+      "MgSiO3": 9.463205637002485,
+      "H2": 24.80303906677078
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.95,
+      "H2": 0.05000000000000004
+    },
+    "Si_to_H_atomic_ratio": 0.1907670590593184
+  },
+  {
+    "feed_id": 85,
+    "parent_id": 125,
+    "mode": "homogeneous",
+    "entrained_lower_fraction": 1.0,
+    "deep_temperature_K": 3500.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 10.0,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 1.0,
+    "available_component_moles": {
+      "MgSiO3": 8.965142182423412,
+      "H2": 49.60607813354158
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.9,
+      "H2": 0.10000000000000007
+    },
+    "Si_to_H_atomic_ratio": 0.0903633437649403
+  },
+  {
+    "feed_id": 86,
+    "parent_id": 125,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.0,
+    "deep_temperature_K": 3500.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 10.0,
+    "separated": true,
+    "available_mass_kg_per_kg_bulk": 0.10354878162970696,
+    "available_component_moles": {
+      "MgSiO3": 0.08292533481937452,
+      "H2": 47.236894586940956
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.08039472763440958,
+      "H2": 0.9196052723655904
+    },
+    "Si_to_H_atomic_ratio": 0.0008777602289958741
+  },
+  {
+    "feed_id": 87,
+    "parent_id": 125,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.01,
+    "deep_temperature_K": 3500.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 10.0,
+    "separated": true,
+    "available_mass_kg_per_kg_bulk": 0.1125132938134099,
+    "available_component_moles": {
+      "MgSiO3": 0.17174750329541505,
+      "H2": 47.26058642240696
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.15323992170763717,
+      "H2": 0.8467600782923628
+    },
+    "Si_to_H_atomic_ratio": 0.0018170267901498887
+  },
+  {
+    "feed_id": 88,
+    "parent_id": 125,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.1,
+    "deep_temperature_K": 3500.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 10.0,
+    "separated": true,
+    "available_mass_kg_per_kg_bulk": 0.19319390346673643,
+    "available_component_moles": {
+      "MgSiO3": 0.9711470195797798,
+      "H2": 47.47381294160102
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.5046344462064344,
+      "H2": 0.49536555379356567
+    },
+    "Si_to_H_atomic_ratio": 0.010228239100727145
+  },
+  {
+    "feed_id": 89,
+    "parent_id": 125,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 1.0,
+    "deep_temperature_K": 3500.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 10.0,
+    "separated": true,
+    "available_mass_kg_per_kg_bulk": 1.0000000000000018,
+    "available_component_moles": {
+      "MgSiO3": 8.965142182423428,
+      "H2": 49.60607813354157
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.9000000000000001,
+      "H2": 0.09999999999999988
+    },
+    "Si_to_H_atomic_ratio": 0.09036334376494047
+  },
+  {
+    "feed_id": 90,
+    "parent_id": 150,
+    "mode": "homogeneous",
+    "entrained_lower_fraction": 1.0,
+    "deep_temperature_K": 3750.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 0.1,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 0.9999999999999999,
+    "available_component_moles": {
+      "MgSiO3": 9.951307822489985,
+      "H2": 0.4960607813354155
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.999,
+      "H2": 0.0010000000000000002
+    },
+    "Si_to_H_atomic_ratio": 10.030331157908378
+  },
+  {
+    "feed_id": 91,
+    "parent_id": 150,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.0,
+    "deep_temperature_K": 3750.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 0.1,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 0.9999999999999999,
+    "available_component_moles": {
+      "MgSiO3": 9.951307822489985,
+      "H2": 0.4960607813354155
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.999,
+      "H2": 0.0010000000000000002
+    },
+    "Si_to_H_atomic_ratio": 10.030331157908378
+  },
+  {
+    "feed_id": 92,
+    "parent_id": 150,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.01,
+    "deep_temperature_K": 3750.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 0.1,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 0.9999999999999999,
+    "available_component_moles": {
+      "MgSiO3": 9.951307822489985,
+      "H2": 0.4960607813354155
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.999,
+      "H2": 0.0010000000000000002
+    },
+    "Si_to_H_atomic_ratio": 10.030331157908378
+  },
+  {
+    "feed_id": 93,
+    "parent_id": 150,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.1,
+    "deep_temperature_K": 3750.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 0.1,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 0.9999999999999999,
+    "available_component_moles": {
+      "MgSiO3": 9.951307822489985,
+      "H2": 0.4960607813354155
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.999,
+      "H2": 0.0010000000000000002
+    },
+    "Si_to_H_atomic_ratio": 10.030331157908378
+  },
+  {
+    "feed_id": 94,
+    "parent_id": 150,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 1.0,
+    "deep_temperature_K": 3750.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 0.1,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 0.9999999999999999,
+    "available_component_moles": {
+      "MgSiO3": 9.951307822489985,
+      "H2": 0.4960607813354155
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.999,
+      "H2": 0.0010000000000000002
+    },
+    "Si_to_H_atomic_ratio": 10.030331157908378
+  },
+  {
+    "feed_id": 95,
+    "parent_id": 151,
+    "mode": "homogeneous",
+    "entrained_lower_fraction": 1.0,
+    "deep_temperature_K": 3750.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 0.3,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 1.0000000000000002,
+    "available_component_moles": {
+      "MgSiO3": 9.931385284306826,
+      "H2": 1.4881823440062463
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.997,
+      "H2": 0.002999999999999999
+    },
+    "Si_to_H_atomic_ratio": 3.3367501382831692
+  },
+  {
+    "feed_id": 96,
+    "parent_id": 151,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.0,
+    "deep_temperature_K": 3750.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 0.3,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 1.0000000000000002,
+    "available_component_moles": {
+      "MgSiO3": 9.931385284306826,
+      "H2": 1.4881823440062463
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.997,
+      "H2": 0.002999999999999999
+    },
+    "Si_to_H_atomic_ratio": 3.3367501382831692
+  },
+  {
+    "feed_id": 97,
+    "parent_id": 151,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.01,
+    "deep_temperature_K": 3750.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 0.3,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 1.0000000000000002,
+    "available_component_moles": {
+      "MgSiO3": 9.931385284306826,
+      "H2": 1.4881823440062463
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.997,
+      "H2": 0.002999999999999999
+    },
+    "Si_to_H_atomic_ratio": 3.3367501382831692
+  },
+  {
+    "feed_id": 98,
+    "parent_id": 151,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.1,
+    "deep_temperature_K": 3750.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 0.3,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 1.0000000000000002,
+    "available_component_moles": {
+      "MgSiO3": 9.931385284306826,
+      "H2": 1.4881823440062463
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.997,
+      "H2": 0.002999999999999999
+    },
+    "Si_to_H_atomic_ratio": 3.3367501382831692
+  },
+  {
+    "feed_id": 99,
+    "parent_id": 151,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 1.0,
+    "deep_temperature_K": 3750.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 0.3,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 1.0000000000000002,
+    "available_component_moles": {
+      "MgSiO3": 9.931385284306826,
+      "H2": 1.4881823440062463
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.997,
+      "H2": 0.002999999999999999
+    },
+    "Si_to_H_atomic_ratio": 3.3367501382831692
+  },
+  {
+    "feed_id": 100,
+    "parent_id": 152,
+    "mode": "homogeneous",
+    "entrained_lower_fraction": 1.0,
+    "deep_temperature_K": 3750.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 1.0,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 0.9999999999999999,
+    "available_component_moles": {
+      "MgSiO3": 9.861656400665751,
+      "H2": 4.960607813354156
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.99,
+      "H2": 0.010000000000000005
+    },
+    "Si_to_H_atomic_ratio": 0.9939967814143436
+  },
+  {
+    "feed_id": 101,
+    "parent_id": 152,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.0,
+    "deep_temperature_K": 3750.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 1.0,
+    "separated": true,
+    "available_mass_kg_per_kg_bulk": 0.0029605245281798817,
+    "available_component_moles": {
+      "MgSiO3": 0.010139026498454867,
+      "H2": 0.9636871963470075
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.3438055809857621,
+      "H2": 0.6561944190142379
+    },
+    "Si_to_H_atomic_ratio": 0.005260538137731973
+  },
+  {
+    "feed_id": 102,
+    "parent_id": 152,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.01,
+    "deep_temperature_K": 3750.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 1.0,
+    "separated": true,
+    "available_mass_kg_per_kg_bulk": 0.012930919282898082,
+    "available_component_moles": {
+      "MgSiO3": 0.10865420024012784,
+      "H2": 1.0036564025170789
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.8435337169960679,
+      "H2": 0.15646628300393212
+    },
+    "Si_to_H_atomic_ratio": 0.05412918204259595
+  },
+  {
+    "feed_id": 103,
+    "parent_id": 152,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.1,
+    "deep_temperature_K": 3750.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 1.0,
+    "separated": true,
+    "available_mass_kg_per_kg_bulk": 0.1026644720753619,
+    "available_component_moles": {
+      "MgSiO3": 0.9952907639151847,
+      "H2": 1.3633792580477224
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.9732291838655318,
+      "H2": 0.026770816134468203
+    },
+    "Si_to_H_atomic_ratio": 0.36500876701776347
+  },
+  {
+    "feed_id": 104,
+    "parent_id": 152,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 1.0,
+    "deep_temperature_K": 3750.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 1.0,
+    "separated": true,
+    "available_mass_kg_per_kg_bulk": 1.0,
+    "available_component_moles": {
+      "MgSiO3": 9.861656400665753,
+      "H2": 4.960607813354156
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.9900000000000001,
+      "H2": 0.010000000000000004
+    },
+    "Si_to_H_atomic_ratio": 0.9939967814143437
+  },
+  {
+    "feed_id": 105,
+    "parent_id": 153,
+    "mode": "homogeneous",
+    "entrained_lower_fraction": 1.0,
+    "deep_temperature_K": 3750.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 3.0,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 1.0,
+    "available_component_moles": {
+      "MgSiO3": 9.662431018834122,
+      "H2": 14.881823440062462
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.9700000000000001,
+      "H2": 0.029999999999999995
+    },
+    "Si_to_H_atomic_ratio": 0.32463867945182284
+  },
+  {
+    "feed_id": 106,
+    "parent_id": 153,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.0,
+    "deep_temperature_K": 3750.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 3.0,
+    "separated": true,
+    "available_mass_kg_per_kg_bulk": 0.033819332531900864,
+    "available_component_moles": {
+      "MgSiO3": 0.11582241776318271,
+      "H2": 11.008609264937135
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.34380558098576214,
+      "H2": 0.6561944190142379
+    },
+    "Si_to_H_atomic_ratio": 0.005260538137731974
+  },
+  {
+    "feed_id": 107,
+    "parent_id": 153,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.01,
+    "deep_temperature_K": 3750.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 3.0,
+    "separated": true,
+    "available_mass_kg_per_kg_bulk": 0.043481139206581865,
+    "available_component_moles": {
+      "MgSiO3": 0.2112885037738921,
+      "H2": 11.047341406688389
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.4878207633017418,
+      "H2": 0.5121792366982582
+    },
+    "Si_to_H_atomic_ratio": 0.009562866575571375
+  },
+  {
+    "feed_id": 108,
+    "parent_id": 153,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.1,
+    "deep_temperature_K": 3750.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 3.0,
+    "separated": true,
+    "available_mass_kg_per_kg_bulk": 0.1304373992787108,
+    "available_component_moles": {
+      "MgSiO3": 1.0704832778702769,
+      "H2": 11.395930682449668
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.823878338091432,
+      "H2": 0.17612166190856804
+    },
+    "Si_to_H_atomic_ratio": 0.04696778647130933
+  },
+  {
+    "feed_id": 109,
+    "parent_id": 153,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 1.0,
+    "deep_temperature_K": 3750.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 3.0,
+    "separated": true,
+    "available_mass_kg_per_kg_bulk": 1.0,
+    "available_component_moles": {
+      "MgSiO3": 9.662431018834122,
+      "H2": 14.881823440062462
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.9700000000000001,
+      "H2": 0.029999999999999995
+    },
+    "Si_to_H_atomic_ratio": 0.32463867945182284
+  },
+  {
+    "feed_id": 110,
+    "parent_id": 154,
+    "mode": "homogeneous",
+    "entrained_lower_fraction": 1.0,
+    "deep_temperature_K": 3750.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 5.0,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 1.0,
+    "available_component_moles": {
+      "MgSiO3": 9.46320563700249,
+      "H2": 24.803039066770776
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.9500000000000001,
+      "H2": 0.05000000000000001
+    },
+    "Si_to_H_atomic_ratio": 0.1907670590593185
+  },
+  {
+    "feed_id": 111,
+    "parent_id": 154,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.0,
+    "deep_temperature_K": 3750.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 5.0,
+    "separated": true,
+    "available_mass_kg_per_kg_bulk": 0.06467814053562189,
+    "available_component_moles": {
+      "MgSiO3": 0.22150580902791067,
+      "H2": 21.05353133352728
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.3438055809857621,
+      "H2": 0.6561944190142379
+    },
+    "Si_to_H_atomic_ratio": 0.005260538137731973
+  },
+  {
+    "feed_id": 112,
+    "parent_id": 154,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.01,
+    "deep_temperature_K": 3750.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 5.0,
+    "separated": true,
+    "available_mass_kg_per_kg_bulk": 0.07403135913026566,
+    "available_component_moles": {
+      "MgSiO3": 0.3139228073076564,
+      "H2": 21.091026410859712
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.42568904579525957,
+      "H2": 0.5743109542047404
+    },
+    "Si_to_H_atomic_ratio": 0.007442094120796758
+  },
+  {
+    "feed_id": 113,
+    "parent_id": 154,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.1,
+    "deep_temperature_K": 3750.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 5.0,
+    "separated": true,
+    "available_mass_kg_per_kg_bulk": 0.15821032648205965,
+    "available_component_moles": {
+      "MgSiO3": 1.145675791825368,
+      "H2": 21.42848210685163
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.7269628833524804,
+      "H2": 0.27303711664751956
+    },
+    "Si_to_H_atomic_ratio": 0.026732546573120197
+  },
+  {
+    "feed_id": 114,
+    "parent_id": 154,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 1.0,
+    "deep_temperature_K": 3750.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 5.0,
+    "separated": true,
+    "available_mass_kg_per_kg_bulk": 0.9999999999999994,
+    "available_component_moles": {
+      "MgSiO3": 9.463205637002483,
+      "H2": 24.80303906677078
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.95,
+      "H2": 0.050000000000000044
+    },
+    "Si_to_H_atomic_ratio": 0.19076705905931834
+  },
+  {
+    "feed_id": 115,
+    "parent_id": 155,
+    "mode": "homogeneous",
+    "entrained_lower_fraction": 1.0,
+    "deep_temperature_K": 3750.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 10.0,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 1.0,
+    "available_component_moles": {
+      "MgSiO3": 8.965142182423412,
+      "H2": 49.60607813354158
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.9,
+      "H2": 0.10000000000000007
+    },
+    "Si_to_H_atomic_ratio": 0.0903633437649403
+  },
+  {
+    "feed_id": 116,
+    "parent_id": 155,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.0,
+    "deep_temperature_K": 3750.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 10.0,
+    "separated": true,
+    "available_mass_kg_per_kg_bulk": 0.14182516054492444,
+    "available_component_moles": {
+      "MgSiO3": 0.4857142871897306,
+      "H2": 46.16583650500263
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.3438055809857621,
+      "H2": 0.6561944190142379
+    },
+    "Si_to_H_atomic_ratio": 0.005260538137731974
+  },
+  {
+    "feed_id": 117,
+    "parent_id": 155,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.01,
+    "deep_temperature_K": 3750.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 10.0,
+    "separated": true,
+    "available_mass_kg_per_kg_bulk": 0.15040690893947523,
+    "available_component_moles": {
+      "MgSiO3": 0.5705085661420675,
+      "H2": 46.20023892128802
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.3807848941659867,
+      "H2": 0.6192151058340132
+    },
+    "Si_to_H_atomic_ratio": 0.006174303201267538
+  },
+  {
+    "feed_id": 118,
+    "parent_id": 155,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.1,
+    "deep_temperature_K": 3750.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 10.0,
+    "separated": true,
+    "available_mass_kg_per_kg_bulk": 0.2276426444904321,
+    "available_component_moles": {
+      "MgSiO3": 1.3336570767130995,
+      "H2": 46.50986066785653
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.588133448578082,
+      "H2": 0.411866551421918
+    },
+    "Si_to_H_atomic_ratio": 0.014337358331787096
+  },
+  {
+    "feed_id": 119,
+    "parent_id": 155,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 1.0,
+    "deep_temperature_K": 3750.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 10.0,
+    "separated": true,
+    "available_mass_kg_per_kg_bulk": 1.0000000000000009,
+    "available_component_moles": {
+      "MgSiO3": 8.96514218242342,
+      "H2": 49.60607813354158
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.9000000000000001,
+      "H2": 0.09999999999999999
+    },
+    "Si_to_H_atomic_ratio": 0.09036334376494039
+  },
+  {
+    "feed_id": 120,
+    "parent_id": 180,
+    "mode": "homogeneous",
+    "entrained_lower_fraction": 1.0,
+    "deep_temperature_K": 4000.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 0.1,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 0.9999999999999999,
+    "available_component_moles": {
+      "MgSiO3": 9.951307822489985,
+      "H2": 0.4960607813354155
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.999,
+      "H2": 0.0010000000000000002
+    },
+    "Si_to_H_atomic_ratio": 10.030331157908378
+  },
+  {
+    "feed_id": 121,
+    "parent_id": 180,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.0,
+    "deep_temperature_K": 4000.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 0.1,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 0.9999999999999999,
+    "available_component_moles": {
+      "MgSiO3": 9.951307822489985,
+      "H2": 0.4960607813354155
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.999,
+      "H2": 0.0010000000000000002
+    },
+    "Si_to_H_atomic_ratio": 10.030331157908378
+  },
+  {
+    "feed_id": 122,
+    "parent_id": 180,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.01,
+    "deep_temperature_K": 4000.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 0.1,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 0.9999999999999999,
+    "available_component_moles": {
+      "MgSiO3": 9.951307822489985,
+      "H2": 0.4960607813354155
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.999,
+      "H2": 0.0010000000000000002
+    },
+    "Si_to_H_atomic_ratio": 10.030331157908378
+  },
+  {
+    "feed_id": 123,
+    "parent_id": 180,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.1,
+    "deep_temperature_K": 4000.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 0.1,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 0.9999999999999999,
+    "available_component_moles": {
+      "MgSiO3": 9.951307822489985,
+      "H2": 0.4960607813354155
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.999,
+      "H2": 0.0010000000000000002
+    },
+    "Si_to_H_atomic_ratio": 10.030331157908378
+  },
+  {
+    "feed_id": 124,
+    "parent_id": 180,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 1.0,
+    "deep_temperature_K": 4000.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 0.1,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 0.9999999999999999,
+    "available_component_moles": {
+      "MgSiO3": 9.951307822489985,
+      "H2": 0.4960607813354155
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.999,
+      "H2": 0.0010000000000000002
+    },
+    "Si_to_H_atomic_ratio": 10.030331157908378
+  },
+  {
+    "feed_id": 125,
+    "parent_id": 181,
+    "mode": "homogeneous",
+    "entrained_lower_fraction": 1.0,
+    "deep_temperature_K": 4000.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 0.3,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 1.0000000000000002,
+    "available_component_moles": {
+      "MgSiO3": 9.931385284306826,
+      "H2": 1.4881823440062463
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.997,
+      "H2": 0.002999999999999999
+    },
+    "Si_to_H_atomic_ratio": 3.3367501382831692
+  },
+  {
+    "feed_id": 126,
+    "parent_id": 181,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.0,
+    "deep_temperature_K": 4000.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 0.3,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 1.0000000000000002,
+    "available_component_moles": {
+      "MgSiO3": 9.931385284306826,
+      "H2": 1.4881823440062463
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.997,
+      "H2": 0.002999999999999999
+    },
+    "Si_to_H_atomic_ratio": 3.3367501382831692
+  },
+  {
+    "feed_id": 127,
+    "parent_id": 181,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.01,
+    "deep_temperature_K": 4000.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 0.3,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 1.0000000000000002,
+    "available_component_moles": {
+      "MgSiO3": 9.931385284306826,
+      "H2": 1.4881823440062463
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.997,
+      "H2": 0.002999999999999999
+    },
+    "Si_to_H_atomic_ratio": 3.3367501382831692
+  },
+  {
+    "feed_id": 128,
+    "parent_id": 181,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.1,
+    "deep_temperature_K": 4000.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 0.3,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 1.0000000000000002,
+    "available_component_moles": {
+      "MgSiO3": 9.931385284306826,
+      "H2": 1.4881823440062463
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.997,
+      "H2": 0.002999999999999999
+    },
+    "Si_to_H_atomic_ratio": 3.3367501382831692
+  },
+  {
+    "feed_id": 129,
+    "parent_id": 181,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 1.0,
+    "deep_temperature_K": 4000.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 0.3,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 1.0000000000000002,
+    "available_component_moles": {
+      "MgSiO3": 9.931385284306826,
+      "H2": 1.4881823440062463
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.997,
+      "H2": 0.002999999999999999
+    },
+    "Si_to_H_atomic_ratio": 3.3367501382831692
+  },
+  {
+    "feed_id": 130,
+    "parent_id": 182,
+    "mode": "homogeneous",
+    "entrained_lower_fraction": 1.0,
+    "deep_temperature_K": 4000.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 1.0,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 0.9999999999999999,
+    "available_component_moles": {
+      "MgSiO3": 9.861656400665751,
+      "H2": 4.960607813354156
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.99,
+      "H2": 0.010000000000000005
+    },
+    "Si_to_H_atomic_ratio": 0.9939967814143436
+  },
+  {
+    "feed_id": 131,
+    "parent_id": 182,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.0,
+    "deep_temperature_K": 4000.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 1.0,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 0.9999999999999999,
+    "available_component_moles": {
+      "MgSiO3": 9.861656400665751,
+      "H2": 4.960607813354156
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.99,
+      "H2": 0.010000000000000005
+    },
+    "Si_to_H_atomic_ratio": 0.9939967814143436
+  },
+  {
+    "feed_id": 132,
+    "parent_id": 182,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.01,
+    "deep_temperature_K": 4000.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 1.0,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 0.9999999999999999,
+    "available_component_moles": {
+      "MgSiO3": 9.861656400665751,
+      "H2": 4.960607813354156
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.99,
+      "H2": 0.010000000000000005
+    },
+    "Si_to_H_atomic_ratio": 0.9939967814143436
+  },
+  {
+    "feed_id": 133,
+    "parent_id": 182,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.1,
+    "deep_temperature_K": 4000.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 1.0,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 0.9999999999999999,
+    "available_component_moles": {
+      "MgSiO3": 9.861656400665751,
+      "H2": 4.960607813354156
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.99,
+      "H2": 0.010000000000000005
+    },
+    "Si_to_H_atomic_ratio": 0.9939967814143436
+  },
+  {
+    "feed_id": 134,
+    "parent_id": 182,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 1.0,
+    "deep_temperature_K": 4000.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 1.0,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 0.9999999999999999,
+    "available_component_moles": {
+      "MgSiO3": 9.861656400665751,
+      "H2": 4.960607813354156
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.99,
+      "H2": 0.010000000000000005
+    },
+    "Si_to_H_atomic_ratio": 0.9939967814143436
+  },
+  {
+    "feed_id": 135,
+    "parent_id": 183,
+    "mode": "homogeneous",
+    "entrained_lower_fraction": 1.0,
+    "deep_temperature_K": 4000.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 3.0,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 1.0,
+    "available_component_moles": {
+      "MgSiO3": 9.662431018834122,
+      "H2": 14.881823440062462
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.9700000000000001,
+      "H2": 0.029999999999999995
+    },
+    "Si_to_H_atomic_ratio": 0.32463867945182284
+  },
+  {
+    "feed_id": 136,
+    "parent_id": 183,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.0,
+    "deep_temperature_K": 4000.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 3.0,
+    "separated": true,
+    "available_mass_kg_per_kg_bulk": 0.06293061441833149,
+    "available_component_moles": {
+      "MgSiO3": 0.4866759699424847,
+      "H2": 6.981455515168963
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.7763601923020446,
+      "H2": 0.2236398076979555
+    },
+    "Si_to_H_atomic_ratio": 0.03485490732448693
+  },
+  {
+    "feed_id": 137,
+    "parent_id": 183,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.01,
+    "deep_temperature_K": 4000.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 3.0,
+    "separated": true,
+    "available_mass_kg_per_kg_bulk": 0.07230130827414818,
+    "available_component_moles": {
+      "MgSiO3": 0.5784335204314011,
+      "H2": 7.060459194417898
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.8031425303150335,
+      "H2": 0.19685746968496645
+    },
+    "Si_to_H_atomic_ratio": 0.04096288247715666
+  },
+  {
+    "feed_id": 138,
+    "parent_id": 183,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.1,
+    "deep_temperature_K": 4000.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 3.0,
+    "separated": true,
+    "available_mass_kg_per_kg_bulk": 0.1566375529764984,
+    "available_component_moles": {
+      "MgSiO3": 1.4042514748316488,
+      "H2": 7.771492307658313
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.8999830426456074,
+      "H2": 0.10001695735439264
+    },
+    "Si_to_H_atomic_ratio": 0.09034632083775261
+  },
+  {
+    "feed_id": 139,
+    "parent_id": 183,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 1.0,
+    "deep_temperature_K": 4000.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 3.0,
+    "separated": true,
+    "available_mass_kg_per_kg_bulk": 1.0000000000000004,
+    "available_component_moles": {
+      "MgSiO3": 9.662431018834125,
+      "H2": 14.881823440062462
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.97,
+      "H2": 0.02999999999999998
+    },
+    "Si_to_H_atomic_ratio": 0.32463867945182295
+  },
+  {
+    "feed_id": 140,
+    "parent_id": 184,
+    "mode": "homogeneous",
+    "entrained_lower_fraction": 1.0,
+    "deep_temperature_K": 4000.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 5.0,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 1.0,
+    "available_component_moles": {
+      "MgSiO3": 9.46320563700249,
+      "H2": 24.803039066770776
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.9500000000000001,
+      "H2": 0.05000000000000001
+    },
+    "Si_to_H_atomic_ratio": 0.1907670590593185
+  },
+  {
+    "feed_id": 141,
+    "parent_id": 184,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.0,
+    "deep_temperature_K": 4000.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 5.0,
+    "separated": true,
+    "available_mass_kg_per_kg_bulk": 0.15971540229039294,
+    "available_component_moles": {
+      "MgSiO3": 1.2351643002835313,
+      "H2": 17.718657071507693
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.7763601923020446,
+      "H2": 0.22363980769795547
+    },
+    "Si_to_H_atomic_ratio": 0.034854907324486935
+  },
+  {
+    "feed_id": 142,
+    "parent_id": 184,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.01,
+    "deep_temperature_K": 4000.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 5.0,
+    "separated": true,
+    "available_mass_kg_per_kg_bulk": 0.168118248267489,
+    "available_component_moles": {
+      "MgSiO3": 1.3174447136507208,
+      "H2": 17.789500891460325
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.7866886253833648,
+      "H2": 0.21331137461663516
+    },
+    "Si_to_H_atomic_ratio": 0.037028714905743845
+  },
+  {
+    "feed_id": 143,
+    "parent_id": 184,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.1,
+    "deep_temperature_K": 4000.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 5.0,
+    "separated": true,
+    "available_mass_kg_per_kg_bulk": 0.2437438620613536,
+    "available_component_moles": {
+      "MgSiO3": 2.0579684339554265,
+      "H2": 18.427095271034002
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.8475988303663942,
+      "H2": 0.15240116963360584
+    },
+    "Si_to_H_atomic_ratio": 0.05584082579717263
+  },
+  {
+    "feed_id": 144,
+    "parent_id": 184,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 1.0,
+    "deep_temperature_K": 4000.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 5.0,
+    "separated": true,
+    "available_mass_kg_per_kg_bulk": 0.9999999999999994,
+    "available_component_moles": {
+      "MgSiO3": 9.463205637002483,
+      "H2": 24.803039066770772
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.95,
+      "H2": 0.05000000000000003
+    },
+    "Si_to_H_atomic_ratio": 0.1907670590593184
+  },
+  {
+    "feed_id": 145,
+    "parent_id": 185,
+    "mode": "homogeneous",
+    "entrained_lower_fraction": 1.0,
+    "deep_temperature_K": 4000.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 10.0,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 1.0,
+    "available_component_moles": {
+      "MgSiO3": 8.965142182423412,
+      "H2": 49.60607813354158
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.9,
+      "H2": 0.10000000000000007
+    },
+    "Si_to_H_atomic_ratio": 0.0903633437649403
+  },
+  {
+    "feed_id": 146,
+    "parent_id": 185,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.0,
+    "deep_temperature_K": 4000.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 10.0,
+    "separated": true,
+    "available_mass_kg_per_kg_bulk": 0.40167737197054637,
+    "available_component_moles": {
+      "MgSiO3": 3.1063851261361464,
+      "H2": 44.5616609623545
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.7763601923020444,
+      "H2": 0.2236398076979555
+    },
+    "Si_to_H_atomic_ratio": 0.03485490732448693
+  },
+  {
+    "feed_id": 147,
+    "parent_id": 185,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.01,
+    "deep_temperature_K": 4000.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 10.0,
+    "separated": true,
+    "available_mass_kg_per_kg_bulk": 0.4076605982508409,
+    "available_component_moles": {
+      "MgSiO3": 3.164972696699019,
+      "H2": 44.612105134066375
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.7793931027238135,
+      "H2": 0.22060689727618651
+    },
+    "Si_to_H_atomic_ratio": 0.03547212900162164
+  },
+  {
+    "feed_id": 148,
+    "parent_id": 185,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.1,
+    "deep_temperature_K": 4000.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 10.0,
+    "separated": true,
+    "available_mass_kg_per_kg_bulk": 0.4615096347734919,
+    "available_component_moles": {
+      "MgSiO3": 3.6922608317648744,
+      "H2": 45.06610267947321
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.8031504905714703,
+      "H2": 0.19684950942852977
+    },
+    "Si_to_H_atomic_ratio": 0.04096494496124503
+  },
+  {
+    "feed_id": 149,
+    "parent_id": 185,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 1.0,
+    "deep_temperature_K": 4000.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 10.0,
+    "separated": true,
+    "available_mass_kg_per_kg_bulk": 1.0000000000000013,
+    "available_component_moles": {
+      "MgSiO3": 8.965142182423424,
+      "H2": 49.60607813354157
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.9000000000000001,
+      "H2": 0.09999999999999992
+    },
+    "Si_to_H_atomic_ratio": 0.09036334376494044
+  },
+  {
+    "feed_id": 150,
+    "parent_id": 210,
+    "mode": "homogeneous",
+    "entrained_lower_fraction": 1.0,
+    "deep_temperature_K": 4250.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 0.1,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 0.9999999999999999,
+    "available_component_moles": {
+      "MgSiO3": 9.951307822489985,
+      "H2": 0.4960607813354155
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.999,
+      "H2": 0.0010000000000000002
+    },
+    "Si_to_H_atomic_ratio": 10.030331157908378
+  },
+  {
+    "feed_id": 151,
+    "parent_id": 210,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.0,
+    "deep_temperature_K": 4250.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 0.1,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 0.9999999999999999,
+    "available_component_moles": {
+      "MgSiO3": 9.951307822489985,
+      "H2": 0.4960607813354155
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.999,
+      "H2": 0.0010000000000000002
+    },
+    "Si_to_H_atomic_ratio": 10.030331157908378
+  },
+  {
+    "feed_id": 152,
+    "parent_id": 210,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.01,
+    "deep_temperature_K": 4250.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 0.1,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 0.9999999999999999,
+    "available_component_moles": {
+      "MgSiO3": 9.951307822489985,
+      "H2": 0.4960607813354155
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.999,
+      "H2": 0.0010000000000000002
+    },
+    "Si_to_H_atomic_ratio": 10.030331157908378
+  },
+  {
+    "feed_id": 153,
+    "parent_id": 210,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.1,
+    "deep_temperature_K": 4250.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 0.1,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 0.9999999999999999,
+    "available_component_moles": {
+      "MgSiO3": 9.951307822489985,
+      "H2": 0.4960607813354155
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.999,
+      "H2": 0.0010000000000000002
+    },
+    "Si_to_H_atomic_ratio": 10.030331157908378
+  },
+  {
+    "feed_id": 154,
+    "parent_id": 210,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 1.0,
+    "deep_temperature_K": 4250.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 0.1,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 0.9999999999999999,
+    "available_component_moles": {
+      "MgSiO3": 9.951307822489985,
+      "H2": 0.4960607813354155
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.999,
+      "H2": 0.0010000000000000002
+    },
+    "Si_to_H_atomic_ratio": 10.030331157908378
+  },
+  {
+    "feed_id": 155,
+    "parent_id": 211,
+    "mode": "homogeneous",
+    "entrained_lower_fraction": 1.0,
+    "deep_temperature_K": 4250.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 0.3,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 1.0000000000000002,
+    "available_component_moles": {
+      "MgSiO3": 9.931385284306826,
+      "H2": 1.4881823440062463
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.997,
+      "H2": 0.002999999999999999
+    },
+    "Si_to_H_atomic_ratio": 3.3367501382831692
+  },
+  {
+    "feed_id": 156,
+    "parent_id": 211,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.0,
+    "deep_temperature_K": 4250.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 0.3,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 1.0000000000000002,
+    "available_component_moles": {
+      "MgSiO3": 9.931385284306826,
+      "H2": 1.4881823440062463
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.997,
+      "H2": 0.002999999999999999
+    },
+    "Si_to_H_atomic_ratio": 3.3367501382831692
+  },
+  {
+    "feed_id": 157,
+    "parent_id": 211,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.01,
+    "deep_temperature_K": 4250.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 0.3,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 1.0000000000000002,
+    "available_component_moles": {
+      "MgSiO3": 9.931385284306826,
+      "H2": 1.4881823440062463
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.997,
+      "H2": 0.002999999999999999
+    },
+    "Si_to_H_atomic_ratio": 3.3367501382831692
+  },
+  {
+    "feed_id": 158,
+    "parent_id": 211,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.1,
+    "deep_temperature_K": 4250.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 0.3,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 1.0000000000000002,
+    "available_component_moles": {
+      "MgSiO3": 9.931385284306826,
+      "H2": 1.4881823440062463
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.997,
+      "H2": 0.002999999999999999
+    },
+    "Si_to_H_atomic_ratio": 3.3367501382831692
+  },
+  {
+    "feed_id": 159,
+    "parent_id": 211,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 1.0,
+    "deep_temperature_K": 4250.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 0.3,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 1.0000000000000002,
+    "available_component_moles": {
+      "MgSiO3": 9.931385284306826,
+      "H2": 1.4881823440062463
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.997,
+      "H2": 0.002999999999999999
+    },
+    "Si_to_H_atomic_ratio": 3.3367501382831692
+  },
+  {
+    "feed_id": 160,
+    "parent_id": 212,
+    "mode": "homogeneous",
+    "entrained_lower_fraction": 1.0,
+    "deep_temperature_K": 4250.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 1.0,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 0.9999999999999999,
+    "available_component_moles": {
+      "MgSiO3": 9.861656400665751,
+      "H2": 4.960607813354156
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.99,
+      "H2": 0.010000000000000005
+    },
+    "Si_to_H_atomic_ratio": 0.9939967814143436
+  },
+  {
+    "feed_id": 161,
+    "parent_id": 212,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.0,
+    "deep_temperature_K": 4250.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 1.0,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 0.9999999999999999,
+    "available_component_moles": {
+      "MgSiO3": 9.861656400665751,
+      "H2": 4.960607813354156
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.99,
+      "H2": 0.010000000000000005
+    },
+    "Si_to_H_atomic_ratio": 0.9939967814143436
+  },
+  {
+    "feed_id": 162,
+    "parent_id": 212,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.01,
+    "deep_temperature_K": 4250.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 1.0,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 0.9999999999999999,
+    "available_component_moles": {
+      "MgSiO3": 9.861656400665751,
+      "H2": 4.960607813354156
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.99,
+      "H2": 0.010000000000000005
+    },
+    "Si_to_H_atomic_ratio": 0.9939967814143436
+  },
+  {
+    "feed_id": 163,
+    "parent_id": 212,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.1,
+    "deep_temperature_K": 4250.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 1.0,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 0.9999999999999999,
+    "available_component_moles": {
+      "MgSiO3": 9.861656400665751,
+      "H2": 4.960607813354156
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.99,
+      "H2": 0.010000000000000005
+    },
+    "Si_to_H_atomic_ratio": 0.9939967814143436
+  },
+  {
+    "feed_id": 164,
+    "parent_id": 212,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 1.0,
+    "deep_temperature_K": 4250.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 1.0,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 0.9999999999999999,
+    "available_component_moles": {
+      "MgSiO3": 9.861656400665751,
+      "H2": 4.960607813354156
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.99,
+      "H2": 0.010000000000000005
+    },
+    "Si_to_H_atomic_ratio": 0.9939967814143436
+  },
+  {
+    "feed_id": 165,
+    "parent_id": 213,
+    "mode": "homogeneous",
+    "entrained_lower_fraction": 1.0,
+    "deep_temperature_K": 4250.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 3.0,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 1.0,
+    "available_component_moles": {
+      "MgSiO3": 9.662431018834122,
+      "H2": 14.881823440062462
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.9700000000000001,
+      "H2": 0.029999999999999995
+    },
+    "Si_to_H_atomic_ratio": 0.32463867945182284
+  },
+  {
+    "feed_id": 166,
+    "parent_id": 213,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.0,
+    "deep_temperature_K": 4250.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 3.0,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 1.0,
+    "available_component_moles": {
+      "MgSiO3": 9.662431018834122,
+      "H2": 14.881823440062462
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.9700000000000001,
+      "H2": 0.029999999999999995
+    },
+    "Si_to_H_atomic_ratio": 0.32463867945182284
+  },
+  {
+    "feed_id": 167,
+    "parent_id": 213,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.01,
+    "deep_temperature_K": 4250.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 3.0,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 1.0,
+    "available_component_moles": {
+      "MgSiO3": 9.662431018834122,
+      "H2": 14.881823440062462
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.9700000000000001,
+      "H2": 0.029999999999999995
+    },
+    "Si_to_H_atomic_ratio": 0.32463867945182284
+  },
+  {
+    "feed_id": 168,
+    "parent_id": 213,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.1,
+    "deep_temperature_K": 4250.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 3.0,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 1.0,
+    "available_component_moles": {
+      "MgSiO3": 9.662431018834122,
+      "H2": 14.881823440062462
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.9700000000000001,
+      "H2": 0.029999999999999995
+    },
+    "Si_to_H_atomic_ratio": 0.32463867945182284
+  },
+  {
+    "feed_id": 169,
+    "parent_id": 213,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 1.0,
+    "deep_temperature_K": 4250.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 3.0,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 1.0,
+    "available_component_moles": {
+      "MgSiO3": 9.662431018834122,
+      "H2": 14.881823440062462
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.9700000000000001,
+      "H2": 0.029999999999999995
+    },
+    "Si_to_H_atomic_ratio": 0.32463867945182284
+  },
+  {
+    "feed_id": 170,
+    "parent_id": 214,
+    "mode": "homogeneous",
+    "entrained_lower_fraction": 1.0,
+    "deep_temperature_K": 4250.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 5.0,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 1.0,
+    "available_component_moles": {
+      "MgSiO3": 9.46320563700249,
+      "H2": 24.803039066770776
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.9500000000000001,
+      "H2": 0.05000000000000001
+    },
+    "Si_to_H_atomic_ratio": 0.1907670590593185
+  },
+  {
+    "feed_id": 171,
+    "parent_id": 214,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.0,
+    "deep_temperature_K": 4250.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 5.0,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 1.0,
+    "available_component_moles": {
+      "MgSiO3": 9.46320563700249,
+      "H2": 24.803039066770776
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.9500000000000001,
+      "H2": 0.05000000000000001
+    },
+    "Si_to_H_atomic_ratio": 0.1907670590593185
+  },
+  {
+    "feed_id": 172,
+    "parent_id": 214,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.01,
+    "deep_temperature_K": 4250.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 5.0,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 1.0,
+    "available_component_moles": {
+      "MgSiO3": 9.46320563700249,
+      "H2": 24.803039066770776
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.9500000000000001,
+      "H2": 0.05000000000000001
+    },
+    "Si_to_H_atomic_ratio": 0.1907670590593185
+  },
+  {
+    "feed_id": 173,
+    "parent_id": 214,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.1,
+    "deep_temperature_K": 4250.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 5.0,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 1.0,
+    "available_component_moles": {
+      "MgSiO3": 9.46320563700249,
+      "H2": 24.803039066770776
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.9500000000000001,
+      "H2": 0.05000000000000001
+    },
+    "Si_to_H_atomic_ratio": 0.1907670590593185
+  },
+  {
+    "feed_id": 174,
+    "parent_id": 214,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 1.0,
+    "deep_temperature_K": 4250.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 5.0,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 1.0,
+    "available_component_moles": {
+      "MgSiO3": 9.46320563700249,
+      "H2": 24.803039066770776
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.9500000000000001,
+      "H2": 0.05000000000000001
+    },
+    "Si_to_H_atomic_ratio": 0.1907670590593185
+  },
+  {
+    "feed_id": 175,
+    "parent_id": 215,
+    "mode": "homogeneous",
+    "entrained_lower_fraction": 1.0,
+    "deep_temperature_K": 4250.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 10.0,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 1.0,
+    "available_component_moles": {
+      "MgSiO3": 8.965142182423412,
+      "H2": 49.60607813354158
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.9,
+      "H2": 0.10000000000000007
+    },
+    "Si_to_H_atomic_ratio": 0.0903633437649403
+  },
+  {
+    "feed_id": 176,
+    "parent_id": 215,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.0,
+    "deep_temperature_K": 4250.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 10.0,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 1.0,
+    "available_component_moles": {
+      "MgSiO3": 8.965142182423412,
+      "H2": 49.60607813354158
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.9,
+      "H2": 0.10000000000000007
+    },
+    "Si_to_H_atomic_ratio": 0.0903633437649403
+  },
+  {
+    "feed_id": 177,
+    "parent_id": 215,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.01,
+    "deep_temperature_K": 4250.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 10.0,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 1.0,
+    "available_component_moles": {
+      "MgSiO3": 8.965142182423412,
+      "H2": 49.60607813354158
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.9,
+      "H2": 0.10000000000000007
+    },
+    "Si_to_H_atomic_ratio": 0.0903633437649403
+  },
+  {
+    "feed_id": 178,
+    "parent_id": 215,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 0.1,
+    "deep_temperature_K": 4250.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 10.0,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 1.0,
+    "available_component_moles": {
+      "MgSiO3": 8.965142182423412,
+      "H2": 49.60607813354158
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.9,
+      "H2": 0.10000000000000007
+    },
+    "Si_to_H_atomic_ratio": 0.0903633437649403
+  },
+  {
+    "feed_id": 179,
+    "parent_id": 215,
+    "mode": "spinodal",
+    "entrained_lower_fraction": 1.0,
+    "deep_temperature_K": 4250.0,
+    "deep_pressure_bar": 10000.0,
+    "hydrogen_wt_percent": 10.0,
+    "separated": false,
+    "available_mass_kg_per_kg_bulk": 1.0,
+    "available_component_moles": {
+      "MgSiO3": 8.965142182423412,
+      "H2": 49.60607813354158
+    },
+    "normalized_component_mass_kg": {
+      "MgSiO3": 0.9,
+      "H2": 0.10000000000000007
+    },
+    "Si_to_H_atomic_ratio": 0.0903633437649403
+  }
+]

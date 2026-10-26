@@ -1,0 +1,105 @@
+{
+  "hydrogen_silicate_at_3975K_1GPa_xH2_0p6": {
+    "bulk_component_1_mole_fraction": 0.6,
+    "homogeneous_curvature_J_per_mol": -13218.062718589828,
+    "spinodally_unstable": true,
+    "metastable": false,
+    "equilibrium_two_phase": true,
+    "valid": true,
+    "spinodal_lower": 0.5721591076842261,
+    "spinodal_upper": 0.8787976302766805,
+    "binodal_lower": 0.4349126577926517,
+    "binodal_upper": 0.9469194554437479,
+    "equilibrium_upper_phase_mole_fraction": 0.3224319344288198,
+    "common_tangent_residual": 6.661338147750939e-16
+  },
+  "illustrative_gas_solution": {
+    "ideal": {
+      "partial_pressure_bar": {
+        "Fe_g": 0.0002744777679354156,
+        "He_g": 0.9997146392743015,
+        "Si_g": 1.0882957763095551e-05
+      },
+      "mixing": {
+        "actual_mixing_gibbs_J_per_mol": -9352.13402346391,
+        "binodal_lower": null,
+        "binodal_upper": null,
+        "bulk_component_1_mole_fraction": 0.25006049174759953,
+        "common_tangent_residual": 0.0,
+        "demixing_enabled": true,
+        "equilibrium_two_phase": false,
+        "equilibrium_upper_phase_mole_fraction": 0.0,
+        "homogeneous_curvature_J_per_mol": 88673.29898332761,
+        "homogeneous_mixing_gibbs_J_per_mol": -9352.13402346391,
+        "metastable": false,
+        "spinodal_lower": null,
+        "spinodal_upper": null,
+        "spinodally_unstable": false,
+        "valid": true
+      },
+      "relative_element_errors": {
+        "He": 4.333989429817921e-16,
+        "Fe": 1.6567031137152782e-16,
+        "Si": 2.4706321425316367e-16
+      }
+    },
+    "constrained_homogeneous": {
+      "partial_pressure_bar": {
+        "Fe_g": 0.00033111222883162644,
+        "He_g": 0.999610070427904,
+        "Si_g": 5.88173432642697e-05
+      },
+      "mixing": {
+        "actual_mixing_gibbs_J_per_mol": 2.999636455478307,
+        "binodal_lower": 0.07072018167994489,
+        "binodal_upper": 0.9292798183200551,
+        "bulk_component_1_mole_fraction": 0.25003869522658595,
+        "common_tangent_residual": 3.0531133177191805e-16,
+        "demixing_enabled": false,
+        "equilibrium_two_phase": true,
+        "equilibrium_upper_phase_mole_fraction": 0.20885970629645095,
+        "homogeneous_curvature_J_per_mol": -11095.099936772864,
+        "homogeneous_mixing_gibbs_J_per_mol": 2.999636455476922,
+        "metastable": false,
+        "spinodal_lower": 0.21132486540518713,
+        "spinodal_upper": 0.7886751345948129,
+        "spinodally_unstable": true,
+        "valid": true
+      },
+      "relative_element_errors": {
+        "He": 4.333989429817921e-16,
+        "Fe": 1.6567031137152782e-16,
+        "Si": 1.2353160712658183e-16
+      }
+    },
+    "equilibrium_demixing": {
+      "partial_pressure_bar": {
+        "Fe_g": 0.0003452578911860026,
+        "He_g": 0.9996136872524857,
+        "Si_g": 4.105485632847144e-05
+      },
+      "mixing": {
+        "actual_mixing_gibbs_J_per_mol": -970.1539380469353,
+        "binodal_lower": 0.07072018167994489,
+        "binodal_upper": 0.9292798183200551,
+        "bulk_component_1_mole_fraction": 0.2500555662624611,
+        "common_tangent_residual": 3.0531133177191805e-16,
+        "demixing_enabled": true,
+        "equilibrium_two_phase": true,
+        "equilibrium_upper_phase_mole_fraction": 0.208879356691316,
+        "homogeneous_curvature_J_per_mol": -11099.088186639703,
+        "homogeneous_mixing_gibbs_J_per_mol": 3.112235832282472,
+        "metastable": false,
+        "spinodal_lower": 0.21132486540518713,
+        "spinodal_upper": 0.7886751345948129,
+        "spinodally_unstable": true,
+        "valid": true
+      },
+      "relative_element_errors": {
+        "He": 4.333989429817921e-16,
+        "Fe": 1.6567031137152782e-16,
+        "Si": 3.705948213797455e-16
+      }
+    }
+  }
+}

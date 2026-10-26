@@ -1,0 +1,93 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.13.7, pytest-9.1.1, pluggy-1.6.0
+rootdir: /Users/felix/.t3/scratch/2026-10-25-download-the-atmodeller-repo-and-e52eac4d/atmodeller
+configfile: pyproject.toml
+plugins: beartype-0.2.0, cov-7.1.0, jaxtyping-0.3.11, anyio-4.14.2
+collected 277 items / 3 deselected / 274 selected
+
+tests/eos/holland/test_cork.py .....................                     [  7%]
+tests/eos/holland/test_mrk.py ........                                   [ 10%]
+tests/eos/test_chabrier.py ...............                               [ 16%]
+tests/eos/test_eos_core.py .....                                         [ 17%]
+tests/eos/test_holley.py .................                               [ 24%]
+tests/eos/test_reid_connolly.py .....                                    [ 25%]
+tests/eos/test_saxena.py ................................                [ 37%]
+tests/eos/test_vanderwaals.py ...                                        [ 38%]
+tests/eos/test_wang.py .......                                           [ 41%]
+tests/eos/test_zhang.py .............                                    [ 45%]
+tests/solubility/test_carbon_species.py .....                            [ 47%]
+tests/solubility/test_hydrogen_species.py ............                   [ 52%]
+tests/solubility/test_other_species.py .......                           [ 54%]
+tests/solubility/test_sulfur_species.py .........                        [ 58%]
+tests/test_CHO.py ............                                           [ 62%]
+tests/test_binary_solution.py ...................                        [ 69%]
+tests/test_condensates.py .....                                          [ 71%]
+tests/test_database.py ....                                              [ 72%]
+tests/test_initializer.py ..                                             [ 73%]
+tests/test_jax_utils.py .                                                [ 73%]
+tests/test_output.py ............                                        [ 78%]
+tests/test_phase_equilibrium_api.py ...........                          [ 82%]
+tests/test_readme.py .                                                   [ 82%]
+tests/test_real_gas.py ......                                            [ 84%]
+tests/test_retracing.py ....                                             [ 86%]
+tests/test_solvers.py .......                                            [ 88%]
+tests/test_state.py ..                                                   [ 89%]
+tests/thermodata/test_activity.py ..                                     [ 90%]
+tests/thermodata/test_mixing.py .................                        [ 96%]
+tests/thermodata/test_redox_buffers.py ....                              [ 97%]
+tests/thermodata/test_thermodynamic_properties.py ......                 [100%]
+
+================================ tests coverage ================================
+_______________ coverage: platform darwin, python 3.13.7-final-0 _______________
+
+Name                                          Stmts   Miss  Cover   Missing
+---------------------------------------------------------------------------
+atmodeller/classes.py                            69      0   100%
+atmodeller/containers.py                        141      1    99%   366
+atmodeller/database.py                           63      4    94%   51, 61, 70, 85
+atmodeller/engine.py                             48      0   100%
+atmodeller/eos/_aggregators.py                  179      0   100%
+atmodeller/eos/_chabrier.py                     150      0   100%
+atmodeller/eos/_holland_powell.py               322      0   100%
+atmodeller/eos/_holley.py                        93      0   100%
+atmodeller/eos/_reid_connolly.py                 25      0   100%
+atmodeller/eos/_saxena.py                       133      0   100%
+atmodeller/eos/_vanderwaals.py                   55      0   100%
+atmodeller/eos/_wang.py                          55      0   100%
+atmodeller/eos/_zhang_duan.py                   110      0   100%
+atmodeller/eos/_zhang_duan_base.py              233      0   100%
+atmodeller/eos/core.py                          138      0   100%
+atmodeller/eos/library.py                        19      0   100%
+atmodeller/eos/redlich_kwong.py                 107      0   100%
+atmodeller/initializer/core.py                   21      0   100%
+atmodeller/initializer/element_potential.py     171      0   100%
+atmodeller/initializer/heuristic.py              93      0   100%
+atmodeller/interfaces.py                         69      0   100%
+atmodeller/jax_utils.py                         116      1    99%   181
+atmodeller/output.py                             90      1    99%   214
+atmodeller/output_base.py                       362      1    99%   601
+atmodeller/parameters.py                        168      0   100%
+atmodeller/phases.py                            338      0   100%
+atmodeller/reactions.py                         250      0   100%
+atmodeller/sci_utils.py                         110      4    96%   111, 353-362
+atmodeller/solubility/_carbon_species.py         53      0   100%
+atmodeller/solubility/_hydrogen_species.py       94      0   100%
+atmodeller/solubility/_other_species.py          81      0   100%
+atmodeller/solubility/_sulfur_species.py        124      0   100%
+atmodeller/solubility/core.py                    47      0   100%
+atmodeller/solubility/library.py                 46      0   100%
+atmodeller/solvers.py                           133      0   100%
+atmodeller/state.py                             275      3    99%   82, 868-869
+atmodeller/thermodata/_redox_buffers.py         132      0   100%
+atmodeller/thermodata/activity_models.py         23      1    96%   84
+atmodeller/thermodata/core.py                   146     11    92%   109, 118, 132, 146, 316, 325, 382, 394, 406-408, 420
+atmodeller/thermodata/defaults.py                 5      0   100%
+atmodeller/thermodata/gustafson.py               46      1    98%   67
+atmodeller/thermodata/holland_powell.py          66      1    98%   55
+atmodeller/thermodata/janaf.py                   86      0   100%
+atmodeller/thermodata/mixing.py                 184      0   100%
+atmodeller/thermodata/vassiliev.py               56      1    98%   108
+---------------------------------------------------------------------------
+TOTAL                                          5325     30    99%
+Coverage XML written to file coverage.xml
+================ 274 passed, 3 deselected in 540.56s (0:09:00) =================
