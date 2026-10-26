@@ -5,7 +5,8 @@ Binary-demixing implementation validation
 environment, local checks and physical scope. ``example_output.json`` is the
 output of ``examples/spinodal_equilibrium.py``. Text logs retain the test,
 style/type, documentation and changed-line coverage results. Local checkout
-paths in logs have been replaced with ``<checkout>``.
+paths in logs have been replaced with ``<checkout>`` and trailing whitespace
+has been removed.
 
 The hydrogen-silicate example evaluates the published binary mixing function.
 The gas-equilibrium example uses an illustrative, uncalibrated Fe-Si interaction

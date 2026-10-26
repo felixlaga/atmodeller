@@ -15,20 +15,20 @@
   },
   "checks": [
     {
-      "command": "uv run pytest --cov=atmodeller --cov-report=xml",
+      "command": ".venv/bin/pytest --cov=atmodeller --cov-report=xml",
       "status": "passed",
       "passed": 263,
       "deselected_performance": 3,
       "new_tests": 36
     },
     {
-      "command": "uv run diff-cover coverage.xml --compare-branch=upstream/main --fail-under=80",
+      "command": ".venv/bin/diff-cover coverage.xml --compare-branch=upstream/main --fail-under=80",
       "status": "passed",
       "changed_executable_lines": 233,
       "covered_percent": 100
     },
     {
-      "command": "uv run pre-commit run --all-files",
+      "command": ".venv/bin/pre-commit run --all-files",
       "status": "passed",
       "hooks": [
         "ruff-check",
@@ -38,16 +38,16 @@
       ]
     },
     {
-      "command": "uv run sphinx-build -W --keep-going -b html docs docs/_build/html",
+      "command": ".venv/bin/sphinx-build -W --keep-going -b html docs docs/_build/html",
       "status": "passed"
     },
     {
-      "command": "uv run python examples/spinodal_equilibrium.py",
+      "command": ".venv/bin/python examples/spinodal_equilibrium.py",
       "status": "passed",
       "output": "example_output.json"
     },
     {
-      "command": "uv run python research/verify_archive.py",
+      "command": ".venv/bin/python research/verify_archive.py",
       "status": "passed",
       "imported_files": 45,
       "source_downloads": 4
@@ -64,10 +64,10 @@
   },
   "evidence_sha256": {
     "tests.txt": "5b9e20a85e31a5a94857f60a90ceec25d40c0f35b0756f0f58742bb73c259713",
-    "documentation.txt": "9946fae64b3c68295d52ff3f9d276a88523f88635d5046a8088d9e2b2d75978b",
+    "documentation.txt": "9bb8625c49e49a38ca762a730c37c6a9e0e1c452e586926a73eadb0fc3a4fd0b",
     "example_output.json": "3a165f7842f4eb4fe95bfbf2dc18bb37fa9931402db5758771664f4b7635efb1",
     "precommit.txt": "446334e577cac8f4ea85608f90e618ed5fbecebf918e260bc326d21eda7df518",
-    "diff_coverage.txt": "5300bd7f1a7e5980d2e56b8fbe91bd131bf03d8961b17bd793c6115abb0f29e5"
+    "diff_coverage.txt": "275b2ea83f732b0b0286aab4bb252e95d2d177bf3bf6981317f3f66c53015e35"
   },
   "limitations": [
     "Binary thermodynamics only; no multicomponent stability Hessian.",
